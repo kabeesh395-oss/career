@@ -1,1 +1,16 @@
-ok
+workflows:
+  default-workflow:
+    name: Default Workflow
+    max_build_duration: 60
+    environment:
+      vars:
+        # your env vars here
+    scripts:
+      - name: Install dependencies
+        script: |
+          echo "Add your install commands here"
+      - name: Build
+        script: |
+          echo "Add your build commands here"
+    artifacts:
+      - build/**/*.apk
