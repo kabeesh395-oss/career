@@ -3,8 +3,7 @@ workflows:
     name: Default Workflow
     max_build_duration: 60
     environment:
-      vars:
-        # your env vars here
+      vars: {}
     scripts:
       - name: Install dependencies
         script: |
