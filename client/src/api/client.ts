@@ -1,4 +1,13 @@
-const API_BASE = '/api';
+import { Capacitor } from '@capacitor/core';
+
+export function getApiBase(): string {
+  const custom = localStorage.getItem('cp_api_url');
+  if (custom) return custom;
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (envUrl) return envUrl;
+  if (Capacitor.isNativePlatform()) return 'http://10.0.2.2:5000/api';
+  return '/api';
+}
 
 function getToken(): string | null {
   return localStorage.getItem('cp_token');
@@ -30,7 +39,7 @@ export async function api<T = any>(
     headers['Content-Type'] = 'application/json';
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const res = await fetch(`${getApiBase()}${endpoint}`, {
     ...options,
     headers,
   });
