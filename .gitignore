@@ -5,6 +5,14 @@ node_modules/
 dist/
 build/
 
+# APK / Android build artifacts
+*.apk
+*.aab
+client/android/app/build/
+client/android/build/
+client/android/.gradle/
+
+
 # Environment variables
 .env
 .env.local
