@@ -1,15 +1,33 @@
 workflows:
-  default-workflow:
-    name: Default Workflow
+  android-workflow:
+    name: Android Release Build (AAB & APK)
     max_build_duration: 60
+    instance_type: mac_mini_m1
     environment:
-      vars: {}
+      android_signing:
+        - release_keystore
+      vars:
+        PACKAGE_NAME: "ai.careerpilot.app"
+      node: 20
+      java: 21
     scripts:
-      - name: Install dependencies
+      - name: Install client dependencies and build web app
         script: |
-          echo "Add your install commands here"
-      - name: Build
+          cd client
+          npm install
+          npm run build
+      - name: Sync Capacitor Android
         script: |
-          echo "Add your build commands here"
+          cd client
+          npx cap copy android
+      - name: Build Android Release AAB & APK
+        script: |
+          cd client/android
+          chmod +x gradlew
+          ./gradlew clean bundleRelease assembleRelease assembleDebug
     artifacts:
-      - build/**/*.apk
+      - client/android/app/build/outputs/bundle/release/*.aab
+      - client/android/app/build/outputs/apk/release/*.apk
+      - client/android/app/build/outputs/apk/debug/*.apk
+      - "*.apk"
+      - "*.aab"
