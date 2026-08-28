@@ -6,18 +6,19 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "ai.careerpilot.app"
-      node: 20
+      node: 22
       java: 21
     scripts:
       - name: Install client dependencies and build web app
         script: |
           cd client
+          node --version
           npm install
           npm run build
       - name: Sync Capacitor Android
         script: |
           cd client
-          npx cap copy android
+          npx @capacitor/cli sync android || npx @capacitor/cli copy android
       - name: Set up Keystore for Release Signing
         script: |
           cd client/android
