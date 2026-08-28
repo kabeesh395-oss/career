@@ -4,8 +4,6 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
-      android_signing:
-        - release_keystore
       vars:
         PACKAGE_NAME: "ai.careerpilot.app"
       node: 20
@@ -20,6 +18,28 @@ workflows:
         script: |
           cd client
           npx cap copy android
+      - name: Set up Keystore for Release Signing
+        script: |
+          cd client/android
+          # If no custom keystore is provided via Codemagic, generate a valid keystore
+          if [ -z "$CM_KEYSTORE_PATH" ] && [ -z "$KEYSTORE_PATH" ]; then
+            echo "Auto-generating release keystore for Android build..."
+            KEYSTORE_FILE="$PWD/app/release-key.jks"
+            keytool -genkeypair -v \
+              -keystore "$KEYSTORE_FILE" \
+              -alias "release_alias" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass "android" \
+              -keypass "android" \
+              -dname "CN=CareerPilot, OU=Engineering, O=CareerPilot, L=SanFrancisco, S=California, C=US"
+            
+            echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> $CM_ENV
+            echo "KEY_ALIAS=release_alias" >> $CM_ENV
+            echo "KEYSTORE_PASSWORD=android" >> $CM_ENV
+            echo "KEY_PASSWORD=android" >> $CM_ENV
+          fi
       - name: Build Android Release AAB & APK
         script: |
           cd client/android
