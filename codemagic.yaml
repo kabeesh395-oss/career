@@ -1,6 +1,6 @@
 workflows:
   android-workflow:
-    name: Android Release Build (AAB & APK)
+    name: CareerPilot Android APK Build
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
@@ -22,7 +22,7 @@ workflows:
       - name: Set up Keystore for Release Signing
         script: |
           cd client/android
-          # If no custom keystore is provided via Codemagic, generate a valid keystore
+          # If no custom keystore is provided via Codemagic, generate a valid release keystore
           if [ -z "$CM_KEYSTORE_PATH" ] && [ -z "$KEYSTORE_PATH" ]; then
             echo "Auto-generating release keystore for Android build..."
             KEYSTORE_FILE="$PWD/app/release-key.jks"
@@ -41,16 +41,13 @@ workflows:
             echo "KEYSTORE_PASSWORD=android" >> $CM_ENV
             echo "KEY_PASSWORD=android" >> $CM_ENV
           fi
-      - name: Build Android Release AAB & APK
+      - name: Build Unified Android Release APK
         script: |
           cd client/android
           mkdir -p app/src/main/res/drawable
           cp -f app/src/main/res/drawable-port-hdpi/splash.png app/src/main/res/drawable/splash.png 2>/dev/null || true
           chmod +x gradlew
-          ./gradlew clean bundleRelease assembleRelease assembleDebug -x lint -x lintVitalRelease
+          ./gradlew clean assembleRelease -x lint -x lintVitalRelease
+          cp -f app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CareerPilot.apk 2>/dev/null || true
     artifacts:
-      - client/android/app/build/outputs/bundle/release/*.aab
-      - client/android/app/build/outputs/apk/release/*.apk
-      - client/android/app/build/outputs/apk/debug/*.apk
-      - "*.apk"
-      - "*.aab"
+      - client/android/app/build/outputs/apk/release/CareerPilot.apk
