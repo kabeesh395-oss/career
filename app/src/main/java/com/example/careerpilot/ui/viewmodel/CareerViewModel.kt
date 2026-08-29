@@ -238,6 +238,21 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun applyCareerStarterTemplate(roleName: String) {
+        viewModelScope.launch {
+            _isAnalyzing.value = true
+            try {
+                repository.applyCareerStarterTemplate(roleName)
+                refreshNextBestAction()
+                _userMessage.value = "Career preset applied for $roleName. Profile, roadmap, and skills updated!"
+            } catch (e: Exception) {
+                _userMessage.value = "Failed to apply preset: ${e.message}"
+            } finally {
+                _isAnalyzing.value = false
+            }
+        }
+    }
+
     fun runCareerAnalysis(targetRole: String) {
         viewModelScope.launch {
             _isAnalyzing.value = true

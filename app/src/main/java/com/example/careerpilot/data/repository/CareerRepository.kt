@@ -919,5 +919,192 @@ class CareerRepository(private val dao: CareerDao) {
         recalibrateAudit()
         return@withContext Pair(aiMessage, score)
     }
+
+    // === FEATURE 4: 1-CLICK CAREER STARTER PRESETS (COLD-START RESOLUTION) ===
+    suspend fun applyCareerStarterTemplate(roleName: String) = withContext(Dispatchers.IO) {
+        val currentProfile = dao.getUserProfile() ?: UserProfile()
+        
+        val (headline, industry, salary, skills, projects) = when (roleName) {
+            "Android Mobile Engineer" -> {
+                Quint(
+                    "Senior Android Architect & Kotlin Specialist",
+                    "Consumer Mobile & FinTech",
+                    "$145,000 - $185,000",
+                    listOf(
+                        UserSkill(skillName = "Kotlin & Coroutines", category = "Mobile", proficiencyLevel = 5, verified = true),
+                        UserSkill(skillName = "Jetpack Compose", category = "Mobile", proficiencyLevel = 5, verified = true),
+                        UserSkill(skillName = "Room & SQLite Persistence", category = "Mobile", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "Android Architecture (MVVM/MVI)", category = "Mobile", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "Performance Profiling & Memory Leaks", category = "Mobile", proficiencyLevel = 3, verified = false),
+                        UserSkill(skillName = "Gradle & CI/CD Automation", category = "DevOps & Cloud", proficiencyLevel = 3, verified = false)
+                    ),
+                    listOf(
+                        PortfolioProject(
+                            title = "High-Performance Mobile Finance & Trading App",
+                            description = "Real-time crypto & stock portfolio tracker with Jetpack Compose Canvas charts, offline Room caching, and biometrics.",
+                            repositoryUrl = "https://github.com/alexchen/compose-fintech",
+                            liveUrl = "https://play.google.com/store/apps/details?id=com.fintech.app",
+                            status = "completed",
+                            technologies = "Kotlin, Jetpack Compose, Room, Coroutines, Flow, Retrofit",
+                            skillsTargeted = "Mobile, Jetpack Compose, State Management"
+                        ),
+                        PortfolioProject(
+                            title = "Offline-First Voice AI Audio Journal",
+                            description = "Low-latency audio transcription and AI summarizer using on-device ML Kit and background Coroutine workers.",
+                            repositoryUrl = "https://github.com/alexchen/voice-ai-journal",
+                            liveUrl = "https://play.google.com/store/apps/details?id=com.voiceai.journal",
+                            status = "in_progress",
+                            technologies = "Kotlin, Room, WorkManager, CameraX, Compose M3",
+                            skillsTargeted = "Mobile, Background Processing, On-Device AI"
+                        )
+                    )
+                )
+            }
+            "AI / Machine Learning Engineer" -> {
+                Quint(
+                    "Applied AI Engineer & LLM Systems Specialist",
+                    "Enterprise AI & Autonomous Agents",
+                    "$160,000 - $210,000",
+                    listOf(
+                        UserSkill(skillName = "Python & PyTorch", category = "Programming Languages", proficiencyLevel = 5, verified = true),
+                        UserSkill(skillName = "LLM Prompting & Function Calling", category = "AI & ML", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "RAG & Vector Embeddings", category = "AI & ML", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "Vector Databases (pgvector/Pinecone)", category = "AI & ML", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "FastAPI & Model Serving", category = "Backend", proficiencyLevel = 3, verified = false),
+                        UserSkill(skillName = "Data Pipelines & Feature Stores", category = "Data", proficiencyLevel = 3, verified = false)
+                    ),
+                    listOf(
+                        PortfolioProject(
+                            title = "Enterprise Autonomous RAG Knowledge Base",
+                            description = "High-accuracy semantic document intelligence engine with hybrid lexical-vector retrieval and self-corrective query reranking.",
+                            repositoryUrl = "https://github.com/alexchen/enterprise-rag",
+                            liveUrl = "https://rag-demo.ai.platform",
+                            status = "completed",
+                            technologies = "Python, PyTorch, LangChain, Pinecone, FastAPI, Docker",
+                            skillsTargeted = "AI & ML, Vector Search, Scalable Serving"
+                        ),
+                        PortfolioProject(
+                            title = "Real-time Agentic Code Review Assistant",
+                            description = "Multi-agent LLM orchestrator that pulls GitHub PRs, runs AST static analysis, and proposes verified diffs.",
+                            repositoryUrl = "https://github.com/alexchen/agentic-pr-reviewer",
+                            liveUrl = "https://ai-reviewer.cloud",
+                            status = "in_progress",
+                            technologies = "Python, Gemini API, Redis, Celery, Docker",
+                            skillsTargeted = "AI Agents, LLM Evaluation, Automation"
+                        )
+                    )
+                )
+            }
+            "DevOps / Cloud Architect" -> {
+                Quint(
+                    "Cloud Infrastructure & Reliability Architect",
+                    "Cloud Infrastructure & FinTech Scaleups",
+                    "$150,000 - $195,000",
+                    listOf(
+                        UserSkill(skillName = "Terraform / IaC", category = "DevOps & Cloud", proficiencyLevel = 5, verified = true),
+                        UserSkill(skillName = "Kubernetes & Container Orchestration", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "AWS / GCP Cloud Architecture", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "Observability (Prometheus/Grafana)", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "CI/CD Pipelines (GitHub Actions)", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "Network Security & Zero Trust", category = "Security", proficiencyLevel = 3, verified = false)
+                    ),
+                    listOf(
+                        PortfolioProject(
+                            title = "Multi-Region Kubernetes Disaster Recovery Mesh",
+                            description = "Automated Terraform IaC provisioning with Istio service mesh, Prometheus observability, and zero-downtime failover.",
+                            repositoryUrl = "https://github.com/alexchen/k8s-mesh-infra",
+                            liveUrl = "https://mesh-status.infra.io",
+                            status = "completed",
+                            technologies = "Terraform, Kubernetes, Helm, Istio, AWS EKS, Prometheus",
+                            skillsTargeted = "DevOps & Cloud, Zero Trust, High Availability"
+                        ),
+                        PortfolioProject(
+                            title = "GitOps Enterprise Continuous Delivery Engine",
+                            description = "ArgoCD and GitHub Actions pipeline with automated canary deployments, security vulnerability scanning, and Slack alerting.",
+                            repositoryUrl = "https://github.com/alexchen/gitops-cd-engine",
+                            liveUrl = "https://cd.internal.cloud",
+                            status = "in_progress",
+                            technologies = "GitHub Actions, ArgoCD, Docker, Trivy, Vault",
+                            skillsTargeted = "CI/CD, Security, Infrastructure"
+                        )
+                    )
+                )
+            }
+            else -> { // Default: Full Stack Engineer
+                Quint(
+                    "Senior Full Stack & Systems Engineer",
+                    "Fintech & Scalable Cloud Platforms",
+                    "$140,000 - $180,000",
+                    listOf(
+                        UserSkill(skillName = "TypeScript", category = "Programming Languages", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "React", category = "Frontend", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "Kotlin & Coroutines", category = "Mobile", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "Node.js / Express", category = "Backend", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "PostgreSQL & Index Tuning", category = "Databases", proficiencyLevel = 4, verified = true),
+                        UserSkill(skillName = "Docker & Containers", category = "DevOps & Cloud", proficiencyLevel = 3, verified = false),
+                        UserSkill(skillName = "System Design & Scalability", category = "Architecture", proficiencyLevel = 3, verified = false)
+                    ),
+                    listOf(
+                        PortfolioProject(
+                            title = "Distributed High-Throughput Task Queue",
+                            description = "Asynchronous task orchestrator with Redis backed retry queues, worker concurrency pools, and telemetry.",
+                            repositoryUrl = "https://github.com/alexchen/distributed-queue",
+                            liveUrl = "https://queue-demo.dev.io",
+                            status = "completed",
+                            technologies = "Kotlin, Coroutines, Redis, Docker, Prometheus",
+                            skillsTargeted = "Backend, Distributed Systems, Concurrency"
+                        ),
+                        PortfolioProject(
+                            title = "Real-time Collaborative Whiteboard Engine",
+                            description = "Low-latency whiteboard application leveraging WebSockets, CRDT conflict resolution, and Compose canvas rendering.",
+                            repositoryUrl = "https://github.com/alexchen/crdt-canvas",
+                            liveUrl = "https://canvas.dev.io",
+                            status = "in_progress",
+                            technologies = "Jetpack Compose, WebSockets, TypeScript, Node.js",
+                            skillsTargeted = "Frontend, Real-time Systems, UI Performance"
+                        )
+                    )
+                )
+            }
+        }
+
+        // 1. Update Profile
+        dao.insertOrUpdateProfile(
+            currentProfile.copy(
+                targetRole = roleName,
+                headline = headline,
+                targetIndustry = industry,
+                targetSalary = salary,
+                readinessScore = 82
+            )
+        )
+
+        // 2. Refresh Skills & Projects
+        dao.clearUserSkills()
+        dao.insertUserSkills(skills)
+
+        dao.clearProjects()
+        projects.forEach { dao.insertProject(it) }
+
+        // 3. Recalibrate Skill Gaps and Roadmap
+        recalibrateSkillGaps(roleName)
+        generateRoadmapForRole(roleName)
+        recalibrateAudit()
+
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "Career Preset Applied",
+                detail = "Applied full 1-click starter configuration for $roleName."
+            )
+        )
+    }
 }
+
+private data class Quint<A, B, C, D, E>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D,
+    val fifth: E
+)
 

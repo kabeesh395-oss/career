@@ -32,6 +32,9 @@ interface CareerDao {
     @Delete
     suspend fun deleteUserSkill(skill: UserSkill)
 
+    @Query("DELETE FROM user_skills")
+    suspend fun clearUserSkills()
+
     // Skill Gaps
     @Query("SELECT * FROM skill_gaps ORDER BY gapScore DESC, priority DESC")
     fun getSkillGapsFlow(): Flow<List<SkillGap>>
@@ -86,6 +89,9 @@ interface CareerDao {
 
     @Delete
     suspend fun deleteProject(project: PortfolioProject)
+
+    @Query("DELETE FROM portfolio_projects")
+    suspend fun clearProjects()
 
     // Resume Audits
     @Query("SELECT * FROM resume_audits ORDER BY createdAt DESC")

@@ -59,6 +59,92 @@ fun ProfileScreen(
             }
         }
 
+        // 1-Click Career Starter Presets
+        item {
+            GlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("career_starter_presets_card"),
+                borderColor = AccentCyan.copy(alpha = 0.4f),
+                backgroundColor = BgSurfaceElevated
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "⚡ Instant Career Presets",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentCyan
+                        )
+                        Text(
+                            text = "1-click auto-setup profile, skills, roadmap & projects",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val presets = listOf(
+                    "Full Stack Engineer",
+                    "Android Mobile Engineer",
+                    "AI / Machine Learning Engineer",
+                    "DevOps / Cloud Architect"
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    presets.forEach { presetRole ->
+                        val isSelected = targetRole.equals(presetRole, ignoreCase = true)
+                        Surface(
+                            onClick = {
+                                viewModel.applyCareerStarterTemplate(presetRole)
+                            },
+                            color = if (isSelected) PrimaryBlue.copy(alpha = 0.2f) else BgCard,
+                            shape = RoundedCornerShape(10.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (isSelected) PrimaryBlueGlow else BorderSubtle
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = presetRole,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) PrimaryBlueGlow else TextPrimary
+                                    )
+                                    Text(
+                                        text = if (isSelected) "Active Profile Trajectory" else "Tap to apply 1-click preset",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isSelected) SuccessGreen else TextMuted
+                                    )
+                                }
+                                Text(
+                                    text = if (isSelected) "Active ✓" else "Apply ⚡",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) SuccessGreen else AccentCyan
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         item {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Text(
