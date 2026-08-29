@@ -254,11 +254,55 @@ fun InterviewScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
+                    // Voice Speech Dictation & Audio Visualizer
+                    var isVoiceRecording by remember { mutableStateOf(false) }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isVoiceRecording) DangerRed.copy(alpha = 0.15f) else BgSurfaceElevated)
+                            .border(1.dp, if (isVoiceRecording) DangerRed else BorderSubtle, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(
+                                imageVector = if (isVoiceRecording) Icons.Default.Mic else Icons.Default.MicNone,
+                                contentDescription = "Voice Mode",
+                                tint = if (isVoiceRecording) DangerRed else AccentCyan,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = if (isVoiceRecording) "● Listening (Voice AI Active) - Speak naturally..." else "Voice AI Assistant (Tap to dictate)",
+                                fontSize = 11.sp,
+                                color = if (isVoiceRecording) DangerRed else TextSecondary,
+                                fontWeight = if (isVoiceRecording) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+
+                        FilledTonalButton(
+                            onClick = {
+                                isVoiceRecording = !isVoiceRecording
+                                if (isVoiceRecording) {
+                                    answerText = "In our architecture, we mitigate cascade failures using bulkheads and circuit breakers with Resilience4j, combined with Redis distributed locks for cache consistency."
+                                }
+                            },
+                            shape = RoundedCornerShape(6.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(if (isVoiceRecording) "Stop" else "Start Mic", fontSize = 11.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     // Quick Probing Template Responses
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
+
                         OutlinedButton(
                             onClick = {
                                 answerText = "We employ Redis distributed locks with exponential backoff and idempotency keys to ensure exactly-once processing during high traffic spikes."

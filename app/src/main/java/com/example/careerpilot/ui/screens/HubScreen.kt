@@ -24,12 +24,17 @@ import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 enum class HubTab(val title: String, val icon: ImageVector) {
     SKILLS("Skill Gaps", Icons.Default.Assessment),
+    APPLICATIONS("Job CRM", Icons.Default.WorkOutline),
+    SANDBOX("Code Sandbox", Icons.Default.Terminal),
+    SPRINTS("Skill Sprints", Icons.Default.EmojiEvents),
+    PEERS("Peer Mocks", Icons.Default.People),
     ROADMAP("Roadmap", Icons.Default.Timeline),
     PROJECTS("Projects", Icons.Default.Code),
     LEARNING("Learning", Icons.Default.MenuBook),
     INTEGRATIONS("Sync", Icons.Default.Sync),
     PROFILE("Profile", Icons.Default.Person)
 }
+
 
 @Composable
 fun HubScreen(
@@ -103,6 +108,10 @@ fun HubScreen(
         ) {
             when (selectedTab) {
                 HubTab.SKILLS -> CareerAnalysisScreen(viewModel = viewModel)
+                HubTab.APPLICATIONS -> ApplicationTrackerScreen(viewModel = viewModel)
+                HubTab.SANDBOX -> CodingSandboxScreen(viewModel = viewModel)
+                HubTab.SPRINTS -> SkillSprintsScreen(viewModel = viewModel)
+                HubTab.PEERS -> PeerMockScreen(viewModel = viewModel)
                 HubTab.ROADMAP -> RoadmapScreen(viewModel = viewModel)
                 HubTab.PROJECTS -> ProjectsScreen(viewModel = viewModel)
                 HubTab.LEARNING -> LearningScreen(viewModel = viewModel)
@@ -110,5 +119,6 @@ fun HubScreen(
                 HubTab.PROFILE -> ProfileScreen(viewModel = viewModel)
             }
         }
+
     }
 }

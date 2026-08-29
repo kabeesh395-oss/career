@@ -222,4 +222,59 @@ interface CareerDao {
 
     @Query("DELETE FROM job_matches WHERE jobPostingId = :jobPostingId")
     suspend fun deleteJobMatchForPosting(jobPostingId: String)
+
+    // Job Applications Pipeline CRM
+    @Query("SELECT * FROM job_applications ORDER BY appliedDate DESC")
+    fun getJobApplicationsFlow(): Flow<List<JobApplication>>
+
+    @Query("SELECT * FROM job_applications ORDER BY appliedDate DESC")
+    suspend fun getJobApplications(): List<JobApplication>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertJobApplication(app: JobApplication)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertJobApplications(apps: List<JobApplication>)
+
+    @Update
+    suspend fun updateJobApplication(app: JobApplication)
+
+    @Delete
+    suspend fun deleteJobApplication(app: JobApplication)
+
+    // Coding Sandbox Challenges
+    @Query("SELECT * FROM coding_challenges ORDER BY isCompleted ASC, difficulty ASC")
+    fun getCodingChallengesFlow(): Flow<List<CodingChallenge>>
+
+    @Query("SELECT * FROM coding_challenges WHERE id = :id LIMIT 1")
+    suspend fun getCodingChallenge(id: String): CodingChallenge?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCodingChallenge(challenge: CodingChallenge)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCodingChallenges(challenges: List<CodingChallenge>)
+
+    @Update
+    suspend fun updateCodingChallenge(challenge: CodingChallenge)
+
+    // Peer Matches
+    @Query("SELECT * FROM peer_matches ORDER BY rating DESC")
+    fun getPeerMatchesFlow(): Flow<List<PeerMatch>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPeerMatches(peers: List<PeerMatch>)
+
+    // Skill Sprints
+    @Query("SELECT * FROM skill_sprints ORDER BY isClaimed ASC, currentDay DESC")
+    fun getSkillSprintsFlow(): Flow<List<SkillSprint>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSkillSprint(sprint: SkillSprint)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSkillSprints(sprints: List<SkillSprint>)
+
+    @Update
+    suspend fun updateSkillSprint(sprint: SkillSprint)
 }

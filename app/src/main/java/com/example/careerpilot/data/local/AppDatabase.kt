@@ -23,9 +23,13 @@ import com.example.careerpilot.data.model.*
         AnalyticsEvent::class,
         AuditIssue::class,
         TargetJobPosting::class,
-        JobMatchResult::class
+        JobMatchResult::class,
+        JobApplication::class,
+        CodingChallenge::class,
+        PeerMatch::class,
+        SkillSprint::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

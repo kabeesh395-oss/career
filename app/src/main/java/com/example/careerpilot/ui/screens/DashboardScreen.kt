@@ -629,15 +629,20 @@ fun DashboardScreen(
         item {
             val quickLinks = listOf(
                 Triple("Audit Center", Icons.Default.Shield, "audit"),
-                Triple("Skill Gaps", Icons.Default.Assessment, "career"),
-                Triple("Roadmap", Icons.Default.Timeline, "roadmap"),
+                Triple("Job CRM", Icons.Default.WorkOutline, "applications"),
+                Triple("Sandbox", Icons.Default.Terminal, "sandbox"),
+                Triple("Sprints", Icons.Default.EmojiEvents, "sprints"),
+                Triple("Peer Mocks", Icons.Default.People, "peers"),
                 Triple("Mock AI", Icons.Default.RecordVoiceOver, "interview"),
                 Triple("ATS Resume", Icons.Default.Description, "resume"),
+                Triple("Skill Gaps", Icons.Default.Assessment, "career"),
+                Triple("Roadmap", Icons.Default.Timeline, "roadmap"),
                 Triple("Projects", Icons.Default.Code, "projects"),
                 Triple("Learning", Icons.Default.MenuBook, "learning"),
                 Triple("Integrations", Icons.Default.Sync, "integrations"),
                 Triple("Profile", Icons.Default.Person, "profile")
             )
+
 
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

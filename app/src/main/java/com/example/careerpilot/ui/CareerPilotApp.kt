@@ -40,7 +40,12 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Learning : Screen("learning", "Learning", Icons.Default.MenuBook)
     object Integrations : Screen("integrations", "Sync", Icons.Default.Sync)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
+    object Applications : Screen("applications", "Job CRM", Icons.Default.WorkOutline)
+    object Sandbox : Screen("sandbox", "Code Sandbox", Icons.Default.Terminal)
+    object Sprints : Screen("sprints", "Skill Sprints", Icons.Default.EmojiEvents)
+    object Peers : Screen("peers", "Peer Mocks", Icons.Default.People)
 }
+
 
 val primaryNavItems = listOf(
     Screen.Dashboard,
@@ -225,6 +230,19 @@ fun CareerPilotApp(
             composable(Screen.Profile.route) {
                 ProfileScreen(viewModel = viewModel)
             }
+            composable(Screen.Applications.route) {
+                ApplicationTrackerScreen(viewModel = viewModel)
+            }
+            composable(Screen.Sandbox.route) {
+                CodingSandboxScreen(viewModel = viewModel)
+            }
+            composable(Screen.Sprints.route) {
+                SkillSprintsScreen(viewModel = viewModel)
+            }
+            composable(Screen.Peers.route) {
+                PeerMockScreen(viewModel = viewModel)
+            }
         }
     }
 }
+

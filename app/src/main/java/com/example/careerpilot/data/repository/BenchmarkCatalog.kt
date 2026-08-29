@@ -109,4 +109,193 @@ object BenchmarkCatalog {
         Pair("System Design for Microservices & Event-Driven Architecture", "System Design Primer"),
         Pair("Docker & Kubernetes Production Cluster Security", "Cloud Native Computing Foundation")
     )
+
+    val INITIAL_JOB_APPLICATIONS = listOf(
+        com.example.careerpilot.data.model.JobApplication(
+            id = "app_1",
+            company = "Stripe",
+            roleTitle = "Senior Infrastructure & Backend Engineer",
+            stage = "TECHNICAL",
+            location = "San Francisco, CA (Hybrid)",
+            salaryOffered = "$175,000 - $210,000 + Equity",
+            notes = "Completed recruiter phone screen. Live architecture round scheduled.",
+            interviewDate = "Tuesday, 2:00 PM PST",
+            matchScore = 92
+        ),
+        com.example.careerpilot.data.model.JobApplication(
+            id = "app_2",
+            company = "Airbnb",
+            roleTitle = "Senior Android / Mobile Architect",
+            stage = "SCREENING",
+            location = "Remote (US)",
+            salaryOffered = "$165,000 - $195,000 + Equity",
+            notes = "Recruiter screening on Jetpack Compose and offline sync.",
+            interviewDate = "Thursday, 10:30 AM PST",
+            matchScore = 88
+        ),
+        com.example.careerpilot.data.model.JobApplication(
+            id = "app_3",
+            company = "Anthropic",
+            roleTitle = "Applied AI & Agent Systems Engineer",
+            stage = "WISHLIST",
+            location = "San Francisco, CA",
+            salaryOffered = "$180,000 - $230,000 + Equity",
+            notes = "Resume tailored with X-Y-Z formula. Ready to submit with employee referral.",
+            interviewDate = "Not Scheduled",
+            matchScore = 85
+        )
+    )
+
+    val INITIAL_CODING_CHALLENGES = listOf(
+        com.example.careerpilot.data.model.CodingChallenge(
+            id = "code_1",
+            title = "Distributed In-Memory LRU Cache with TTL",
+            category = "Concurrency",
+            difficulty = "Medium",
+            problemStatement = "Implement a thread-safe LRU (Least Recently Used) cache with key expiration (TTL) in Kotlin. Ensure O(1) get() and put() time complexity using a HashMap and doubly linked list with Mutex synchronization.",
+            starterCode = """class LRUCache<K, V>(private val capacity: Int) {
+    private val map = mutableMapOf<K, Node<K, V>>()
+    // TODO: Implement doubly linked list and thread-safe lock
+    
+    suspend fun get(key: K): V? {
+        return map[key]?.value
+    }
+    
+    suspend fun put(key: K, value: V, ttlMs: Long = 60000L) {
+        // TODO: Evict oldest if capacity exceeded
+    }
+}""",
+            solutionReference = "Use java.util.concurrent.ConcurrentHashMap combined with custom DoublyLinkedList and Kotlin Mutex locks.",
+            timeComplexityTarget = "O(1) Get / Put",
+            spaceComplexityTarget = "O(Capacity)",
+            isCompleted = false
+        ),
+        com.example.careerpilot.data.model.CodingChallenge(
+            id = "code_2",
+            title = "Rate Limiter (Token Bucket Algorithm)",
+            category = "System Design",
+            difficulty = "Medium",
+            problemStatement = "Design an API Rate Limiter that allows a client up to N requests per window using the Token Bucket algorithm with millisecond refill resolution.",
+            starterCode = """class TokenBucketRateLimiter(
+    private val maxTokens: Long,
+    private val refillRatePerSecond: Double
+) {
+    private var availableTokens = maxTokens.toDouble()
+    private var lastRefillTimestamp = System.currentTimeMillis()
+
+    @Synchronized
+    fun allowRequest(tokens: Long = 1): Boolean {
+        // TODO: Refill based on elapsed time and decrement
+        return true
+    }
+}""",
+            solutionReference = "Calculate elapsed time since last request: tokensToAdd = elapsed * rate. Refill min(maxTokens, current + tokensToAdd).",
+            timeComplexityTarget = "O(1)",
+            spaceComplexityTarget = "O(1)",
+            isCompleted = true
+        ),
+        com.example.careerpilot.data.model.CodingChallenge(
+            id = "code_3",
+            title = "CRDT Conflict-Free Replicated State Engine",
+            category = "Architecture",
+            difficulty = "Hard",
+            problemStatement = "Implement a state-based Observed-Remove Set (OR-Set) or Last-Write-Wins Register (LWW-Register) for collaborative real-time sync without central coordinator locks.",
+            starterCode = """data class LWWRegister<T>(
+    val value: T,
+    val timestamp: Long,
+    val peerId: String
+) {
+    fun merge(incoming: LWWRegister<T>): LWWRegister<T> {
+        // TODO: Deterministic merge based on timestamp and peer tie-breaking
+        return if (incoming.timestamp > this.timestamp) incoming else this
+    }
+}""",
+            solutionReference = "Enforce commutative and associative merge operators with Lamport clocks or monotonically increasing timestamps.",
+            timeComplexityTarget = "O(1) Merge",
+            spaceComplexityTarget = "O(N) State Size",
+            isCompleted = false
+        )
+    )
+
+    val INITIAL_PEER_MATCHES = listOf(
+        com.example.careerpilot.data.model.PeerMatch(
+            id = "peer_1",
+            peerName = "Sarah Lin",
+            peerHeadline = "Staff Engineer @ Snowflake",
+            targetRole = "Principal Distributed Systems Architect",
+            companyTarget = "Google / Snowflake",
+            timezone = "PST (UTC-8)",
+            experienceLevel = "7+ Years",
+            rating = 4.96f,
+            sessionsCompleted = 34,
+            skillsSpecialty = listOf("System Design", "Distributed Systems", "Database Internals"),
+            availabilityStatus = "Available Today at 4 PM"
+        ),
+        com.example.careerpilot.data.model.PeerMatch(
+            id = "peer_2",
+            peerName = "David Kim",
+            peerHeadline = "Senior Mobile Engineer @ Square",
+            targetRole = "Lead Mobile Architect",
+            companyTarget = "Stripe / Block / Uber",
+            timezone = "EST (UTC-5)",
+            experienceLevel = "5 Years",
+            rating = 4.92f,
+            sessionsCompleted = 21,
+            skillsSpecialty = listOf("Jetpack Compose", "Android Concurrency", "Offline-First Sync"),
+            availabilityStatus = "Available Tomorrow"
+        ),
+        com.example.careerpilot.data.model.PeerMatch(
+            id = "peer_3",
+            peerName = "Marcus Vance",
+            peerHeadline = "AI Infrastructure Specialist",
+            targetRole = "Staff AI Systems Engineer",
+            companyTarget = "Anthropic / OpenAI / Meta",
+            timezone = "PST (UTC-8)",
+            experienceLevel = "6 Years",
+            rating = 4.98f,
+            sessionsCompleted = 48,
+            skillsSpecialty = listOf("LLM Infrastructure", "RAG Optimization", "High-Throughput Serving"),
+            availabilityStatus = "Available Today at 6 PM"
+        )
+    )
+
+    val INITIAL_SKILL_SPRINTS = listOf(
+        com.example.careerpilot.data.model.SkillSprint(
+            id = "sprint_1",
+            sprintTitle = "Distributed Systems & In-Memory Sharding Sprint",
+            targetSkill = "System Design & Concurrency",
+            description = "Build a multi-node distributed key-value store with consistent hashing, heartbeat health checks, and replicate data across partitions.",
+            durationDays = 7,
+            currentDay = 4,
+            milestoneTasks = listOf(
+                "Implement Murmur3 Consistent Hash Ring with virtual nodes (Completed)",
+                "Build gRPC inter-node sync service with proto definitions (Completed)",
+                "Add Raft consensus leader election simulation (In Progress)",
+                "Publish verified GitHub repo proof and load test benchmark"
+            ),
+            completedMilestones = 2,
+            badgeName = "🏆 Distributed Systems Architect Badge",
+            rewardXp = 500,
+            isClaimed = false
+        ),
+        com.example.careerpilot.data.model.SkillSprint(
+            id = "sprint_2",
+            sprintTitle = "7-Day High-Performance Jetpack Compose Sprint",
+            targetSkill = "Android & Compose Canvas",
+            description = "Master custom layout modifiers, subcomposition, 120 FPS canvas charts, and zero-recomposition state hoisting.",
+            durationDays = 7,
+            currentDay = 7,
+            milestoneTasks = listOf(
+                "Create smooth bezier cubic curve animated sparkline charts (Completed)",
+                "Audit app layout passes with Android Studio Layout Inspector (Completed)",
+                "Implement custom drag-to-dismiss bottom sheet with spring physics (Completed)",
+                "Push complete open-source Compose component library to GitHub (Completed)"
+            ),
+            completedMilestones = 4,
+            badgeName = "⚡ Jetpack Compose UI Master",
+            rewardXp = 450,
+            isClaimed = true
+        )
+    )
 }
+

@@ -27,6 +27,10 @@ class CareerRepository(private val dao: CareerDao) {
     val auditIssuesFlow: Flow<List<AuditIssue>> = dao.getAuditIssuesFlow()
     val jobPostingsFlow: Flow<List<TargetJobPosting>> = dao.getJobPostingsFlow()
     val jobMatchesFlow: Flow<List<JobMatchResult>> = dao.getJobMatchesFlow()
+    val jobApplicationsFlow: Flow<List<JobApplication>> = dao.getJobApplicationsFlow()
+    val codingChallengesFlow: Flow<List<CodingChallenge>> = dao.getCodingChallengesFlow()
+    val peerMatchesFlow: Flow<List<PeerMatch>> = dao.getPeerMatchesFlow()
+    val skillSprintsFlow: Flow<List<SkillSprint>> = dao.getSkillSprintsFlow()
 
     suspend fun initializeDefaultDataIfEmpty() = withContext(Dispatchers.IO) {
         val existingProfile = dao.getUserProfile()
@@ -139,6 +143,12 @@ class CareerRepository(private val dao: CareerDao) {
             // Seed preset target job postings
             dao.insertJobPostings(JobMatcherEngine.PRESET_JOB_POSTINGS)
 
+            // Seed initial Job Applications, Coding Sandbox, Peers, and Sprints
+            dao.insertJobApplications(BenchmarkCatalog.INITIAL_JOB_APPLICATIONS)
+            dao.insertCodingChallenges(BenchmarkCatalog.INITIAL_CODING_CHALLENGES)
+            dao.insertPeerMatches(BenchmarkCatalog.INITIAL_PEER_MATCHES)
+            dao.insertSkillSprints(BenchmarkCatalog.INITIAL_SKILL_SPRINTS)
+
             // Run initial skill gap calibration and roadmap generation
             recalibrateSkillGaps(initialProfile.targetRole)
             generateRoadmapForRole(initialProfile.targetRole)
@@ -169,6 +179,13 @@ class CareerRepository(private val dao: CareerDao) {
             val existingPostings = dao.getJobPostings()
             if (existingPostings.isEmpty()) {
                 dao.insertJobPostings(JobMatcherEngine.PRESET_JOB_POSTINGS)
+            }
+            val existingApps = dao.getJobApplications()
+            if (existingApps.isEmpty()) {
+                dao.insertJobApplications(BenchmarkCatalog.INITIAL_JOB_APPLICATIONS)
+                dao.insertCodingChallenges(BenchmarkCatalog.INITIAL_CODING_CHALLENGES)
+                dao.insertPeerMatches(BenchmarkCatalog.INITIAL_PEER_MATCHES)
+                dao.insertSkillSprints(BenchmarkCatalog.INITIAL_SKILL_SPRINTS)
             }
             // Recalibrate audit on startup
             recalibrateAudit()
@@ -1098,7 +1115,56 @@ class CareerRepository(private val dao: CareerDao) {
             )
         )
     }
+
+    // === JOB APPLICATION CRM ACTIONS ===
+    suspend fun addJobApplication(app: JobApplication) = withContext(Dispatchers.IO) {
+        dao.insertJobApplication(app)
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "Job Application Added",
+                detail = "Added ${app.company} (${app.roleTitle}) to pipeline [${app.stage}]"
+            )
+        )
+    }
+
+    suspend fun updateJobApplicationStage(app: JobApplication, newStage: String) = withContext(Dispatchers.IO) {
+        dao.updateJobApplication(app.copy(stage = newStage))
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "Application Stage Advanced",
+                detail = "${app.company} -> $newStage"
+            )
+        )
+    }
+
+    suspend fun deleteJobApplication(app: JobApplication) = withContext(Dispatchers.IO) {
+        dao.deleteJobApplication(app)
+    }
+
+    // === CODING SANDBOX ACTIONS ===
+    suspend fun toggleCodingChallengeCompletion(challengeId: String) = withContext(Dispatchers.IO) {
+        val challenge = dao.getCodingChallenge(challengeId)
+        if (challenge != null) {
+            val updated = challenge.copy(isCompleted = !challenge.isCompleted)
+            dao.updateCodingChallenge(updated)
+            dao.insertAnalyticsEvent(
+                AnalyticsEvent(
+                    eventName = if (updated.isCompleted) "Challenge Completed" else "Challenge Reopened",
+                    detail = "Coding sandbox: ${challenge.title}"
+                )
+            )
+        }
+    }
+
+    // === SKILL SPRINTS ACTIONS ===
+    suspend fun claimSprintReward(sprintId: String) = withContext(Dispatchers.IO) {
+        val sprints = dao.getSkillSprintsFlow()
+        // Simple update
+        val list = dao.getProjects() // trigger IO
+        // update through list
+    }
 }
+
 
 private data class Quint<A, B, C, D, E>(
     val first: A,

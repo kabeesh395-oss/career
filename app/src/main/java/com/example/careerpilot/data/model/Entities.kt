@@ -293,4 +293,66 @@ data class ConversationMessage(
     val feedbackSnippet: String? = null
 )
 
+// === FEATURE 4: JOB APPLICATION PIPELINE CRM & SALARY CALCULATOR ===
+@Entity(tableName = "job_applications")
+data class JobApplication(
+    @PrimaryKey val id: String,
+    val company: String,
+    val roleTitle: String,
+    val stage: String, // "WISHLIST", "APPLIED", "SCREENING", "TECHNICAL", "OFFER", "REJECTED"
+    val location: String,
+    val salaryOffered: String,
+    val notes: String,
+    val interviewDate: String, // e.g. "Tomorrow at 2:00 PM"
+    val matchScore: Int = 85,
+    val appliedDate: Long = System.currentTimeMillis()
+)
+
+// === FEATURE 5: LIVE CODING & SYSTEM DESIGN SANDBOX ===
+@Entity(tableName = "coding_challenges")
+data class CodingChallenge(
+    @PrimaryKey val id: String,
+    val title: String,
+    val category: String, // "Algorithms", "System Design", "Concurrency", "Architecture"
+    val difficulty: String, // "Easy", "Medium", "Hard"
+    val problemStatement: String,
+    val starterCode: String,
+    val solutionReference: String,
+    val timeComplexityTarget: String,
+    val spaceComplexityTarget: String,
+    val isCompleted: Boolean = false
+)
+
+// === FEATURE 6: PEER MOCK INTERVIEWS & MENTOR MATCHMAKING ===
+@Entity(tableName = "peer_matches")
+data class PeerMatch(
+    @PrimaryKey val id: String,
+    val peerName: String,
+    val peerHeadline: String,
+    val targetRole: String,
+    val companyTarget: String,
+    val timezone: String,
+    val experienceLevel: String,
+    val rating: Float, // 4.8 to 5.0
+    val sessionsCompleted: Int,
+    val skillsSpecialty: List<String>,
+    val availabilityStatus: String = "Available Today"
+)
+
+// === FEATURE 7: WEEKLY SKILL SPRINTS & GITHUB PROOF BADGES ===
+@Entity(tableName = "skill_sprints")
+data class SkillSprint(
+    @PrimaryKey val id: String,
+    val sprintTitle: String,
+    val targetSkill: String,
+    val description: String,
+    val durationDays: Int = 7,
+    val currentDay: Int = 1,
+    val milestoneTasks: List<String>,
+    val completedMilestones: Int = 0,
+    val badgeName: String,
+    val rewardXp: Int = 350,
+    val isClaimed: Boolean = false
+)
+
 

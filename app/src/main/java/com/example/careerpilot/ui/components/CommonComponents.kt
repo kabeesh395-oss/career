@@ -154,6 +154,31 @@ fun StatusBadge(
 }
 
 @Composable
+fun StatusBadge(
+    text: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(color.copy(alpha = 0.15f))
+            .border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text.uppercase(),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = color,
+            letterSpacing = 0.5.sp
+        )
+    }
+}
+
+
+@Composable
 fun CircularScoreGauge(
     score: Int,
     size: Dp = 100.dp,

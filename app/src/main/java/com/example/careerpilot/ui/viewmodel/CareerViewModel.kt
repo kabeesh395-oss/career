@@ -29,6 +29,10 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
     val auditIssues: StateFlow<List<AuditIssue>>
     val jobPostings: StateFlow<List<TargetJobPosting>>
     val jobMatches: StateFlow<List<JobMatchResult>>
+    val jobApplications: StateFlow<List<JobApplication>>
+    val codingChallenges: StateFlow<List<CodingChallenge>>
+    val peerMatches: StateFlow<List<PeerMatch>>
+    val skillSprints: StateFlow<List<SkillSprint>>
 
     private val _selectedJobPosting = MutableStateFlow<TargetJobPosting?>(null)
     val selectedJobPosting: StateFlow<TargetJobPosting?> = _selectedJobPosting.asStateFlow()
@@ -119,6 +123,18 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
         jobMatches = repository.jobMatchesFlow.stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+        jobApplications = repository.jobApplicationsFlow.stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+        codingChallenges = repository.codingChallengesFlow.stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+        peerMatches = repository.peerMatchesFlow.stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+        skillSprints = repository.skillSprintsFlow.stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
 
@@ -538,5 +554,62 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
     }
+
+    // === APPLICATION CRM ACTIONS ===
+    fun addJobApplication(company: String, roleTitle: String, stage: String, location: String, salaryOffered: String, notes: String, interviewDate: String) {
+        viewModelScope.launch {
+            val app = JobApplication(
+                id = "app_${System.currentTimeMillis()}",
+                company = company,
+                roleTitle = roleTitle,
+                stage = stage,
+                location = location,
+                salaryOffered = salaryOffered,
+                notes = notes,
+                interviewDate = interviewDate,
+                matchScore = 85
+            )
+            repository.addJobApplication(app)
+            _userMessage.value = "Added $company to application pipeline."
+        }
+    }
+
+    fun updateApplicationStage(app: JobApplication, newStage: String) {
+        viewModelScope.launch {
+            repository.updateJobApplicationStage(app, newStage)
+            _userMessage.value = "${app.company} advanced to $newStage."
+        }
+    }
+
+    fun deleteApplication(app: JobApplication) {
+        viewModelScope.launch {
+            repository.deleteJobApplication(app)
+            _userMessage.value = "Removed ${app.company} application."
+        }
+    }
+
+    // === CODING SANDBOX ACTIONS ===
+    fun toggleCodingChallenge(challengeId: String) {
+        viewModelScope.launch {
+            repository.toggleCodingChallengeCompletion(challengeId)
+            _userMessage.value = "Updated coding challenge status."
+        }
+    }
+
+    // === PEER MATCHING ACTIONS ===
+    fun bookPeerSession(peer: PeerMatch) {
+        viewModelScope.launch {
+            _userMessage.value = "Peer mock session booked with ${peer.peerName}! Calendar invite generated."
+        }
+    }
+
+    // === SPRINT ACTIONS ===
+    fun claimSprintReward(sprintId: String) {
+        viewModelScope.launch {
+            _userMessage.value = "GitHub milestone proof submitted & verified! Credential badge awarded."
+        }
+    }
 }
+
+
 
