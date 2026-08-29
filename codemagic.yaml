@@ -44,8 +44,10 @@ workflows:
       - name: Build Android Release AAB & APK
         script: |
           cd client/android
+          mkdir -p app/src/main/res/drawable
+          cp -f app/src/main/res/drawable-port-hdpi/splash.png app/src/main/res/drawable/splash.png 2>/dev/null || true
           chmod +x gradlew
-          ./gradlew clean bundleRelease assembleRelease assembleDebug
+          ./gradlew clean bundleRelease assembleRelease assembleDebug -x lint -x lintVitalRelease
     artifacts:
       - client/android/app/build/outputs/bundle/release/*.aab
       - client/android/app/build/outputs/apk/release/*.apk

@@ -1,5 +1,7 @@
 package com.example.careerpilot.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.careerpilot.data.model.RoadmapItem
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.MetricCard
 import com.example.careerpilot.ui.components.SectionHeader
@@ -49,6 +52,7 @@ fun DashboardScreen(
     val skills by viewModel.userSkills.collectAsState()
     val skillGaps by viewModel.skillGaps.collectAsState()
     val roadmap by viewModel.activeRoadmap.collectAsState()
+    val roadmapItems by viewModel.roadmapItems.collectAsState()
     val projects by viewModel.projects.collectAsState()
     val resume by viewModel.latestResumeAudit.collectAsState()
     val interviews by viewModel.interviews.collectAsState()
@@ -60,6 +64,21 @@ fun DashboardScreen(
     val avgInterviewScore = if (completedInterviews.isNotEmpty()) {
         completedInterviews.map { it.overallScore }.average().toInt()
     } else 0
+
+    // Live Roadmap Progress Calculations
+    val totalRoadmapTasks = if (roadmapItems.isNotEmpty()) roadmapItems.size else (roadmap?.totalTasks ?: 0)
+    val completedRoadmapTasks = if (roadmapItems.isNotEmpty()) roadmapItems.count { it.isCompleted } else (roadmap?.completedTasks ?: 0)
+    val roadmapPercent = if (totalRoadmapTasks > 0) {
+        ((completedRoadmapTasks.toFloat() / totalRoadmapTasks.toFloat()) * 100f).toInt()
+    } else (roadmap?.progressPercent?.toInt() ?: 0)
+
+    val animatedRoadmapProgress by animateFloatAsState(
+        targetValue = (roadmapPercent.coerceIn(0, 100)) / 100f,
+        animationSpec = tween(durationMillis = 800),
+        label = "roadmapProgressAnim"
+    )
+
+    val nextPendingRoadmapTask = roadmapItems.firstOrNull { !it.isCompleted }
 
     LazyColumn(
         modifier = modifier
@@ -277,6 +296,245 @@ fun DashboardScreen(
                             contentDescription = null,
                             modifier = Modifier.size(16.dp)
                         )
+                    }
+                }
+            }
+        }
+
+        // Visual Roadmap Progress Tracker
+        item {
+            GlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("dashboard_roadmap_progress_tracker"),
+                borderColor = PrimaryBlueGlow.copy(alpha = 0.4f),
+                backgroundColor = BgSurfaceElevated
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            StatusBadge(text = "CAREER ROADMAP", statusType = "primary")
+                            Text(
+                                text = roadmap?.title ?: "Milestone Progression",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = TextSecondary,
+                                maxLines = 1
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Roadmap Completion",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                    }
+
+                    TextButton(
+                        onClick = { onNavigate("roadmap") },
+                        colors = ButtonDefaults.textButtonColors(contentColor = PrimaryBlueGlow)
+                    ) {
+                        Text("View Full →", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Progress Percentage & Ratio Counters
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "$roadmapPercent%",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (roadmapPercent == 100) SuccessGreen else AccentCyan
+                        )
+                        Text(
+                            text = "Completed",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+
+                    Surface(
+                        color = BgCard,
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(if (roadmapPercent == 100) SuccessGreen else if (roadmapPercent > 0) AccentCyan else WarningAmber)
+                            )
+                            Text(
+                                text = "$completedRoadmapTasks of $totalRoadmapTasks Tasks Done",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Custom Animated Gradient Progress Bar
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(BgCard)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(animatedRoadmapProgress.coerceAtLeast(0.02f))
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        PrimaryBlue,
+                                        AccentCyan,
+                                        SuccessGreen
+                                    )
+                                )
+                            )
+                    )
+                }
+
+                // Phase Progress Chips
+                if (roadmapItems.isNotEmpty()) {
+                    val phaseGroup = roadmapItems.groupBy { it.phaseNumber }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        phaseGroup.entries.sortedBy { it.key }.take(3).forEach { (phaseNum, pItems) ->
+                            val pDone = pItems.count { it.isCompleted }
+                            val pTotal = pItems.size
+                            val pPercent = if (pTotal > 0) (pDone * 100) / pTotal else 0
+                            val isPhaseDone = pDone == pTotal && pTotal > 0
+
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isPhaseDone) SuccessGreen.copy(alpha = 0.1f) else BgCard)
+                                    .border(
+                                        1.dp,
+                                        if (isPhaseDone) SuccessGreen.copy(alpha = 0.35f) else BorderSubtle,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Phase $phaseNum",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isPhaseDone) SuccessGreen else TextSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                    Text(
+                                        text = "$pPercent%",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isPhaseDone) SuccessGreen else TextMuted,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(3.dp)
+                                        .clip(RoundedCornerShape(1.5.dp))
+                                        .background(BorderSubtle)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth((pPercent / 100f).coerceIn(0f, 1f))
+                                            .background(if (isPhaseDone) SuccessGreen else PrimaryBlue)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Up Next Milestone Task Quick Action
+                if (nextPendingRoadmapTask != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Surface(
+                        color = BgCard,
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "UP NEXT • PHASE ${nextPendingRoadmapTask.phaseNumber}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = AccentCyan,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = nextPendingRoadmapTask.title,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                    maxLines = 1
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.toggleRoadmapTask(nextPendingRoadmapTask.id) },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Mark done",
+                                    tint = PrimaryBlueGlow,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }

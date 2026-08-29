@@ -29,26 +29,25 @@ import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Dashboard : Screen("dashboard", "Dashboard", Icons.Default.Dashboard)
-    object Audit : Screen("audit", "Audit Center", Icons.Default.Shield)
+    object Dashboard : Screen("dashboard", "Home", Icons.Default.Dashboard)
+    object Audit : Screen("audit", "Audit", Icons.Default.Shield)
+    object Resume : Screen("resume", "Resume ATS", Icons.Default.Description)
+    object Interview : Screen("interview", "Mock AI", Icons.Default.RecordVoiceOver)
+    object Hub : Screen("hub", "Career Hub", Icons.Default.Hub)
     object Career : Screen("career", "Skill Gaps", Icons.Default.Assessment)
     object Roadmap : Screen("roadmap", "Roadmap", Icons.Default.Timeline)
-    object Interview : Screen("interview", "Mock AI", Icons.Default.RecordVoiceOver)
-    object Resume : Screen("resume", "ATS Resume", Icons.Default.Description)
     object Projects : Screen("projects", "Projects", Icons.Default.Code)
     object Learning : Screen("learning", "Learning", Icons.Default.MenuBook)
     object Integrations : Screen("integrations", "Sync", Icons.Default.Sync)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
 }
 
-val navItems = listOf(
+val primaryNavItems = listOf(
     Screen.Dashboard,
     Screen.Audit,
-    Screen.Career,
-    Screen.Roadmap,
-    Screen.Interview,
     Screen.Resume,
-    Screen.Profile
+    Screen.Interview,
+    Screen.Hub
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,8 +131,9 @@ fun CareerPilotApp(
                     .border(1.dp, BorderSubtle, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                     .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             ) {
-                navItems.forEach { screen ->
-                    val selected = currentRoute == screen.route
+                primaryNavItems.forEach { screen ->
+                    val selected = currentRoute == screen.route || 
+                        (screen == Screen.Hub && listOf("career", "roadmap", "projects", "learning", "integrations", "profile", "hub").contains(currentRoute))
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
@@ -154,8 +154,8 @@ fun CareerPilotApp(
                         label = {
                             Text(
                                 text = screen.title,
-                                fontSize = 10.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                fontSize = 11.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
@@ -198,17 +198,20 @@ fun CareerPilotApp(
                     }
                 )
             }
+            composable(Screen.Resume.route) {
+                ResumeAuditScreen(viewModel = viewModel)
+            }
+            composable(Screen.Interview.route) {
+                InterviewScreen(viewModel = viewModel)
+            }
+            composable(Screen.Hub.route) {
+                HubScreen(viewModel = viewModel)
+            }
             composable(Screen.Career.route) {
                 CareerAnalysisScreen(viewModel = viewModel)
             }
             composable(Screen.Roadmap.route) {
                 RoadmapScreen(viewModel = viewModel)
-            }
-            composable(Screen.Interview.route) {
-                InterviewScreen(viewModel = viewModel)
-            }
-            composable(Screen.Resume.route) {
-                ResumeAuditScreen(viewModel = viewModel)
             }
             composable(Screen.Projects.route) {
                 ProjectsScreen(viewModel = viewModel)
