@@ -63,6 +63,7 @@ fun SkillSprintsScreen(
         items(sprints) { sprint ->
             SprintCard(
                 sprint = sprint,
+                onToggleMilestone = { idx -> viewModel.toggleSprintMilestone(sprint.id, idx) },
                 onClaim = { viewModel.claimSprintReward(sprint.id) }
             )
         }
@@ -72,9 +73,12 @@ fun SkillSprintsScreen(
 @Composable
 private fun SprintCard(
     sprint: SkillSprint,
+    onToggleMilestone: (Int) -> Unit,
     onClaim: () -> Unit
 ) {
-    val progress = sprint.completedMilestones.toFloat() / sprint.milestoneTasks.size.toFloat()
+    val progress = if (sprint.milestoneTasks.isNotEmpty()) {
+        sprint.completedMilestones.toFloat() / sprint.milestoneTasks.size.toFloat()
+    } else 0f
 
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -148,7 +152,12 @@ private fun SprintCard(
                 val isDone = idx < sprint.completedMilestones
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { onToggleMilestone(idx) }
+                        .padding(vertical = 4.dp, horizontal = 4.dp)
                 ) {
                     Icon(
                         imageVector = if (isDone) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,

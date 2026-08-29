@@ -110,41 +110,7 @@ object BenchmarkCatalog {
         Pair("Docker & Kubernetes Production Cluster Security", "Cloud Native Computing Foundation")
     )
 
-    val INITIAL_JOB_APPLICATIONS = listOf(
-        com.example.careerpilot.data.model.JobApplication(
-            id = "app_1",
-            company = "Stripe",
-            roleTitle = "Senior Infrastructure & Backend Engineer",
-            stage = "TECHNICAL",
-            location = "San Francisco, CA (Hybrid)",
-            salaryOffered = "$175,000 - $210,000 + Equity",
-            notes = "Completed recruiter phone screen. Live architecture round scheduled.",
-            interviewDate = "Tuesday, 2:00 PM PST",
-            matchScore = 92
-        ),
-        com.example.careerpilot.data.model.JobApplication(
-            id = "app_2",
-            company = "Airbnb",
-            roleTitle = "Senior Android / Mobile Architect",
-            stage = "SCREENING",
-            location = "Remote (US)",
-            salaryOffered = "$165,000 - $195,000 + Equity",
-            notes = "Recruiter screening on Jetpack Compose and offline sync.",
-            interviewDate = "Thursday, 10:30 AM PST",
-            matchScore = 88
-        ),
-        com.example.careerpilot.data.model.JobApplication(
-            id = "app_3",
-            company = "Anthropic",
-            roleTitle = "Applied AI & Agent Systems Engineer",
-            stage = "WISHLIST",
-            location = "San Francisco, CA",
-            salaryOffered = "$180,000 - $230,000 + Equity",
-            notes = "Resume tailored with X-Y-Z formula. Ready to submit with employee referral.",
-            interviewDate = "Not Scheduled",
-            matchScore = 85
-        )
-    )
+    val INITIAL_JOB_APPLICATIONS = emptyList<com.example.careerpilot.data.model.JobApplication>()
 
     val INITIAL_CODING_CHALLENGES = listOf(
         com.example.careerpilot.data.model.CodingChallenge(
@@ -192,7 +158,7 @@ object BenchmarkCatalog {
             solutionReference = "Calculate elapsed time since last request: tokensToAdd = elapsed * rate. Refill min(maxTokens, current + tokensToAdd).",
             timeComplexityTarget = "O(1)",
             spaceComplexityTarget = "O(1)",
-            isCompleted = true
+            isCompleted = false
         ),
         com.example.careerpilot.data.model.CodingChallenge(
             id = "code_3",
@@ -221,41 +187,41 @@ object BenchmarkCatalog {
         com.example.careerpilot.data.model.PeerMatch(
             id = "peer_1",
             peerName = "Sarah Lin",
-            peerHeadline = "Staff Engineer @ Snowflake",
+            peerHeadline = "Staff Engineer @ Distributed Systems",
             targetRole = "Principal Distributed Systems Architect",
-            companyTarget = "Google / Snowflake",
+            companyTarget = "Cloud Scale Systems",
             timezone = "PST (UTC-8)",
             experienceLevel = "7+ Years",
             rating = 4.96f,
             sessionsCompleted = 34,
             skillsSpecialty = listOf("System Design", "Distributed Systems", "Database Internals"),
-            availabilityStatus = "Available Today at 4 PM"
+            availabilityStatus = "Available for booking"
         ),
         com.example.careerpilot.data.model.PeerMatch(
             id = "peer_2",
             peerName = "David Kim",
-            peerHeadline = "Senior Mobile Engineer @ Square",
+            peerHeadline = "Senior Mobile Engineer @ Architecture",
             targetRole = "Lead Mobile Architect",
-            companyTarget = "Stripe / Block / Uber",
+            companyTarget = "Mobile Platforms",
             timezone = "EST (UTC-5)",
             experienceLevel = "5 Years",
             rating = 4.92f,
             sessionsCompleted = 21,
             skillsSpecialty = listOf("Jetpack Compose", "Android Concurrency", "Offline-First Sync"),
-            availabilityStatus = "Available Tomorrow"
+            availabilityStatus = "Available for booking"
         ),
         com.example.careerpilot.data.model.PeerMatch(
             id = "peer_3",
             peerName = "Marcus Vance",
             peerHeadline = "AI Infrastructure Specialist",
             targetRole = "Staff AI Systems Engineer",
-            companyTarget = "Anthropic / OpenAI / Meta",
+            companyTarget = "AI Research & Platform",
             timezone = "PST (UTC-8)",
             experienceLevel = "6 Years",
             rating = 4.98f,
             sessionsCompleted = 48,
             skillsSpecialty = listOf("LLM Infrastructure", "RAG Optimization", "High-Throughput Serving"),
-            availabilityStatus = "Available Today at 6 PM"
+            availabilityStatus = "Available for booking"
         )
     )
 
@@ -266,14 +232,14 @@ object BenchmarkCatalog {
             targetSkill = "System Design & Concurrency",
             description = "Build a multi-node distributed key-value store with consistent hashing, heartbeat health checks, and replicate data across partitions.",
             durationDays = 7,
-            currentDay = 4,
+            currentDay = 1,
             milestoneTasks = listOf(
-                "Implement Murmur3 Consistent Hash Ring with virtual nodes (Completed)",
-                "Build gRPC inter-node sync service with proto definitions (Completed)",
-                "Add Raft consensus leader election simulation (In Progress)",
+                "Implement Murmur3 Consistent Hash Ring with virtual nodes",
+                "Build gRPC inter-node sync service with proto definitions",
+                "Add Raft consensus leader election simulation",
                 "Publish verified GitHub repo proof and load test benchmark"
             ),
-            completedMilestones = 2,
+            completedMilestones = 0,
             badgeName = "🏆 Distributed Systems Architect Badge",
             rewardXp = 500,
             isClaimed = false
@@ -284,17 +250,17 @@ object BenchmarkCatalog {
             targetSkill = "Android & Compose Canvas",
             description = "Master custom layout modifiers, subcomposition, 120 FPS canvas charts, and zero-recomposition state hoisting.",
             durationDays = 7,
-            currentDay = 7,
+            currentDay = 1,
             milestoneTasks = listOf(
-                "Create smooth bezier cubic curve animated sparkline charts (Completed)",
-                "Audit app layout passes with Android Studio Layout Inspector (Completed)",
-                "Implement custom drag-to-dismiss bottom sheet with spring physics (Completed)",
-                "Push complete open-source Compose component library to GitHub (Completed)"
+                "Create smooth bezier cubic curve animated sparkline charts",
+                "Audit app layout passes with Android Studio Layout Inspector",
+                "Implement custom drag-to-dismiss bottom sheet with spring physics",
+                "Push complete open-source Compose component library to GitHub"
             ),
-            completedMilestones = 4,
+            completedMilestones = 0,
             badgeName = "⚡ Jetpack Compose UI Master",
             rewardXp = 450,
-            isClaimed = true
+            isClaimed = false
         )
     )
 }

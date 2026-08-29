@@ -81,7 +81,16 @@ class CareerLogicTest {
             projects = projects,
             latestResume = null,
             interviewAnswers = emptyList(),
-            integrations = listOf(IntegrationAccount("github", "alex_dev", true, System.currentTimeMillis(), "Connected"))
+            integrations = listOf(
+                IntegrationAccount(
+                    provider = "github",
+                    username = "alex_dev",
+                    isConnected = true,
+                    connectionStatus = "CONNECTED",
+                    lastSyncedAt = System.currentTimeMillis(),
+                    details = "Verified"
+                )
+            )
         )
 
         assertNotNull(issues)
@@ -90,5 +99,28 @@ class CareerLogicTest {
         assertTrue("Net audit score should be calculated", summary.netAuditScore <= summary.readinessScore)
         assertTrue("Evidence coverage percent should be > 0", summary.evidenceCoveragePercent > 0)
     }
-}
 
+    @Test
+    fun testLearningResourceWorkflowInitialState() {
+        val resource = LearningResource(
+            id = 1L,
+            title = "Designing Data-Intensive Applications",
+            url = "https://dataintensive.net",
+            provider = "O'Reilly",
+            category = "Architecture",
+            resourceType = "Course",
+            difficulty = "Advanced",
+            estimatedMinutes = 180,
+            status = "NOT_STARTED",
+            progressPercent = 0,
+            quizQuestion = "Which consensus algorithm uses leader election?",
+            quizOptions = "Raft / Paxos|Two-Phase Locking|Consistent Hashing",
+            quizCorrectIndex = 0
+        )
+
+        assertEquals("NOT_STARTED", resource.status)
+        assertEquals(0, resource.progressPercent)
+        assertFalse(resource.isCompleted)
+        assertEquals(0, resource.quizCorrectIndex)
+    }
+}

@@ -138,9 +138,21 @@ data class LearningResource(
     val provider: String,
     val url: String,
     val category: String,
-    val skillTags: String,
+    val skillTags: String = "",
     val estimatedMinutes: Int,
     val difficulty: String,
+    val resourceType: String = "Article", // "Article", "Video", "Course", "Documentation"
+    val status: String = "NOT_STARTED", // "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
+    val progressPercent: Int = 0,
+    val startedAt: Long? = null,
+    val completedAt: Long? = null,
+    val lastStudiedAt: Long? = null,
+    val studyMinutesSpent: Int = 0,
+    val notes: String = "",
+    val contentSummary: String = "",
+    val quizQuestion: String = "",
+    val quizOptions: String = "",
+    val quizCorrectIndex: Int = 0,
     val isCompleted: Boolean = false
 )
 
@@ -148,9 +160,21 @@ data class LearningResource(
 data class IntegrationAccount(
     @PrimaryKey val provider: String, // "github", "linkedin"
     val username: String = "",
+    val connectionStatus: String = "NOT_CONNECTED", // "NOT_CONNECTED", "CHECKING", "CONNECTED", "INVALID", "NOT_FOUND", "RATE_LIMITED", "ERROR"
     val isConnected: Boolean = false,
     val lastSyncedAt: Long = 0L,
-    val details: String = ""
+    val avatarUrl: String = "",
+    val displayName: String = "",
+    val publicReposCount: Int = 0,
+    val followersCount: Int = 0,
+    val followingCount: Int = 0,
+    val publicGistsCount: Int = 0,
+    val bio: String = "",
+    val company: String = "",
+    val location: String = "",
+    val topRepositoriesJson: String = "",
+    val details: String = "",
+    val errorMessage: String = ""
 )
 
 @Entity(tableName = "analytics_events")

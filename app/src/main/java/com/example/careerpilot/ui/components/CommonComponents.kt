@@ -14,8 +14,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -28,73 +32,103 @@ import androidx.compose.ui.unit.sp
 import com.example.careerpilot.ui.animation.*
 import com.example.careerpilot.ui.theme.*
 
+/**
+ * Standard Enterprise Surface Card
+ * Features refined slate backing with subtle hairline border
+ */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(16.dp),
     borderColor: Color = BorderSubtle,
     backgroundColor: Color = BgCard,
+    glowColor: Color? = null,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val cardModifier = modifier
+        .then(
+            if (glowColor != null) {
+                Modifier.drawBehind {
+                    drawCircle(
+                        color = glowColor.copy(alpha = 0.08f),
+                        radius = size.maxDimension * 0.5f,
+                        center = Offset(size.width * 0.5f, size.height * 0.5f)
+                    )
+                }
+            } else Modifier
+        )
+        .then(
+            if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
+        )
+        .clip(shape)
+        .background(backgroundColor)
+        .border(1.dp, borderColor, shape)
+        .padding(16.dp)
+
     Column(
-        modifier = modifier
-            .then(
-                if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
-            )
-            .clip(shape)
-            .background(backgroundColor)
-            .border(1.dp, borderColor, shape)
-            .padding(18.dp),
+        modifier = cardModifier,
         content = content
     )
 }
 
+/**
+ * Surface Card with Focused Accent Gradient (Hero cards, Key Takeaways, CTA)
+ */
 @Composable
 fun GradientGlassCard(
     modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(16.dp),
     startColor: Color = PrimaryBlue.copy(alpha = 0.15f),
     endColor: Color = BgCard,
-    borderColor: Color = PrimaryBlueGlow.copy(alpha = 0.4f),
+    borderColor: Color = PrimaryBlue.copy(alpha = 0.35f),
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val cardModifier = modifier
+        .then(
+            if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
+        )
+        .clip(shape)
+        .background(
+            Brush.verticalGradient(listOf(startColor, endColor))
+        )
+        .border(1.dp, borderColor, shape)
+        .padding(16.dp)
+
+    Column(
+        modifier = cardModifier,
+        content = content
+    )
+}
+
+/**
+ * Focused Highlight Card for Key Insights
+ */
+@Composable
+fun AnimatedGlowingGlassCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(16.dp),
+    backgroundColor: Color = BgCardHover,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
     Column(
         modifier = modifier
             .then(
                 if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
             )
             .clip(shape)
-            .background(
-                Brush.verticalGradient(listOf(startColor, endColor))
-            )
-            .border(1.dp, borderColor, shape)
-            .padding(18.dp),
-        content = content
-    )
-}
-
-@Composable
-fun AnimatedGlowingGlassCard(
-    modifier: Modifier = Modifier,
-    backgroundColor: Color = BgCard,
-    onClick: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val shape = RoundedCornerShape(16.dp)
-    Column(
-        modifier = modifier
-            .then(
-                if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
-            )
-            .animatedGradientBorder(shape = shape, borderWidth = 1.5.dp)
             .background(backgroundColor)
-            .padding(18.dp),
+            .border(1.dp, BorderHighlight.copy(alpha = 0.4f), shape)
+            .padding(16.dp),
         content = content
     )
 }
 
+/**
+ * Glassmorphic Metric Stat Display
+ */
 @Composable
 fun MetricCard(
     label: String,
@@ -104,11 +138,44 @@ fun MetricCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    GlassCard(
-        modifier = modifier.testTag("metric_${label.lowercase().replace(' ', '_')}"),
-        borderColor = accentColor.copy(alpha = 0.35f),
-        backgroundColor = BgCard,
-        onClick = onClick
+    val shape = RoundedCornerShape(16.dp)
+    val specularBorder = Brush.linearGradient(
+        listOf(
+            Color.White.copy(alpha = 0.3f),
+            accentColor.copy(alpha = 0.4f),
+            Color.White.copy(alpha = 0.05f)
+        )
+    )
+
+    Column(
+        modifier = modifier
+            .testTag("metric_${label.lowercase().replace(' ', '_')}")
+            .then(
+                if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
+            )
+            .clip(shape)
+            .background(GlassCardBase)
+            .drawBehind {
+                // Ambient accent glow in top right
+                drawCircle(
+                    color = accentColor.copy(alpha = 0.15f),
+                    radius = size.width * 0.55f,
+                    center = Offset(size.width * 0.9f, 0f)
+                )
+                // Frosted top sheen
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.07f),
+                            Color.Transparent
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(size.width * 0.5f, size.height * 0.5f)
+                    )
+                )
+            }
+            .border(1.dp, specularBorder, shape)
+            .padding(16.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -118,13 +185,15 @@ fun MetricCard(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
+                color = TextSecondary,
+                fontWeight = FontWeight.Medium
             )
             Box(
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
                     .background(accentColor)
+                    .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -132,7 +201,7 @@ fun MetricCard(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
             color = TextPrimary,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -144,33 +213,37 @@ fun MetricCard(
     }
 }
 
+/**
+ * Refined Pill Status Badge
+ */
 @Composable
 fun StatusBadge(
     text: String,
     statusType: String = "neutral",
     modifier: Modifier = Modifier
 ) {
-    val (bgColor, txtColor) = when (statusType.lowercase()) {
-        "urgent", "danger", "high", "critical" -> DangerRed.copy(alpha = 0.15f) to DangerRed
-        "medium", "warning", "in_progress" -> WarningAmber.copy(alpha = 0.15f) to WarningAmber
-        "success", "completed", "verified", "low", "resolved" -> SuccessGreen.copy(alpha = 0.15f) to SuccessGreen
-        "primary", "active" -> PrimaryBlue.copy(alpha = 0.2f) to PrimaryBlueGlow
-        "accent" -> AccentPurple.copy(alpha = 0.2f) to AccentPurple
-        else -> BgMuted to TextSecondary
+    val (bgColor, txtColor, borderColor) = when (statusType.lowercase()) {
+        "urgent", "danger", "high", "critical" -> Triple(DangerRed.copy(alpha = 0.12f), DangerRedGlow, DangerRed.copy(alpha = 0.3f))
+        "medium", "warning", "in_progress" -> Triple(WarningAmber.copy(alpha = 0.12f), WarningAmberGlow, WarningAmber.copy(alpha = 0.3f))
+        "success", "completed", "verified", "low", "resolved" -> Triple(SuccessGreen.copy(alpha = 0.12f), SuccessGreenGlow, SuccessGreen.copy(alpha = 0.3f))
+        "primary", "active" -> Triple(PrimaryBlue.copy(alpha = 0.12f), PrimaryBlueGlow, PrimaryBlue.copy(alpha = 0.3f))
+        "accent" -> Triple(AccentPurple.copy(alpha = 0.12f), AccentPurpleGlow, AccentPurple.copy(alpha = 0.3f))
+        else -> Triple(BgMuted, TextSecondary, BorderSubtle)
     }
 
+    val shape = RoundedCornerShape(6.dp)
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(shape)
             .background(bgColor)
-            .border(1.dp, txtColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .border(1.dp, borderColor, shape)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text.uppercase(),
             fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             color = txtColor,
             letterSpacing = 0.5.sp
         )
@@ -183,18 +256,19 @@ fun StatusBadge(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    val shape = RoundedCornerShape(6.dp)
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(color.copy(alpha = 0.15f))
-            .border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .clip(shape)
+            .background(color.copy(alpha = 0.12f))
+            .border(1.dp, color.copy(alpha = 0.3f), shape)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text.uppercase(),
             fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             color = color,
             letterSpacing = 0.5.sp
         )
@@ -207,39 +281,40 @@ fun PulsingLiveBadge(
     color: Color = AccentCyan,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition(label = "pulseBadge")
+    val infiniteTransition = rememberInfiniteTransition(label = "pulseBadge")
     val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
+        initialValue = 0.4f,
         targetValue = 1f,
-        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-            animation = androidx.compose.animation.core.tween(900, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
         ),
         label = "dotAlpha"
     )
 
+    val shape = RoundedCornerShape(6.dp)
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(color.copy(alpha = 0.15f))
-            .border(1.dp, color.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .clip(shape)
+            .background(color.copy(alpha = 0.12f))
+            .border(1.dp, color.copy(alpha = 0.3f), shape)
+            .padding(horizontal = 8.dp, vertical = 3.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(5.dp)
                     .clip(CircleShape)
                     .background(color.copy(alpha = alpha))
             )
             Text(
                 text = text.uppercase(),
                 fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = color,
                 letterSpacing = 0.5.sp
             )
@@ -247,19 +322,18 @@ fun PulsingLiveBadge(
     }
 }
 
-
 @Composable
 fun CircularScoreGauge(
     score: Int,
-    size: Dp = 100.dp,
-    strokeWidth: Dp = 8.dp,
+    size: Dp = 96.dp,
+    strokeWidth: Dp = 6.dp,
     label: String = "SCORE",
     primaryColor: Color = PrimaryBlue,
     modifier: Modifier = Modifier
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = (score.coerceIn(0, 100)) / 100f,
-        animationSpec = tween(durationMillis = 1000),
+        animationSpec = tween(durationMillis = 800),
         label = "scoreProgress"
     )
 
@@ -269,21 +343,14 @@ fun CircularScoreGauge(
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokePx = strokeWidth.toPx()
-            // Background track
+            // Track
             drawCircle(
-                color = BorderSubtle.copy(alpha = 0.6f),
+                color = Color(0xFF1E293B),
                 style = Stroke(width = strokePx)
             )
             // Progress arc
             drawArc(
-                brush = Brush.sweepGradient(
-                    listOf(
-                        primaryColor,
-                        AccentCyan,
-                        AccentPurple,
-                        primaryColor
-                    )
-                ),
+                color = primaryColor,
                 startAngle = -90f,
                 sweepAngle = animatedProgress * 360f,
                 useCenter = false,
@@ -297,15 +364,16 @@ fun CircularScoreGauge(
         ) {
             Text(
                 text = "$score%",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
-                fontSize = 9.sp
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -345,7 +413,11 @@ fun SectionHeader(
                 onClick = onActionClick,
                 colors = ButtonDefaults.textButtonColors(contentColor = PrimaryBlueGlow)
             ) {
-                Text(actionText, style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = actionText,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -362,7 +434,7 @@ fun EmptyStateCard(
 ) {
     GlassCard(
         modifier = modifier.fillMaxWidth(),
-        backgroundColor = BgCard.copy(alpha = 0.5f)
+        backgroundColor = GlassCardBase.copy(alpha = 0.5f)
     ) {
         Column(
             modifier = Modifier
@@ -375,7 +447,8 @@ fun EmptyStateCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(PrimaryBlue.copy(alpha = 0.15f)),
+                    .background(PrimaryBlue.copy(alpha = 0.18f))
+                    .border(1.dp, PrimaryBlueGlow.copy(alpha = 0.4f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -406,7 +479,7 @@ fun EmptyStateCard(
                 Button(
                     onClick = onActionClick,
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(text = actionLabel, fontWeight = FontWeight.SemiBold)
                 }

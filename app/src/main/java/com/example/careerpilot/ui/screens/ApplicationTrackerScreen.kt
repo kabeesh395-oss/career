@@ -180,7 +180,38 @@ fun ApplicationTrackerScreen(
         }
 
         // Applications List
-        if (filteredApplications.isEmpty()) {
+        if (applications.isEmpty()) {
+            item {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.WorkOutline,
+                            contentDescription = null,
+                            tint = AccentCyan,
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Text(
+                            text = "No Applications in Pipeline",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Track your job applications, interviews, and recruiter follow-ups. Tap '+ New' to log your first target position.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+        } else if (filteredApplications.isEmpty()) {
             item {
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
                     Text(

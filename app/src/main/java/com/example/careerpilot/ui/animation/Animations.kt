@@ -34,14 +34,62 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /**
- * High-end animations & micro-interactions inspired by modern UI animation libraries (animmasterlib).
+ * High-end Glassmorphism & Atmospheric Animation Engine
  */
+
+/**
+ * Clean Modern Dark Canvas with subtle ambient depth
+ */
+@Composable
+fun AmbientGlassBackground(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(BgBase)
+            .drawBehind {
+                val w = size.width
+                val h = size.height
+
+                // Subtle deep top-down gradient
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0F172A),
+                            Color(0xFF090D16),
+                            Color(0xFF06090F)
+                        ),
+                        startY = 0f,
+                        endY = h
+                    )
+                )
+
+                // Very gentle ambient top-right glow for depth
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            PrimaryBlue.copy(alpha = 0.08f),
+                            Color.Transparent
+                        ),
+                        center = Offset(w * 0.85f, h * 0.1f),
+                        radius = w * 0.7f
+                    ),
+                    center = Offset(w * 0.85f, h * 0.1f),
+                    radius = w * 0.7f
+                )
+            }
+    ) {
+        content()
+    }
+}
 
 /**
  * 1. Bouncy Clickable Modifier with Spring Physics
  */
 fun Modifier.bouncyClickable(
-    pressedScale: Float = 0.95f,
+    pressedScale: Float = 0.96f,
     onClick: () -> Unit
 ): Modifier = composed {
     val interactionSource = remember { MutableInteractionSource() }
@@ -66,43 +114,21 @@ fun Modifier.bouncyClickable(
 }
 
 /**
- * 2. Animated Gradient Border Sweep
+ * 2. Elegant Precision Focus Border
  */
 fun Modifier.animatedGradientBorder(
     shape: Shape = RoundedCornerShape(16.dp),
-    borderWidth: Dp = 1.5.dp,
+    borderWidth: Dp = 1.dp,
     colors: List<Color> = listOf(
-        PrimaryBlueGlow,
-        AccentCyan,
-        AccentPurple,
-        WarningAmber,
-        PrimaryBlueGlow
+        PrimaryBlue.copy(alpha = 0.6f),
+        AccentCyan.copy(alpha = 0.4f),
+        PrimaryBlue.copy(alpha = 0.2f)
     ),
-    durationMillis: Int = 4000
+    durationMillis: Int = 3000
 ): Modifier = composed {
-    val infiniteTransition = rememberInfiniteTransition(label = "borderTransition")
-    val angle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "borderAngle"
-    )
-
     this
         .clip(shape)
-        .drawBehind {
-            rotate(angle) {
-                drawCircle(
-                    brush = Brush.sweepGradient(colors),
-                    radius = size.maxDimension
-                )
-            }
-        }
-        .padding(borderWidth)
-        .clip(shape)
+        .border(borderWidth, Brush.linearGradient(colors), shape)
 }
 
 /**
@@ -111,7 +137,7 @@ fun Modifier.animatedGradientBorder(
 fun Modifier.shimmerSweep(
     shimmerColors: List<Color> = listOf(
         Color.White.copy(alpha = 0.0f),
-        Color.White.copy(alpha = 0.18f),
+        Color.White.copy(alpha = 0.12f),
         Color.White.copy(alpha = 0.0f)
     ),
     durationMillis: Int = 1800
@@ -138,66 +164,36 @@ fun Modifier.shimmerSweep(
 }
 
 /**
- * 4. Pulsing Live Radar / AI Orb Component
+ * 4. Refined Audio Waveform / Live Voice Indicator
  */
 @Composable
 fun PulsingAiOrb(
     modifier: Modifier = Modifier,
     baseColor: Color = PrimaryBlueGlow,
     secondaryColor: Color = AccentCyan,
-    size: Dp = 72.dp,
+    size: Dp = 64.dp,
     isPulsing: Boolean = true
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "orbTransition")
 
-    val pulseScale1 by infiniteTransition.animateFloat(
-        initialValue = 0.85f,
-        targetValue = 1.35f,
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.12f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
         ),
-        label = "pulseScale1"
+        label = "pulseScale"
     )
 
-    val pulseAlpha1 by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 0f,
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.05f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
         ),
-        label = "pulseAlpha1"
-    )
-
-    val pulseScale2 by infiniteTransition.animateFloat(
-        initialValue = 0.7f,
-        targetValue = 1.6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2200, delayMillis = 400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulseScale2"
-    )
-
-    val pulseAlpha2 by infiniteTransition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2200, delayMillis = 400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulseAlpha2"
-    )
-
-    val innerRotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(6000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "innerRotation"
+        label = "pulseAlpha"
     )
 
     Box(
@@ -205,48 +201,54 @@ fun PulsingAiOrb(
         contentAlignment = Alignment.Center
     ) {
         if (isPulsing) {
-            // Outer Wave 2
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .scale(pulseScale2)
+                    .scale(pulseScale)
                     .clip(CircleShape)
-                    .background(secondaryColor.copy(alpha = pulseAlpha2))
-            )
-            // Outer Wave 1
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scale(pulseScale1)
-                    .clip(CircleShape)
-                    .background(baseColor.copy(alpha = pulseAlpha1))
+                    .background(baseColor.copy(alpha = pulseAlpha))
             )
         }
 
-        // Rotating Core
-        Canvas(modifier = Modifier.size(size * 0.7f)) {
-            rotate(innerRotation) {
-                drawCircle(
-                    brush = Brush.sweepGradient(
-                        listOf(
-                            baseColor,
-                            secondaryColor,
-                            AccentPurple,
-                            baseColor
-                        )
-                    )
-                )
-            }
-        }
-
-        // Inner Bright Center
+        // Clean modern inner icon container
         Box(
             modifier = Modifier
-                .size(size * 0.45f)
+                .size(size * 0.7f)
                 .clip(CircleShape)
-                .background(Color(0xFF0F172A))
-                .border(1.5.dp, Color.White.copy(alpha = 0.8f), CircleShape)
-        )
+                .background(
+                    Brush.linearGradient(
+                        listOf(PrimaryBlue.copy(alpha = 0.3f), BgCard)
+                    )
+                )
+                .border(1.dp, BorderHighlight.copy(alpha = 0.5f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            // Audio wave lines
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val heights = listOf(0.4f, 0.8f, 1f, 0.7f, 0.4f)
+                heights.forEachIndexed { idx, h ->
+                    val waveHeight by infiniteTransition.animateFloat(
+                        initialValue = (size.value * 0.2f * h),
+                        targetValue = (size.value * 0.45f * h),
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(600 + (idx * 120), easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "wave_$idx"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(2.5.dp)
+                            .height(waveHeight.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (isPulsing) PrimaryBlueGlow else TextMuted)
+                    )
+                }
+            }
+        }
     }
 }
 

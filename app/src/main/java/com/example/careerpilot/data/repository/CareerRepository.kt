@@ -2,6 +2,9 @@ package com.example.careerpilot.data.repository
 
 import com.example.careerpilot.data.local.CareerDao
 import com.example.careerpilot.data.model.*
+import com.example.careerpilot.data.remote.github.GitHubApiClient
+import com.example.careerpilot.data.remote.github.GitHubRepoItem
+import com.example.careerpilot.data.remote.github.GitHubValidationResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -40,10 +43,10 @@ class CareerRepository(private val dao: CareerDao) {
 
             // Initial Skills
             val defaultSkills = listOf(
-                UserSkill(skillName = "TypeScript", category = "Programming Languages", proficiencyLevel = 4, verified = true),
-                UserSkill(skillName = "React", category = "Frontend", proficiencyLevel = 4, verified = true),
-                UserSkill(skillName = "Kotlin & Coroutines", category = "Mobile", proficiencyLevel = 4, verified = true),
-                UserSkill(skillName = "Jetpack Compose", category = "Mobile", proficiencyLevel = 4, verified = true),
+                UserSkill(skillName = "TypeScript", category = "Programming Languages", proficiencyLevel = 4, verified = false),
+                UserSkill(skillName = "React", category = "Frontend", proficiencyLevel = 4, verified = false),
+                UserSkill(skillName = "Kotlin & Coroutines", category = "Mobile", proficiencyLevel = 4, verified = false),
+                UserSkill(skillName = "Jetpack Compose", category = "Mobile", proficiencyLevel = 4, verified = false),
                 UserSkill(skillName = "Node.js / Express", category = "Backend", proficiencyLevel = 3, verified = false),
                 UserSkill(skillName = "PostgreSQL", category = "Databases", proficiencyLevel = 3, verified = false),
                 UserSkill(skillName = "Docker & Containers", category = "DevOps & Cloud", proficiencyLevel = 2, verified = false),
@@ -58,7 +61,7 @@ class CareerRepository(private val dao: CareerDao) {
                     description = "High-throughput asynchronous task orchestrator with Redis backed retry queues and live metrics dashboard.",
                     repositoryUrl = "https://github.com/alexchen/distributed-queue",
                     liveUrl = "https://queue-demo.dev.io",
-                    status = "completed",
+                    status = "in_progress",
                     technologies = "Kotlin, Coroutines, Redis, Docker, Prometheus",
                     skillsTargeted = "Backend, Distributed Systems, Concurrency"
                 )
@@ -75,36 +78,57 @@ class CareerRepository(private val dao: CareerDao) {
                 )
             )
 
-            // Initial Learning Resources
+            // Initial Learning Resources (Proper functional lifecycle: Not Started -> In Progress -> Verified Completed)
             val learningList = listOf(
                 LearningResource(
                     title = "Mastering Distributed Systems & Consistency Patterns",
                     provider = "Designing Data-Intensive Applications",
                     url = "https://dataintensive.net",
                     category = "Architecture",
-                    skillTags = "Distributed Systems, Consensus, Replicas",
+                    skillTags = "Distributed Systems, Raft, Consensus, Partition Tolerance",
                     estimatedMinutes = 120,
                     difficulty = "Advanced",
+                    resourceType = "Article",
+                    status = "NOT_STARTED",
+                    progressPercent = 0,
+                    contentSummary = "Deep dive into CAP theorem trade-offs, Paxos vs Raft consensus algorithms, linearizability vs serializability, and distributed transaction isolation levels like 2PC and Saga orchestrators.",
+                    quizQuestion = "Under the CAP theorem, when a network partition occurs in a distributed database, what fundamental trade-off must the system make?",
+                    quizOptions = "Must choose between Consistency (returning errors/waiting) or Availability (returning stale data)|Sacrifice Partition Tolerance to gain infinite throughput|Automatically elect a single master node across the globe without delay|Disable write replication until all servers reboot",
+                    quizCorrectIndex = 0,
                     isCompleted = false
                 ),
                 LearningResource(
-                    title = "Modern Android Architecture & State Management",
+                    title = "Modern Android Architecture & Reactive State Management",
                     provider = "Android Developer Guides",
                     url = "https://developer.android.com/topic/architecture",
                     category = "Mobile",
-                    skillTags = "Jetpack Compose, ViewModel, MVI",
+                    skillTags = "Jetpack Compose, StateFlow, Coroutines, UDF",
                     estimatedMinutes = 90,
                     difficulty = "Intermediate",
-                    isCompleted = true
+                    resourceType = "Documentation",
+                    status = "NOT_STARTED",
+                    progressPercent = 0,
+                    contentSummary = "Explores Unidirectional Data Flow (UDF), managing state hoisting in Jetpack Compose, handling configuration changes with ViewModel, and safely collecting StateFlows with repeatOnLifecycle.",
+                    quizQuestion = "Why is collectAsStateWithLifecycle preferred over collectAsState when consuming Flow in Android Jetpack Compose?",
+                    quizOptions = "It automatically halts Flow collection when the Composable lifecycle is below STARTED, saving battery and CPU|It converts synchronous network calls into coroutines automatically|It renders the UI directly to OpenGL without recomposition|It bypasses ViewModel state saving during screen rotations",
+                    quizCorrectIndex = 0,
+                    isCompleted = false
                 ),
                 LearningResource(
-                    title = "Database Indexing & Query Plan Deep-Dive",
+                    title = "Database Indexing & Query Plan Optimization",
                     provider = "Use The Index, Luke",
                     url = "https://use-the-index-luke.com",
                     category = "Databases",
-                    skillTags = "PostgreSQL, B-Tree, Execution Plans",
+                    skillTags = "PostgreSQL, B-Tree Indexing, EXPLAIN ANALYZE",
                     estimatedMinutes = 60,
                     difficulty = "Intermediate",
+                    resourceType = "Article",
+                    status = "NOT_STARTED",
+                    progressPercent = 0,
+                    contentSummary = "Comprehensive study on how B-Tree indexes function internally, how multi-column index order impacts query selectivity, avoiding sequential scans, and reading EXPLAIN ANALYZE execution plans.",
+                    quizQuestion = "In a compound (multi-column) index on columns (A, B), which query CANNOT efficiently use the index leading edge?",
+                    quizOptions = "SELECT * FROM tbl WHERE B = 10 (omitting column A)|SELECT * FROM tbl WHERE A = 5 AND B = 10|SELECT * FROM tbl WHERE A = 5|SELECT * FROM tbl WHERE A = 5 ORDER BY B",
+                    quizCorrectIndex = 0,
                     isCompleted = false
                 ),
                 LearningResource(
@@ -112,31 +136,57 @@ class CareerRepository(private val dao: CareerDao) {
                     provider = "DeepLearning.AI",
                     url = "https://deeplearning.ai",
                     category = "AI & ML",
-                    skillTags = "Python, Embeddings, Vector DB",
+                    skillTags = "Vector Embeddings, Cosine Similarity, Chunking, RAG",
                     estimatedMinutes = 100,
                     difficulty = "Advanced",
+                    resourceType = "Course",
+                    status = "NOT_STARTED",
+                    progressPercent = 0,
+                    contentSummary = "Practical guide to building production Retrieval-Augmented Generation pipelines: optimal text chunking strategies, semantic similarity search with HNSW indexes, hybrid search with BM25, and prompt grounding.",
+                    quizQuestion = "What is the primary benefit of adding a Re-ranking step (e.g. Cross-Encoder) after preliminary vector similarity search in RAG?",
+                    quizOptions = "It precisely scores semantic relevance between the query and top candidates, eliminating irrelevant context hallucinations|It speeds up vector indexing by 100x on cold start|It generates synthetic training tokens for downstream model fine-tuning|It eliminates the need for vector databases altogether",
+                    quizCorrectIndex = 0,
+                    isCompleted = false
+                ),
+                LearningResource(
+                    title = "High-Performance Concurrency with Kotlin Coroutines",
+                    provider = "Kotlin Official Documentation",
+                    url = "https://kotlinlang.org/docs/coroutines-overview.html",
+                    category = "Mobile",
+                    skillTags = "Kotlin, Coroutines, Dispatchers, Mutex",
+                    estimatedMinutes = 75,
+                    difficulty = "Intermediate",
+                    resourceType = "Article",
+                    status = "NOT_STARTED",
+                    progressPercent = 0,
+                    contentSummary = "Structured concurrency principles, CoroutineScope hierarchy, exception propagation with SupervisorJob, non-blocking suspension vs blocking threads, and shared state synchronization with Mutex.",
+                    quizQuestion = "What happens to sibling coroutines in a standard CoroutineScope (without SupervisorJob) when one child coroutine fails with an uncaught exception?",
+                    quizOptions = "The exception cancels the parent scope, which immediately cancels all other sibling coroutines|Sibling coroutines continue running silently indefinitely|The failing coroutine is automatically restarted 3 times|The entire Android OS kills the application process immediately",
+                    quizCorrectIndex = 0,
                     isCompleted = false
                 )
             )
             dao.insertLearningResources(learningList)
 
-            // Initial Integrations
+            // Initial Integrations (Clean real state: Not Connected until verified)
             dao.insertOrUpdateIntegration(
                 IntegrationAccount(
                     provider = "github",
-                    username = "alexchen-dev",
-                    isConnected = true,
-                    lastSyncedAt = System.currentTimeMillis() - 3600000 * 4,
-                    details = "48 public repositories · 340 commits this quarter"
+                    username = "",
+                    connectionStatus = "NOT_CONNECTED",
+                    isConnected = false,
+                    lastSyncedAt = 0L,
+                    details = "Connect your GitHub profile to sync public repositories and commit telemetry."
                 )
             )
             dao.insertOrUpdateIntegration(
                 IntegrationAccount(
                     provider = "linkedin",
-                    username = "alex-chen-tech",
-                    isConnected = true,
-                    lastSyncedAt = System.currentTimeMillis() - 3600000 * 12,
-                    details = "Profile optimized · 500+ connections"
+                    username = "",
+                    connectionStatus = "NOT_CONNECTED",
+                    isConnected = false,
+                    lastSyncedAt = 0L,
+                    details = "Connect your LinkedIn profile for keyword visibility."
                 )
             )
 
@@ -352,7 +402,7 @@ class CareerRepository(private val dao: CareerDao) {
                 category = "Skill Mastery",
                 estimatedHours = 6.0f,
                 orderIndex = ++order,
-                isCompleted = true
+                isCompleted = false
             )
         )
         items.add(
@@ -778,24 +828,318 @@ class CareerRepository(private val dao: CareerDao) {
         recalibrateAudit()
     }
 
-    // Learning CRUD
+    // ==========================================
+    // REAL LEARNING RESOURCE WORKFLOW
+    // ==========================================
+    suspend fun startLearningResource(resourceId: Long) = withContext(Dispatchers.IO) {
+        val resource = dao.getLearningResource(resourceId) ?: return@withContext
+        val now = System.currentTimeMillis()
+        val updated = resource.copy(
+            status = "IN_PROGRESS",
+            startedAt = resource.startedAt ?: now,
+            lastStudiedAt = now,
+            progressPercent = max(15, resource.progressPercent),
+            isCompleted = false
+        )
+        dao.updateLearningResource(updated)
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "Learning Started",
+                detail = "Started '${resource.title}' (${resource.provider})"
+            )
+        )
+    }
+
+    suspend fun updateLearningProgress(
+        resourceId: Long,
+        additionalMinutes: Int,
+        newProgressPercent: Int,
+        userNotes: String
+    ) = withContext(Dispatchers.IO) {
+        val resource = dao.getLearningResource(resourceId) ?: return@withContext
+        val now = System.currentTimeMillis()
+        val totalMinutes = resource.studyMinutesSpent + max(0, additionalMinutes)
+        val cappedPercent = if (resource.status == "COMPLETED") 100 else newProgressPercent.coerceIn(0, 95)
+        val updated = resource.copy(
+            status = if (resource.status == "NOT_STARTED") "IN_PROGRESS" else resource.status,
+            startedAt = resource.startedAt ?: now,
+            lastStudiedAt = now,
+            studyMinutesSpent = totalMinutes,
+            progressPercent = cappedPercent,
+            notes = userNotes.ifBlank { resource.notes }
+        )
+        dao.updateLearningResource(updated)
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "Learning Progress Logged",
+                detail = "${resource.title}: $cappedPercent% (${totalMinutes}m logged)"
+            )
+        )
+    }
+
+    suspend fun verifyAndCompleteLearning(
+        resourceId: Long,
+        selectedQuizIndex: Int,
+        userNotes: String
+    ): Boolean = withContext(Dispatchers.IO) {
+        val resource = dao.getLearningResource(resourceId) ?: return@withContext false
+        val isQuizCorrect = selectedQuizIndex == resource.quizCorrectIndex
+
+        if (isQuizCorrect) {
+            val now = System.currentTimeMillis()
+            val updated = resource.copy(
+                status = "COMPLETED",
+                isCompleted = true,
+                progressPercent = 100,
+                completedAt = now,
+                lastStudiedAt = now,
+                studyMinutesSpent = max(resource.studyMinutesSpent, resource.estimatedMinutes),
+                notes = userNotes.ifBlank { resource.notes }
+            )
+            dao.updateLearningResource(updated)
+            recalibrateAudit()
+
+            dao.insertAnalyticsEvent(
+                AnalyticsEvent(
+                    eventName = "Learning Verified & Completed",
+                    detail = "Mastered '${resource.title}' (+${resource.estimatedMinutes}m competency credit)"
+                )
+            )
+            return@withContext true
+        } else {
+            dao.insertAnalyticsEvent(
+                AnalyticsEvent(
+                    eventName = "Comprehension Check Attempted",
+                    detail = "Quiz attempt incorrect for '${resource.title}' — review required."
+                )
+            )
+            return@withContext false
+        }
+    }
+
+    suspend fun resetLearningResource(resourceId: Long) = withContext(Dispatchers.IO) {
+        val resource = dao.getLearningResource(resourceId) ?: return@withContext
+        val updated = resource.copy(
+            status = "NOT_STARTED",
+            progressPercent = 0,
+            startedAt = null,
+            completedAt = null,
+            lastStudiedAt = null,
+            studyMinutesSpent = 0,
+            isCompleted = false
+        )
+        dao.updateLearningResource(updated)
+        recalibrateAudit()
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "Learning Module Reset",
+                detail = "Reset progress for '${resource.title}'"
+            )
+        )
+    }
+
     suspend fun toggleLearningCompleted(resource: LearningResource) = withContext(Dispatchers.IO) {
-        dao.updateLearningResource(resource.copy(isCompleted = !resource.isCompleted))
+        if (resource.isCompleted || resource.status == "COMPLETED") {
+            resetLearningResource(resource.id)
+        } else {
+            startLearningResource(resource.id)
+        }
+    }
+
+    // ==========================================
+    // REAL GITHUB INTEGRATION & API TELEMETRY
+    // ==========================================
+    suspend fun validateAndConnectGitHub(username: String): GitHubValidationResult = withContext(Dispatchers.IO) {
+        val trimmed = username.trim()
+        if (trimmed.isBlank()) {
+            val errResult = GitHubValidationResult.Error(400, "Please enter a valid GitHub username.")
+            return@withContext errResult
+        }
+
+        // Set state to CHECKING
+        val existing = dao.getIntegration("github") ?: IntegrationAccount(provider = "github")
+        dao.insertOrUpdateIntegration(
+            existing.copy(
+                username = trimmed,
+                connectionStatus = "CHECKING",
+                errorMessage = ""
+            )
+        )
+
+        val apiResult = GitHubApiClient.fetchGitHubProfileAndRepos(trimmed)
+
+        when (apiResult) {
+            is GitHubValidationResult.Success -> {
+                val profile = apiResult.profile
+                val topReposJson = buildTopReposJson(profile.topRepos)
+                val detailsString = "${profile.publicRepos} public repos • ${profile.followers} followers • ${profile.topRepos.size} recent active repos"
+
+                val connectedAccount = IntegrationAccount(
+                    provider = "github",
+                    username = profile.username,
+                    connectionStatus = "CONNECTED",
+                    isConnected = true,
+                    lastSyncedAt = System.currentTimeMillis(),
+                    avatarUrl = profile.avatarUrl,
+                    displayName = profile.displayName,
+                    publicReposCount = profile.publicRepos,
+                    followersCount = profile.followers,
+                    followingCount = profile.following,
+                    publicGistsCount = profile.publicGists,
+                    bio = profile.bio,
+                    company = profile.company,
+                    location = profile.location,
+                    topRepositoriesJson = topReposJson,
+                    details = detailsString,
+                    errorMessage = ""
+                )
+                dao.insertOrUpdateIntegration(connectedAccount)
+                recalibrateAudit()
+
+                dao.insertAnalyticsEvent(
+                    AnalyticsEvent(
+                        eventName = "GitHub Connected",
+                        detail = "Verified GitHub account '${profile.username}' (${profile.publicRepos} repos, ${profile.followers} followers)"
+                    )
+                )
+            }
+            is GitHubValidationResult.UserNotFound -> {
+                val notFoundAccount = IntegrationAccount(
+                    provider = "github",
+                    username = trimmed,
+                    connectionStatus = "NOT_FOUND",
+                    isConnected = false,
+                    errorMessage = apiResult.message,
+                    details = "User '$trimmed' not found on GitHub."
+                )
+                dao.insertOrUpdateIntegration(notFoundAccount)
+                recalibrateAudit()
+
+                dao.insertAnalyticsEvent(
+                    AnalyticsEvent(
+                        eventName = "GitHub Verification Failed",
+                        detail = "User '$trimmed' does not exist on GitHub (HTTP 404)"
+                    )
+                )
+            }
+            is GitHubValidationResult.RateLimited -> {
+                val rateLimitedAccount = IntegrationAccount(
+                    provider = "github",
+                    username = trimmed,
+                    connectionStatus = "RATE_LIMITED",
+                    isConnected = false,
+                    errorMessage = apiResult.message,
+                    details = "GitHub API rate limit exceeded."
+                )
+                dao.insertOrUpdateIntegration(rateLimitedAccount)
+            }
+            is GitHubValidationResult.Error -> {
+                val errorAccount = IntegrationAccount(
+                    provider = "github",
+                    username = trimmed,
+                    connectionStatus = "ERROR",
+                    isConnected = false,
+                    errorMessage = apiResult.message,
+                    details = "Error verifying account: ${apiResult.message}"
+                )
+                dao.insertOrUpdateIntegration(errorAccount)
+            }
+        }
+
+        return@withContext apiResult
+    }
+
+    suspend fun disconnectGitHub() = withContext(Dispatchers.IO) {
+        val disconnected = IntegrationAccount(
+            provider = "github",
+            username = "",
+            connectionStatus = "NOT_CONNECTED",
+            isConnected = false,
+            lastSyncedAt = 0L,
+            avatarUrl = "",
+            displayName = "",
+            publicReposCount = 0,
+            followersCount = 0,
+            followingCount = 0,
+            publicGistsCount = 0,
+            bio = "",
+            company = "",
+            location = "",
+            topRepositoriesJson = "",
+            details = "Disconnected. Connect your GitHub profile to sync public repositories.",
+            errorMessage = ""
+        )
+        dao.insertOrUpdateIntegration(disconnected)
+        recalibrateAudit()
+
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "GitHub Disconnected",
+                detail = "Disconnected GitHub integration and cleared telemetry."
+            )
+        )
+    }
+
+    suspend fun importGitHubRepoToPortfolio(repo: GitHubRepoItem) = withContext(Dispatchers.IO) {
+        val newProject = PortfolioProject(
+            title = repo.name,
+            description = repo.description.ifBlank { "Production repository synced from GitHub (${repo.language})." },
+            repositoryUrl = repo.url,
+            liveUrl = "",
+            status = "in_progress",
+            technologies = repo.language.ifBlank { "Kotlin, Software Engineering" },
+            skillsTargeted = repo.language
+        )
+        dao.insertProject(newProject)
+        recalibrateAudit()
+
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "GitHub Repo Imported",
+                detail = "Imported '${repo.name}' (${repo.language}, ★${repo.stars}) into portfolio projects."
+            )
+        )
+    }
+
+    private fun buildTopReposJson(repos: List<GitHubRepoItem>): String {
+        val jsonArray = org.json.JSONArray()
+        repos.forEach { repo ->
+            val obj = org.json.JSONObject()
+            obj.put("name", repo.name)
+            obj.put("description", repo.description)
+            obj.put("url", repo.url)
+            obj.put("stars", repo.stars)
+            obj.put("forks", repo.forks)
+            obj.put("language", repo.language)
+            obj.put("updatedAt", repo.updatedAt)
+            jsonArray.put(obj)
+        }
+        return jsonArray.toString()
     }
 
     // Integration Sync
     suspend fun toggleIntegration(provider: String, username: String) = withContext(Dispatchers.IO) {
-        val existing = dao.getIntegration(provider)
-        val isNowConnected = !(existing?.isConnected ?: false)
-        val updated = IntegrationAccount(
-            provider = provider,
-            username = username.ifBlank { if (provider == "github") "dev-user" else "dev-profile" },
-            isConnected = isNowConnected,
-            lastSyncedAt = if (isNowConnected) System.currentTimeMillis() else 0L,
-            details = if (isNowConnected) "Synced with telemetry stream" else "Disconnected"
-        )
-        dao.insertOrUpdateIntegration(updated)
-        recalibrateAudit()
+        if (provider == "github") {
+            val current = dao.getIntegration("github")
+            if (current?.isConnected == true) {
+                disconnectGitHub()
+            } else {
+                validateAndConnectGitHub(username)
+            }
+        } else {
+            val existing = dao.getIntegration(provider)
+            val isNowConnected = !(existing?.isConnected ?: false)
+            val updated = IntegrationAccount(
+                provider = provider,
+                username = username.ifBlank { "linkedin-user" },
+                connectionStatus = if (isNowConnected) "CONNECTED" else "NOT_CONNECTED",
+                isConnected = isNowConnected,
+                lastSyncedAt = if (isNowConnected) System.currentTimeMillis() else 0L,
+                details = if (isNowConnected) "Profile linked • Keyword visibility synced" else "Disconnected"
+            )
+            dao.insertOrUpdateIntegration(updated)
+            recalibrateAudit()
+        }
     }
 
     // === FEATURE 1: JOB DESCRIPTION MATCHER ===
@@ -1157,11 +1501,41 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     // === SKILL SPRINTS ACTIONS ===
+    suspend fun toggleSprintMilestone(sprintId: String, milestoneIndex: Int) = withContext(Dispatchers.IO) {
+        val sprint = dao.getSkillSprint(sprintId)
+        if (sprint != null) {
+            val total = sprint.milestoneTasks.size
+            val newCompleted = if (milestoneIndex < sprint.completedMilestones) {
+                max(0, milestoneIndex)
+            } else {
+                min(total, milestoneIndex + 1)
+            }
+            val updated = sprint.copy(
+                completedMilestones = newCompleted,
+                currentDay = min(sprint.durationDays, max(1, newCompleted * 2))
+            )
+            dao.updateSkillSprint(updated)
+            dao.insertAnalyticsEvent(
+                AnalyticsEvent(
+                    eventName = "Sprint Milestone Updated",
+                    detail = "${sprint.sprintTitle}: $newCompleted/$total completed"
+                )
+            )
+        }
+    }
+
     suspend fun claimSprintReward(sprintId: String) = withContext(Dispatchers.IO) {
-        val sprints = dao.getSkillSprintsFlow()
-        // Simple update
-        val list = dao.getProjects() // trigger IO
-        // update through list
+        val sprint = dao.getSkillSprint(sprintId)
+        if (sprint != null) {
+            val updated = sprint.copy(isClaimed = true, completedMilestones = sprint.milestoneTasks.size)
+            dao.updateSkillSprint(updated)
+            dao.insertAnalyticsEvent(
+                AnalyticsEvent(
+                    eventName = "Sprint Badge Awarded",
+                    detail = "Claimed ${sprint.badgeName} (+${sprint.rewardXp} XP)"
+                )
+            )
+        }
     }
 }
 

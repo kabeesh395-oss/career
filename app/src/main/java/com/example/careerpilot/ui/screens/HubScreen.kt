@@ -14,30 +14,34 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.careerpilot.ui.animation.bouncyClickable
 import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 enum class HubTab(val title: String, val icon: ImageVector) {
-    MARKET("Search Grounding", Icons.Default.TravelExplore),
-    SKILLS("Skill Gaps", Icons.Default.Assessment),
-    APPLICATIONS("Job CRM", Icons.Default.WorkOutline),
-    COMPENSATION("Offer Lab", Icons.Default.MonetizationOn),
-    EXPORTS("Export Hub", Icons.Default.FileDownload),
+    MARKET("Market Insights", Icons.Default.TravelExplore),
+    SKILLS("Skill Matrix", Icons.Default.Assessment),
+    APPLICATIONS("Applications", Icons.Default.WorkOutline),
+    COMPENSATION("Offer Negotiator", Icons.Default.MonetizationOn),
+    EXPORTS("Export Portfolio", Icons.Default.FileDownload),
     SANDBOX("Code Sandbox", Icons.Default.Terminal),
     SPRINTS("Skill Sprints", Icons.Default.EmojiEvents),
     PEERS("Peer Mocks", Icons.Default.People),
     ROADMAP("Roadmap", Icons.Default.Timeline),
     PROJECTS("Projects", Icons.Default.Code),
     LEARNING("Learning", Icons.Default.MenuBook),
-    INTEGRATIONS("Sync", Icons.Default.Sync),
-    PROFILE("Profile & Auth", Icons.Default.Person)
+    INTEGRATIONS("Sync Integrations", Icons.Default.Sync),
+    PROFILE("Profile & Settings", Icons.Default.Person)
 }
-
 
 @Composable
 fun HubScreen(
@@ -50,12 +54,21 @@ fun HubScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BgBase)
+            .background(Color.Transparent)
     ) {
-        // Top Horizontal Scrollable Tab Selector
-        Surface(
-            color = BgSurface,
-            modifier = Modifier.fillMaxWidth()
+        // Modern Horizontal Scrollable Tab Selector
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(BgSurface)
+                .drawBehind {
+                    drawLine(
+                        color = BorderSubtle,
+                        start = Offset(0f, size.height),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = 1.dp.toPx()
+                    )
+                }
         ) {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -64,17 +77,22 @@ fun HubScreen(
             ) {
                 itemsIndexed(HubTab.values()) { _, tab ->
                     val isSelected = selectedTab == tab
+                    val shape = RoundedCornerShape(8.dp)
+
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (isSelected) PrimaryBlue else BgCard)
+                            .clip(shape)
+                            .background(
+                                if (isSelected) PrimaryBlue.copy(alpha = 0.15f)
+                                else BgCard
+                            )
                             .border(
                                 1.dp,
-                                if (isSelected) PrimaryBlueGlow else BorderSubtle,
-                                RoundedCornerShape(20.dp)
+                                if (isSelected) PrimaryBlue.copy(alpha = 0.4f) else BorderSubtle,
+                                shape
                             )
-                            .clickable { selectedTab = tab }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .bouncyClickable { selectedTab = tab }
+                            .padding(horizontal = 12.dp, vertical = 7.dp)
                             .testTag("hub_tab_${tab.name.lowercase()}"),
                         contentAlignment = Alignment.Center
                     ) {
@@ -85,7 +103,7 @@ fun HubScreen(
                             Icon(
                                 imageVector = tab.icon,
                                 contentDescription = null,
-                                tint = if (isSelected) TextPrimary else TextSecondary,
+                                tint = if (isSelected) PrimaryBlueGlow else TextSecondary,
                                 modifier = Modifier.size(15.dp)
                             )
                             Text(
@@ -100,8 +118,6 @@ fun HubScreen(
                 }
             }
         }
-
-        Divider(color = BorderSubtle, thickness = 1.dp)
 
         // Selected Subscreen Content
         Box(
@@ -125,6 +141,5 @@ fun HubScreen(
                 HubTab.PROFILE -> ProfileScreen(viewModel = viewModel)
             }
         }
-
     }
 }

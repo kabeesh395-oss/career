@@ -11,6 +11,8 @@ import com.example.careerpilot.data.local.AppDatabase
 import com.example.careerpilot.data.model.*
 import com.example.careerpilot.data.remote.gemini.SearchGroundedResult
 import com.example.careerpilot.data.remote.gemini.SearchGroundingService
+import com.example.careerpilot.data.remote.github.GitHubRepoItem
+import com.example.careerpilot.data.remote.github.GitHubValidationResult
 import com.example.careerpilot.data.repository.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -438,10 +440,113 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // REAL LEARNING RESOURCE WORKFLOW
+    fun startLearningResource(resourceId: Long) {
+        viewModelScope.launch {
+            repository.startLearningResource(resourceId)
+            refreshNextBestAction()
+            _userMessage.value = "Learning session started."
+        }
+    }
+
+    fun updateLearningProgress(
+        resourceId: Long,
+        additionalMinutes: Int,
+        newProgressPercent: Int,
+        userNotes: String = ""
+    ) {
+        viewModelScope.launch {
+            repository.updateLearningProgress(resourceId, additionalMinutes, newProgressPercent, userNotes)
+            refreshNextBestAction()
+        }
+    }
+
+    fun verifyAndCompleteLearning(
+        resourceId: Long,
+        selectedQuizIndex: Int,
+        userNotes: String = "",
+        onResult: ((Boolean) -> Unit)? = null
+    ) {
+        viewModelScope.launch {
+            val success = repository.verifyAndCompleteLearning(resourceId, selectedQuizIndex, userNotes)
+            refreshNextBestAction()
+            if (success) {
+                _userMessage.value = "Resource comprehension verified! Completed."
+            } else {
+                _userMessage.value = "Comprehension check incorrect. Please review the material."
+            }
+            onResult?.invoke(success)
+        }
+    }
+
+    fun resetLearningResource(resourceId: Long) {
+        viewModelScope.launch {
+            repository.resetLearningResource(resourceId)
+            refreshNextBestAction()
+            _userMessage.value = "Learning progress reset."
+        }
+    }
+
     fun toggleLearningCompleted(resource: LearningResource) {
         viewModelScope.launch {
             repository.toggleLearningCompleted(resource)
             refreshNextBestAction()
+        }
+    }
+
+    // REAL GITHUB INTEGRATION & API TELEMETRY
+    fun connectGitHub(username: String) {
+        viewModelScope.launch {
+            _isAnalyzing.value = true
+            try {
+                val result = repository.validateAndConnectGitHub(username)
+                refreshNextBestAction()
+                when (result) {
+                    is GitHubValidationResult.Success -> {
+                        _userMessage.value = "Connected to GitHub profile '${result.profile.username}' (${result.profile.publicRepos} public repositories verified)."
+                    }
+                    is GitHubValidationResult.UserNotFound -> {
+                        _userMessage.value = "GitHub user '$username' not found (HTTP 404)."
+                    }
+                    is GitHubValidationResult.RateLimited -> {
+                        _userMessage.value = "GitHub API rate limit reached. Please retry in a few moments."
+                    }
+                    is GitHubValidationResult.Error -> {
+                        _userMessage.value = "Failed to connect to GitHub: ${result.message}"
+                    }
+                }
+            } catch (e: Exception) {
+                _userMessage.value = "Error connecting to GitHub: ${e.message}"
+            } finally {
+                _isAnalyzing.value = false
+            }
+        }
+    }
+
+    fun disconnectGitHub() {
+        viewModelScope.launch {
+            repository.disconnectGitHub()
+            refreshNextBestAction()
+            _userMessage.value = "GitHub account disconnected."
+        }
+    }
+
+    fun refreshGitHubData() {
+        viewModelScope.launch {
+            val github = integrations.value.find { it.provider == "github" }
+            if (github != null && github.username.isNotBlank()) {
+                connectGitHub(github.username)
+            } else {
+                _userMessage.value = "No GitHub account currently configured to refresh."
+            }
+        }
+    }
+
+    fun importGitHubRepoToPortfolio(repo: GitHubRepoItem) {
+        viewModelScope.launch {
+            repository.importGitHubRepoToPortfolio(repo)
+            refreshNextBestAction()
+            _userMessage.value = "Imported repository '${repo.name}' to Portfolio Projects!"
         }
     }
 
@@ -622,8 +727,16 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // === SPRINT ACTIONS ===
+    fun toggleSprintMilestone(sprintId: String, milestoneIndex: Int) {
+        viewModelScope.launch {
+            repository.toggleSprintMilestone(sprintId, milestoneIndex)
+            _userMessage.value = "Sprint milestone progress updated."
+        }
+    }
+
     fun claimSprintReward(sprintId: String) {
         viewModelScope.launch {
+            repository.claimSprintReward(sprintId)
             _userMessage.value = "GitHub milestone proof submitted & verified! Credential badge awarded."
         }
     }

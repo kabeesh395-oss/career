@@ -105,12 +105,13 @@ fun DashboardScreen(
 
         // Hero Banner Card
         item {
+            val heroShape = RoundedCornerShape(14.dp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .border(1.dp, BorderSubtle, RoundedCornerShape(18.dp))
+                    .height(136.dp)
+                    .clip(heroShape)
+                    .border(1.dp, BorderSubtle, heroShape)
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.career_hero_banner_1787884489105),
@@ -124,8 +125,8 @@ fun DashboardScreen(
                         .background(
                             Brush.horizontalGradient(
                                 listOf(
-                                    BgBase.copy(alpha = 0.88f),
-                                    BgBase.copy(alpha = 0.5f),
+                                    BgSurface.copy(alpha = 0.95f),
+                                    BgSurface.copy(alpha = 0.70f),
                                     Color.Transparent
                                 )
                             )
@@ -136,17 +137,17 @@ fun DashboardScreen(
                         modifier = Modifier.align(Alignment.CenterStart),
                         verticalArrangement = Arrangement.Center
                     ) {
-                        StatusBadge(text = "AI CAREER INTELLIGENCE", statusType = "primary")
+                        StatusBadge(text = "CAREER ROADMAP", statusType = "primary")
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Accelerate to Staff & Lead Level",
+                            text = "Staff & Lead Career Velocity",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
                         Text(
-                            text = "Continuous skill calibration & ATS optimization",
-                            style = MaterialTheme.typography.labelSmall,
+                            text = "Live skill calibration & portfolio tracking",
+                            style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
                     }
@@ -253,7 +254,7 @@ fun DashboardScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            PulsingLiveBadge(text = "LIVE AI COPILOT", color = AccentCyan)
+                            PulsingLiveBadge(text = "RECOMMENDED FOCUS", color = AccentCyan)
                             StatusBadge(text = nextAction!!.priority, statusType = nextAction!!.priority)
                         }
                         Text(
@@ -701,32 +702,31 @@ fun DashboardScreen(
         // Quick Hub Navigation
         item {
             SectionHeader(
-                title = "Career Acceleration Hub",
-                subtitle = "Core tools for career mastery"
+                title = "Engineering Toolkit",
+                subtitle = "Direct access to career & portfolio modules"
             )
         }
 
         item {
             val quickLinks = listOf(
-                Triple("Search Intel", Icons.Default.TravelExplore, "market"),
+                Triple("Market Grounding", Icons.Default.TravelExplore, "market"),
                 Triple("Cloud Sync", Icons.Default.CloudDone, "profile"),
                 Triple("Audit Center", Icons.Default.Shield, "audit"),
-                Triple("Offer Lab", Icons.Default.MonetizationOn, "negotiator"),
-                Triple("Export Hub", Icons.Default.FileDownload, "export"),
-                Triple("Job CRM", Icons.Default.WorkOutline, "applications"),
-                Triple("Sandbox", Icons.Default.Terminal, "sandbox"),
-                Triple("Sprints", Icons.Default.EmojiEvents, "sprints"),
+                Triple("Offer Negotiator", Icons.Default.MonetizationOn, "negotiator"),
+                Triple("Export Portfolio", Icons.Default.FileDownload, "export"),
+                Triple("Applications", Icons.Default.WorkOutline, "applications"),
+                Triple("Code Sandbox", Icons.Default.Terminal, "sandbox"),
+                Triple("Skill Sprints", Icons.Default.EmojiEvents, "sprints"),
                 Triple("Peer Mocks", Icons.Default.People, "peers"),
-                Triple("Mock AI", Icons.Default.RecordVoiceOver, "interview"),
-                Triple("ATS Resume", Icons.Default.Description, "resume"),
-                Triple("Skill Gaps", Icons.Default.Assessment, "career"),
+                Triple("Interviews", Icons.Default.RecordVoiceOver, "interview"),
+                Triple("Resume Audit", Icons.Default.Description, "resume"),
+                Triple("Skill Matrix", Icons.Default.Assessment, "career"),
                 Triple("Roadmap", Icons.Default.Timeline, "roadmap"),
                 Triple("Projects", Icons.Default.Code, "projects"),
                 Triple("Learning", Icons.Default.MenuBook, "learning"),
                 Triple("Integrations", Icons.Default.Sync, "integrations"),
                 Triple("Profile", Icons.Default.Person, "profile")
             )
-
 
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -745,8 +745,8 @@ fun DashboardScreen(
         // Recent Activity Feed
         item {
             SectionHeader(
-                title = "Recent Telemetry Events",
-                subtitle = "Audit log of career milestones"
+                title = "Activity History",
+                subtitle = "Timeline of updates, audits and milestones"
             )
         }
 

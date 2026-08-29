@@ -141,11 +141,17 @@ interface CareerDao {
     @Query("SELECT * FROM learning_resources ORDER BY category ASC, id ASC")
     suspend fun getLearningResources(): List<LearningResource>
 
+    @Query("SELECT * FROM learning_resources WHERE id = :id LIMIT 1")
+    suspend fun getLearningResource(id: Long): LearningResource?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLearningResources(resources: List<LearningResource>)
 
     @Update
     suspend fun updateLearningResource(resource: LearningResource)
+
+    @Query("DELETE FROM learning_resources")
+    suspend fun clearLearningResources()
 
     // Integrations
     @Query("SELECT * FROM integrations")
@@ -268,6 +274,12 @@ interface CareerDao {
     // Skill Sprints
     @Query("SELECT * FROM skill_sprints ORDER BY isClaimed ASC, currentDay DESC")
     fun getSkillSprintsFlow(): Flow<List<SkillSprint>>
+
+    @Query("SELECT * FROM skill_sprints")
+    suspend fun getSkillSprints(): List<SkillSprint>
+
+    @Query("SELECT * FROM skill_sprints WHERE id = :id LIMIT 1")
+    suspend fun getSkillSprint(id: String): SkillSprint?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSkillSprint(sprint: SkillSprint)

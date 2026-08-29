@@ -61,7 +61,6 @@ fun MarketIntelligenceScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgBase)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
