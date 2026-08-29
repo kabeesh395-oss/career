@@ -23,8 +23,11 @@ import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 enum class HubTab(val title: String, val icon: ImageVector) {
+    MARKET("Search Grounding", Icons.Default.TravelExplore),
     SKILLS("Skill Gaps", Icons.Default.Assessment),
     APPLICATIONS("Job CRM", Icons.Default.WorkOutline),
+    COMPENSATION("Offer Lab", Icons.Default.MonetizationOn),
+    EXPORTS("Export Hub", Icons.Default.FileDownload),
     SANDBOX("Code Sandbox", Icons.Default.Terminal),
     SPRINTS("Skill Sprints", Icons.Default.EmojiEvents),
     PEERS("Peer Mocks", Icons.Default.People),
@@ -32,7 +35,7 @@ enum class HubTab(val title: String, val icon: ImageVector) {
     PROJECTS("Projects", Icons.Default.Code),
     LEARNING("Learning", Icons.Default.MenuBook),
     INTEGRATIONS("Sync", Icons.Default.Sync),
-    PROFILE("Profile", Icons.Default.Person)
+    PROFILE("Profile & Auth", Icons.Default.Person)
 }
 
 
@@ -107,8 +110,11 @@ fun HubScreen(
                 .weight(1f)
         ) {
             when (selectedTab) {
+                HubTab.MARKET -> MarketIntelligenceScreen(viewModel = viewModel)
                 HubTab.SKILLS -> CareerAnalysisScreen(viewModel = viewModel)
                 HubTab.APPLICATIONS -> ApplicationTrackerScreen(viewModel = viewModel)
+                HubTab.COMPENSATION -> SalaryNegotiatorScreen(viewModel = viewModel)
+                HubTab.EXPORTS -> ExportCenterScreen(viewModel = viewModel)
                 HubTab.SANDBOX -> CodingSandboxScreen(viewModel = viewModel)
                 HubTab.SPRINTS -> SkillSprintsScreen(viewModel = viewModel)
                 HubTab.PEERS -> PeerMockScreen(viewModel = viewModel)

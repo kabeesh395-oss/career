@@ -33,6 +33,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Audit : Screen("audit", "Audit", Icons.Default.Shield)
     object Resume : Screen("resume", "Resume ATS", Icons.Default.Description)
     object Interview : Screen("interview", "Mock AI", Icons.Default.RecordVoiceOver)
+    object Market : Screen("market", "Search Intel", Icons.Default.TravelExplore)
     object Hub : Screen("hub", "Career Hub", Icons.Default.Hub)
     object Career : Screen("career", "Skill Gaps", Icons.Default.Assessment)
     object Roadmap : Screen("roadmap", "Roadmap", Icons.Default.Timeline)
@@ -44,12 +45,13 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Sandbox : Screen("sandbox", "Code Sandbox", Icons.Default.Terminal)
     object Sprints : Screen("sprints", "Skill Sprints", Icons.Default.EmojiEvents)
     object Peers : Screen("peers", "Peer Mocks", Icons.Default.People)
+    object Negotiator : Screen("negotiator", "Offer Lab", Icons.Default.MonetizationOn)
+    object Export : Screen("export", "Export Hub", Icons.Default.FileDownload)
 }
 
 
 val primaryNavItems = listOf(
     Screen.Dashboard,
-    Screen.Audit,
     Screen.Resume,
     Screen.Interview,
     Screen.Hub
@@ -118,6 +120,16 @@ fun CareerPilotApp(
                     titleContentColor = TextPrimary
                 ),
                 actions = {
+                    IconButton(
+                        onClick = { viewModel.triggerCloudSync() },
+                        modifier = Modifier.testTag("topbar_sync_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudSync,
+                            contentDescription = "Cloud Firestore Sync",
+                            tint = SuccessGreen
+                        )
+                    }
                     IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
@@ -209,6 +221,16 @@ fun CareerPilotApp(
             composable(Screen.Interview.route) {
                 InterviewScreen(viewModel = viewModel)
             }
+            composable(Screen.Market.route) {
+                MarketIntelligenceScreen(
+                    viewModel = viewModel,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
             composable(Screen.Hub.route) {
                 HubScreen(viewModel = viewModel)
             }
@@ -241,6 +263,12 @@ fun CareerPilotApp(
             }
             composable(Screen.Peers.route) {
                 PeerMockScreen(viewModel = viewModel)
+            }
+            composable(Screen.Negotiator.route) {
+                SalaryNegotiatorScreen(viewModel = viewModel)
+            }
+            composable(Screen.Export.route) {
+                ExportCenterScreen(viewModel = viewModel)
             }
         }
     }

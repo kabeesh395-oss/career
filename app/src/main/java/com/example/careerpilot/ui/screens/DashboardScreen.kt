@@ -33,10 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.careerpilot.data.model.RoadmapItem
-import com.example.careerpilot.ui.components.GlassCard
-import com.example.careerpilot.ui.components.MetricCard
-import com.example.careerpilot.ui.components.SectionHeader
-import com.example.careerpilot.ui.components.StatusBadge
+import com.example.careerpilot.ui.animation.*
+import com.example.careerpilot.ui.components.*
 import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 import java.text.SimpleDateFormat
@@ -237,14 +235,13 @@ fun DashboardScreen(
             }
         }
 
-        // Next Best Action Card
+        // Next Best Action Card with Animated Gradient Glow & Pulsing AI Orb
         if (nextAction != null) {
             item {
-                GlassCard(
+                AnimatedGlowingGlassCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("next_best_action_card"),
-                    borderColor = PrimaryBlueGlow.copy(alpha = 0.6f),
                     backgroundColor = BgCardHover
                 ) {
                     Row(
@@ -252,8 +249,11 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            StatusBadge(text = "NEXT BEST ACTION", statusType = "primary")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PulsingLiveBadge(text = "LIVE AI COPILOT", color = AccentCyan)
                             StatusBadge(text = nextAction!!.priority, statusType = nextAction!!.priority)
                         }
                         Text(
@@ -262,21 +262,36 @@ fun DashboardScreen(
                             color = TextMuted
                         )
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = nextAction!!.title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        PulsingAiOrb(
+                            size = 54.dp,
+                            baseColor = PrimaryBlueGlow,
+                            secondaryColor = AccentCyan
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = nextAction!!.title,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = nextAction!!.whyItMatters,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = nextAction!!.whyItMatters,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary,
-                        lineHeight = 18.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Evidence: ${nextAction!!.evidence}",
                         style = MaterialTheme.typography.bodySmall,
@@ -287,7 +302,10 @@ fun DashboardScreen(
                         onClick = { onNavigate(nextAction!!.targetRoute) },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.testTag("nba_cta_button")
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .bouncyClickable { onNavigate(nextAction!!.targetRoute) }
+                            .testTag("nba_cta_button")
                     ) {
                         Text(text = nextAction!!.ctaText, fontWeight = FontWeight.SemiBold)
                         Spacer(modifier = Modifier.width(6.dp))
@@ -618,6 +636,68 @@ fun DashboardScreen(
             }
         }
 
+        // Search Grounding Live Market Intelligence Teaser
+        item {
+            GlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigate("market") }
+                    .testTag("dashboard_search_grounding_teaser"),
+                borderColor = AccentCyan.copy(alpha = 0.5f),
+                backgroundColor = BgSurfaceElevated
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(AccentCyan.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.TravelExplore,
+                                contentDescription = null,
+                                tint = AccentCyan,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                PulsingLiveBadge(text = "LIVE GOOGLE SEARCH", color = AccentCyan)
+                                Text(
+                                    text = "Market Intel",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
+                            Text(
+                                text = "Grounded via gemini-3.5-flash: 2026 FAANG comp & interview loops",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Open Market Intel",
+                        tint = AccentCyan,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+
         // Quick Hub Navigation
         item {
             SectionHeader(
@@ -628,7 +708,11 @@ fun DashboardScreen(
 
         item {
             val quickLinks = listOf(
+                Triple("Search Intel", Icons.Default.TravelExplore, "market"),
+                Triple("Cloud Sync", Icons.Default.CloudDone, "profile"),
                 Triple("Audit Center", Icons.Default.Shield, "audit"),
+                Triple("Offer Lab", Icons.Default.MonetizationOn, "negotiator"),
+                Triple("Export Hub", Icons.Default.FileDownload, "export"),
                 Triple("Job CRM", Icons.Default.WorkOutline, "applications"),
                 Triple("Sandbox", Icons.Default.Terminal, "sandbox"),
                 Triple("Sprints", Icons.Default.EmojiEvents, "sprints"),

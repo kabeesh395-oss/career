@@ -17,11 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.JobApplication
+import com.example.careerpilot.data.repository.GeneratedOutreachLetter
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.components.StatusBadge
@@ -36,6 +39,9 @@ fun ApplicationTrackerScreen(
     val applications by viewModel.jobApplications.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedFilterStage by remember { mutableStateOf("ALL") }
+    var outreachApp by remember { mutableStateOf<JobApplication?>(null) }
+    val clipboardManager = LocalClipboardManager.current
+    var copiedToast by remember { mutableStateOf<String?>(null) }
 
     // Dialog form state
     var companyInput by remember { mutableStateOf("") }
@@ -189,10 +195,132 @@ fun ApplicationTrackerScreen(
                 ApplicationCard(
                     app = app,
                     onStageChange = { newStage -> viewModel.updateApplicationStage(app, newStage) },
-                    onDelete = { viewModel.deleteApplication(app) }
+                    onDelete = { viewModel.deleteApplication(app) },
+                    onOutreachClick = { outreachApp = app },
+                    onReminderClick = { viewModel.scheduleInterviewReminder(app, "24h") }
                 )
             }
         }
+    }
+
+    // AI Recruiter Outreach & Cover Letter Modal
+    outreachApp?.let { app ->
+        val outreachData = remember(app) {
+            viewModel.generateOutreachForApplication(app)
+        }
+
+        AlertDialog(
+            onDismissRequest = { outreachApp = null },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = AccentCyan)
+                    Text("AI Recruiter Outreach & Cover Letter", fontWeight = FontWeight.Bold, color = TextPrimary)
+                }
+            },
+            text = {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    item {
+                        Text(
+                            text = "Target: ${app.company} · ${app.roleTitle}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentCyan
+                        )
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("LinkedIn InMail Script", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Button(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(outreachData.linkedInInMail))
+                                    copiedToast = "✓ LinkedIn InMail copied to clipboard!"
+                                },
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Copy InMail", fontSize = 10.sp)
+                            }
+                        }
+
+                        Text(
+                            text = outreachData.linkedInInMail,
+                            fontSize = 11.sp,
+                            color = TextSecondary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(BgSurface, RoundedCornerShape(6.dp))
+                                .padding(8.dp)
+                        )
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Tailored Cover Letter", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Button(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(outreachData.tailoredCoverLetter))
+                                    copiedToast = "✓ Cover letter copied to clipboard!"
+                                },
+                                shape = RoundedCornerShape(6.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(12.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Copy Letter", fontSize = 10.sp)
+                            }
+                        }
+
+                        Text(
+                            text = outreachData.tailoredCoverLetter,
+                            fontSize = 11.sp,
+                            color = TextMuted,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(BgSurface, RoundedCornerShape(6.dp))
+                                .padding(8.dp)
+                        )
+                    }
+
+                    copiedToast?.let { toast ->
+                        item {
+                            Text(
+                                text = toast,
+                                fontSize = 11.sp,
+                                color = SuccessGreen,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        outreachApp = null
+                        copiedToast = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                ) {
+                    Text("Done")
+                }
+            }
+        )
     }
 
     // Add Application Dialog
@@ -279,7 +407,9 @@ private fun PipelineMetricBadge(label: String, count: String, color: Color) {
 private fun ApplicationCard(
     app: JobApplication,
     onStageChange: (String) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onOutreachClick: () -> Unit,
+    onReminderClick: () -> Unit
 ) {
     val stageColor = when (app.stage) {
         "OFFER" -> SuccessGreen
@@ -288,7 +418,6 @@ private fun ApplicationCard(
         "REJECTED" -> DangerRed
         else -> PrimaryBlueGlow
     }
-
 
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -342,7 +471,37 @@ private fun ApplicationCard(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Quick AI Outreach & Reminder Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = onOutreachClick,
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("AI InMail & Letter", fontSize = 11.sp, color = AccentCyan)
+            }
+
+            OutlinedButton(
+                onClick = onReminderClick,
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Push Reminder", fontSize = 11.sp, color = WarningAmber)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Stage Transitions & Delete
         Row(

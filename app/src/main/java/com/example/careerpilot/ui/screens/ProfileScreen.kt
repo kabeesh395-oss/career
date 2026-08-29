@@ -1,19 +1,25 @@
 package com.example.careerpilot.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.repository.BenchmarkCatalog
-import com.example.careerpilot.ui.components.GlassCard
+import com.example.careerpilot.ui.animation.*
+import com.example.careerpilot.ui.components.*
 import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
@@ -23,6 +29,8 @@ fun ProfileScreen(
     modifier: Modifier = Modifier
 ) {
     val profile by viewModel.userProfile.collectAsState()
+    val authUser by viewModel.authUserState.collectAsState()
+    val syncStatus by viewModel.cloudSyncStatus.collectAsState()
 
     var fullName by remember(profile) { mutableStateOf(profile?.fullName ?: "Alex Chen") }
     var headline by remember(profile) { mutableStateOf(profile?.headline ?: "Aspiring Senior Full Stack Engineer") }
@@ -56,6 +64,143 @@ fun ProfileScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary
                 )
+            }
+        }
+
+        // Firebase Auth & Cloud Firestore Persistence Hero
+        item {
+            AnimatedGlowingGlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("firebase_auth_firestore_card"),
+                backgroundColor = BgSurfaceElevated
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(if (authUser.isAuthenticated) SuccessGreen.copy(alpha = 0.2f) else PrimaryBlue.copy(alpha = 0.2f))
+                                .border(1.dp, if (authUser.isAuthenticated) SuccessGreen else PrimaryBlueGlow, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (authUser.isAuthenticated) Icons.Default.CloudDone else Icons.Default.CloudQueue,
+                                contentDescription = null,
+                                tint = if (authUser.isAuthenticated) SuccessGreen else PrimaryBlueGlow,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Column {
+                            PulsingLiveBadge(
+                                text = if (authUser.isAuthenticated) "FIREBASE AUTH CONNECTED" else "CLOUD SYNC READY",
+                                color = if (authUser.isAuthenticated) SuccessGreen else AccentCyan
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = authUser.displayName ?: "Local User",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = authUser.email ?: "local.dev@careerpilot.io",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    if (authUser.isAuthenticated) {
+                        OutlinedButton(
+                            onClick = { viewModel.signOut() },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.bouncyClickable { viewModel.signOut() }
+                        ) {
+                            Text("Sign Out", fontSize = 11.sp)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = BorderSubtle)
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Cloud Firestore Persistence:",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentCyan
+                        )
+                        Text(
+                            text = syncStatus.syncStatus,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (!authUser.isAuthenticated) {
+                        Button(
+                            onClick = { viewModel.signInWithGoogle() },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .bouncyClickable { viewModel.signInWithGoogle() }
+                                .testTag("google_signin_button")
+                        ) {
+                            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Sign in with Google", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Button(
+                        onClick = { viewModel.triggerCloudSync() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (authUser.isAuthenticated) SuccessGreen else BgCardHover
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .bouncyClickable { viewModel.triggerCloudSync() }
+                            .testTag("firestore_sync_button")
+                    ) {
+                        if (syncStatus.isSyncing) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary, strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Sync Firestore", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
 

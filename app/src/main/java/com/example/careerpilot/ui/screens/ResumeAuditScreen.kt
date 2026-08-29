@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.BulletRewriteOption
 import com.example.careerpilot.data.model.TargetJobPosting
 import com.example.careerpilot.data.repository.ResumeBulletRewriter
+import com.example.careerpilot.data.repository.ResumeParser
 import com.example.careerpilot.ui.components.CircularScoreGauge
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
@@ -46,8 +47,10 @@ fun ResumeAuditScreen(
     val activeJobMatch by viewModel.activeJobMatch.collectAsState()
     val bulletAnalysis by viewModel.bulletAnalysis.collectAsState()
 
-    var selectedTab by remember { mutableIntStateOf(0) } // 0: ATS Audit, 1: Job Matcher, 2: X-Y-Z Bullet Rewriter
-    val tabTitles = listOf("ATS Audit", "Job Matcher", "X-Y-Z Rewriter")
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: ATS Audit, 1: Job Matcher, 2: X-Y-Z Bullet Rewriter, 3: Import Resume
+    val tabTitles = listOf("ATS Audit", "Job Matcher", "X-Y-Z Rewriter", "Import Resume")
+
+    var importResumeText by remember { mutableStateOf(ResumeParser.SAMPLE_IMPORT_RESUMES.first()) }
 
     var resumeTextInput by remember {
         mutableStateOf(
@@ -135,7 +138,8 @@ B.S. in Computer Science — University of California (GPA: 3.8/4.0)"""
                                 imageVector = when (index) {
                                     0 -> Icons.Default.Assessment
                                     1 -> Icons.Default.WorkOutline
-                                    else -> Icons.Default.AutoFixHigh
+                                    2 -> Icons.Default.AutoFixHigh
+                                    else -> Icons.Default.FileUpload
                                 },
                                 contentDescription = title,
                                 modifier = Modifier.size(18.dp)
@@ -835,6 +839,96 @@ B.S. in Computer Science — University of California (GPA: 3.8/4.0)"""
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("1-Tap Apply to Active Resume Draft")
                         }
+                    }
+                }
+            }
+        }
+
+        // ================= TAB 3: RESUME IMPORTER & AUTO-PARSER =================
+        if (selectedTab == 3) {
+            item {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    borderColor = AccentPurple.copy(alpha = 0.5f)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Intelligent Resume Importer & Parser",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AccentCyan
+                            )
+                            Text(
+                                text = "Extracts skills, experience years, education & role into your profile",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                        Icon(Icons.Default.FileUpload, contentDescription = null, tint = AccentPurple, modifier = Modifier.size(28.dp))
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text("Load Sample Senior Engineer Profiles:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { importResumeText = ResumeParser.SAMPLE_IMPORT_RESUMES[0] },
+                            colors = ButtonDefaults.buttonColors(containerColor = BgSurface),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Backend / Cloud", fontSize = 11.sp, color = TextPrimary)
+                        }
+
+                        Button(
+                            onClick = { importResumeText = ResumeParser.SAMPLE_IMPORT_RESUMES[1] },
+                            colors = ButtonDefaults.buttonColors(containerColor = BgSurface),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Mobile Architect", fontSize = 11.sp, color = TextPrimary)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    OutlinedTextField(
+                        value = importResumeText,
+                        onValueChange = { importResumeText = it },
+                        label = { Text("Paste Raw Resume or PDF Text Here") },
+                        minLines = 8,
+                        maxLines = 14,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("import_resume_text_field")
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            if (importResumeText.isNotBlank()) {
+                                viewModel.importResumeFromText(importResumeText)
+                                selectedTab = 0
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentPurple),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("parse_import_resume_button")
+                    ) {
+                        Icon(Icons.Default.AutoFixHigh, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Parse & Sync to User Profile", fontWeight = FontWeight.Bold)
                     }
                 }
             }

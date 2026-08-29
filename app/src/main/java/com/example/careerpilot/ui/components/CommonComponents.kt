@@ -1,7 +1,6 @@
 package com.example.careerpilot.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.careerpilot.ui.animation.*
 import com.example.careerpilot.ui.theme.*
 
 @Composable
@@ -39,10 +39,12 @@ fun GlassCard(
     val shape = RoundedCornerShape(16.dp)
     Column(
         modifier = modifier
+            .then(
+                if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
+            )
             .clip(shape)
             .background(backgroundColor)
             .border(1.dp, borderColor, shape)
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(18.dp),
         content = content
     )
@@ -60,12 +62,34 @@ fun GradientGlassCard(
     val shape = RoundedCornerShape(16.dp)
     Column(
         modifier = modifier
+            .then(
+                if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
+            )
             .clip(shape)
             .background(
                 Brush.verticalGradient(listOf(startColor, endColor))
             )
             .border(1.dp, borderColor, shape)
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .padding(18.dp),
+        content = content
+    )
+}
+
+@Composable
+fun AnimatedGlowingGlassCard(
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = BgCard,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        modifier = modifier
+            .then(
+                if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
+            )
+            .animatedGradientBorder(shape = shape, borderWidth = 1.5.dp)
+            .background(backgroundColor)
             .padding(18.dp),
         content = content
     )
@@ -174,6 +198,52 @@ fun StatusBadge(
             color = color,
             letterSpacing = 0.5.sp
         )
+    }
+}
+
+@Composable
+fun PulsingLiveBadge(
+    text: String,
+    color: Color = AccentCyan,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition(label = "pulseBadge")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation = androidx.compose.animation.core.tween(900, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "dotAlpha"
+    )
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(color.copy(alpha = 0.15f))
+            .border(1.dp, color.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = alpha))
+            )
+            Text(
+                text = text.uppercase(),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = color,
+                letterSpacing = 0.5.sp
+            )
+        }
     }
 }
 

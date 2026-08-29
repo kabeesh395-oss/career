@@ -26,10 +26,8 @@ import com.example.careerpilot.data.model.ConversationMessage
 import com.example.careerpilot.data.model.InterviewSession
 import com.example.careerpilot.data.repository.BenchmarkCatalog
 import com.example.careerpilot.data.repository.ConversationalInterviewEngine
-import com.example.careerpilot.ui.components.CircularScoreGauge
-import com.example.careerpilot.ui.components.GlassCard
-import com.example.careerpilot.ui.components.SectionHeader
-import com.example.careerpilot.ui.components.StatusBadge
+import com.example.careerpilot.ui.animation.*
+import com.example.careerpilot.ui.components.*
 import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 import kotlinx.coroutines.launch
@@ -74,43 +72,37 @@ fun InterviewScreen(
         if (activeSession != null) {
             // Header Bar with Session Info & Exit
             item {
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    borderColor = PrimaryBlueGlow.copy(alpha = 0.5f)
+                AnimatedGlowingGlassCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(10.dp)
-                                        .clip(CircleShape)
-                                        .background(SuccessGreen)
-                                )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            PulsingAiOrb(size = 46.dp, baseColor = PrimaryBlueGlow, secondaryColor = AccentCyan)
+                            Column {
+                                PulsingLiveBadge(text = "LIVE AI PROBING", color = SuccessGreen)
+                                Spacer(modifier = Modifier.height(3.dp))
                                 Text(
-                                    text = "Live AI Probing Session",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    text = "${activeSession!!.roleTarget} • ${activeSession!!.difficulty} Level",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = AccentCyan
                                 )
                             }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "${activeSession!!.roleTarget} • ${activeSession!!.difficulty} Level",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AccentCyan
-                            )
                         }
 
                         OutlinedButton(
                             onClick = { viewModel.exitActiveInterview() },
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed)
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
+                            modifier = Modifier.bouncyClickable { viewModel.exitActiveInterview() }
                         ) {
                             Text("End Session", fontSize = 12.sp)
                         }
