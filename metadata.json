@@ -1,6 +1,6 @@
 {
-  "name": "CareerPilot AI",
-  "description": "Intelligent career acceleration, skill gap analysis, personalized roadmaps, and AI mock interviews.",
+  "name": "Career Hub",
+  "description": "Comprehensive engineering career operating system with real-time skill tracking, interview simulations, and market intelligence.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

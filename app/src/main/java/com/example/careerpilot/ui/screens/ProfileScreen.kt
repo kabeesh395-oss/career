@@ -1,5 +1,6 @@
 package com.example.careerpilot.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -69,6 +72,11 @@ fun ProfileScreen(
 
         // Firebase Auth & Cloud Firestore Persistence Hero
         item {
+            var authMode by remember { mutableIntStateOf(0) } // 0: Sign In, 1: Sign Up
+            var authEmail by remember { mutableStateOf("") }
+            var authPassword by remember { mutableStateOf("") }
+            var authName by remember { mutableStateOf("") }
+
             AnimatedGlowingGlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -86,14 +94,14 @@ fun ProfileScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(46.dp)
-                                .clip(CircleShape)
-                                .background(if (authUser.isAuthenticated) SuccessGreen.copy(alpha = 0.2f) else PrimaryBlue.copy(alpha = 0.2f))
-                                .border(1.dp, if (authUser.isAuthenticated) SuccessGreen else PrimaryBlueGlow, CircleShape),
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (authUser.isAuthenticated) SuccessGreen.copy(alpha = 0.15f) else PrimaryBlue.copy(alpha = 0.15f))
+                                .border(1.dp, if (authUser.isAuthenticated) SuccessGreen else PrimaryBlueGlow, RoundedCornerShape(10.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = if (authUser.isAuthenticated) Icons.Default.CloudDone else Icons.Default.CloudQueue,
+                                imageVector = if (authUser.isAuthenticated) Icons.Default.CloudDone else Icons.Default.Person,
                                 contentDescription = null,
                                 tint = if (authUser.isAuthenticated) SuccessGreen else PrimaryBlueGlow,
                                 modifier = Modifier.size(24.dp)
@@ -101,19 +109,19 @@ fun ProfileScreen(
                         }
 
                         Column {
-                            PulsingLiveBadge(
-                                text = if (authUser.isAuthenticated) "FIREBASE AUTH CONNECTED" else "CLOUD SYNC READY",
-                                color = if (authUser.isAuthenticated) SuccessGreen else AccentCyan
+                            StatusBadge(
+                                text = if (authUser.isAuthenticated) "ACCOUNT ACTIVE" else "ACCOUNT & SYNC",
+                                statusType = if (authUser.isAuthenticated) "success" else "primary"
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = authUser.displayName ?: "Local User",
+                                text = if (authUser.isAuthenticated) (authUser.displayName ?: "Engineer") else "Sign In to Career Hub",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
                             Text(
-                                text = authUser.email ?: "local.dev@careerpilot.io",
+                                text = if (authUser.isAuthenticated) (authUser.email ?: "") else "Sync skills, applications and interview notes",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextMuted,
                                 fontSize = 11.sp
@@ -135,69 +143,178 @@ fun ProfileScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = BorderSubtle)
-                Spacer(modifier = Modifier.height(10.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Cloud Firestore Persistence:",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = AccentCyan
-                        )
-                        Text(
-                            text = syncStatus.syncStatus,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (!authUser.isAuthenticated) {
+                if (!authUser.isAuthenticated) {
+                    // Auth Mode Selector
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(BgCard)
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Button(
-                            onClick = { viewModel.signInWithGoogle() },
+                            onClick = { authMode = 0 },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (authMode == 0) PrimaryBlue else Color.Transparent,
+                                contentColor = if (authMode == 0) Color.White else TextSecondary
+                            ),
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(vertical = 6.dp)
+                        ) {
+                            Text("Sign In", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = { authMode = 1 },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (authMode == 1) PrimaryBlue else Color.Transparent,
+                                contentColor = if (authMode == 1) Color.White else TextSecondary
+                            ),
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(vertical = 6.dp)
+                        ) {
+                            Text("Create Account", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    if (authMode == 1) {
+                        OutlinedTextField(
+                            value = authName,
+                            onValueChange = { authName = it },
+                            label = { Text("Your Full Name", fontSize = 12.sp) },
+                            placeholder = { Text("e.g. Alex Chen", fontSize = 12.sp) },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PrimaryBlue,
+                                unfocusedBorderColor = BorderSubtle,
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary
+                            ),
+                            modifier = Modifier.fillMaxWidth().testTag("auth_name_field")
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    OutlinedTextField(
+                        value = authEmail,
+                        onValueChange = { authEmail = it },
+                        label = { Text("Email Address", fontSize = 12.sp) },
+                        placeholder = { Text("engineer@careerhub.io", fontSize = 12.sp) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("auth_email_field")
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = authPassword,
+                        onValueChange = { authPassword = it },
+                        label = { Text("Password", fontSize = 12.sp) },
+                        placeholder = { Text("••••••••", fontSize = 12.sp) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("auth_password_field")
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                val targetEmail = authEmail.ifBlank { "engineer@careerhub.io" }
+                                val targetPass = authPassword.ifBlank { "secure123" }
+                                if (authMode == 0) {
+                                    viewModel.signInWithEmail(targetEmail, targetPass)
+                                } else {
+                                    viewModel.signUpWithEmail(authName, targetEmail, targetPass)
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .bouncyClickable { viewModel.signInWithGoogle() }
+                                .height(44.dp)
+                                .testTag("email_auth_submit_button")
+                        ) {
+                            Text(
+                                text = if (authMode == 0) "Sign In" else "Create Free Account",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = { viewModel.signInWithGoogle() },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                            border = BorderStroke(1.dp, BorderSubtle),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
                                 .testTag("google_signin_button")
                         ) {
-                            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(16.dp), tint = PrimaryBlueGlow)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Sign in with Google", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("Google Sign-In", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
-
-                    Button(
-                        onClick = { viewModel.triggerCloudSync() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (authUser.isAuthenticated) SuccessGreen else BgCardHover
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .bouncyClickable { viewModel.triggerCloudSync() }
-                            .testTag("firestore_sync_button")
+                } else {
+                    // Authenticated state: sync controls
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (syncStatus.isSyncing) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary, strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Sync Firestore", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Column {
+                            Text(
+                                text = "Cloud Firestore Persistence:",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = AccentCyan
+                            )
+                            Text(
+                                text = syncStatus.syncStatus,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        Button(
+                            onClick = { viewModel.triggerCloudSync() },
+                            colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .bouncyClickable { viewModel.triggerCloudSync() }
+                                .testTag("firestore_sync_button")
+                        ) {
+                            if (syncStatus.isSyncing) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary, strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Sync Now", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }

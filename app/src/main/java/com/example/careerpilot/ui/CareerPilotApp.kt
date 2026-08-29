@@ -64,6 +64,8 @@ val primaryNavItems = listOf(
 fun CareerPilotApp(
     viewModel: CareerViewModel = viewModel()
 ) {
+    var showSplashScreen by remember { mutableStateOf(true) }
+
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Dashboard.route
@@ -78,46 +80,51 @@ fun CareerPilotApp(
         }
     }
 
-    AmbientGlassBackground {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(PrimaryBlue.copy(alpha = 0.15f))
-                                    .border(1.dp, PrimaryBlue.copy(alpha = 0.35f), RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
+    if (showSplashScreen) {
+        CareerHubSplashScreen(
+            onSplashFinished = { showSplashScreen = false }
+        )
+    } else {
+        AmbientGlassBackground {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.TrendingUp,
-                                    contentDescription = null,
-                                    tint = PrimaryBlueGlow,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(PrimaryBlue.copy(alpha = 0.15f))
+                                        .border(1.dp, PrimaryBlue.copy(alpha = 0.35f), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Hub,
+                                        contentDescription = null,
+                                        tint = PrimaryBlueGlow,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Career Hub",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                    Text(
+                                        text = "Engineering Portfolio & Career OS",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                }
                             }
-                            Column {
-                                Text(
-                                    text = "CareerPilot",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = "Engineering Portfolio & Career OS",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextSecondary,
-                                    fontSize = 10.sp
-                                )
-                            }
-                        }
-                    },
+                        },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = BgSurface,
                         titleContentColor = TextPrimary
@@ -316,4 +323,5 @@ fun CareerPilotApp(
             }
         }
     }
+}
 }

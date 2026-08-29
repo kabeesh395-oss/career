@@ -719,7 +719,7 @@ class CareerRepository(private val dao: CareerDao) {
                 actionId = "nba_onboarding",
                 title = "Define Target Role & Objectives",
                 category = "Onboarding",
-                whyItMatters = "CareerPilot AI requires your target role to calibrate readiness scores and personalized roadmaps.",
+                whyItMatters = "Career Hub requires your target role to calibrate readiness scores and personalized roadmaps.",
                 evidence = "Target role is currently unset.",
                 estimatedMinutes = 2,
                 priority = "urgent",

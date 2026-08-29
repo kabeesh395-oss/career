@@ -1,8 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:width="72dp"
-        android:height="72dp"
-        android:drawable="@drawable/careerpilot_icon_1787884475911"
-        android:gravity="center" />
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Hub Interconnecting Pathways -->
+    <path
+        android:strokeColor="#60A5FA"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 54,30 L 54,78 M 30,54 L 78,54 M 36,36 L 72,72 M 36,72 L 72,36" />
+    
+    <!-- Outer Node Rings -->
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2"
+        android:fillColor="#0F172A"
+        android:pathData="M 54,22 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2"
+        android:fillColor="#0F172A"
+        android:pathData="M 54,86 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2"
+        android:fillColor="#0F172A"
+        android:pathData="M 22,54 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2"
+        android:fillColor="#0F172A"
+        android:pathData="M 86,54 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
+
+    <!-- Node Center Points -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 54,22 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 54,86 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 22,54 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 86,54 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
+
+    <!-- Central Core Hexagon / Hub Platform -->
+    <path
+        android:fillColor="#1D4ED8"
+        android:strokeColor="#93C5FD"
+        android:strokeWidth="2.5"
+        android:pathData="M 54,39 L 67,46.5 L 67,61.5 L 54,69 L 41,61.5 L 41,46.5 Z" />
+
+    <!-- Central Emblem / Rocket / Star Point -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 54,44 L 57.5,52 L 64,54 L 57.5,56 L 54,64 L 50.5,56 L 44,54 L 50.5,52 Z" />
+</vector>
