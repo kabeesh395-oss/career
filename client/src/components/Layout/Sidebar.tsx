@@ -48,13 +48,13 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
       }}>
         <div style={{
           width: 36, height: 36, borderRadius: 10,
-          background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+          background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 16, fontWeight: 800, color: '#fff',
-          boxShadow: '0 0 16px rgba(99,102,241,0.35)'
-        }}>C</div>
+          boxShadow: '0 0 16px rgba(59,130,246,0.35)'
+        }}>⬡</div>
         <span style={{ fontSize: 16, fontWeight: 700 }} className="gradient-text">
-          CareerPilot
+          Career Hub
         </span>
       </div>
 

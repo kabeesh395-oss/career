@@ -59,17 +59,17 @@ export default function AuthPage() {
           }}>
             <div style={{
               width: 42, height: 42, borderRadius: 12,
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+              background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 20, fontWeight: 800, color: '#fff',
-              boxShadow: '0 0 20px rgba(99,102,241,0.4)'
-            }}>C</div>
+              boxShadow: '0 0 20px rgba(59,130,246,0.4)'
+            }}>⬡</div>
             <span style={{ fontSize: 22, fontWeight: 700 }} className="gradient-text">
-              CareerPilot AI
+              Career Hub
             </span>
           </div>
           <p style={{ color: '#94a3b8', fontSize: 14 }}>
-            {isLogin ? 'Welcome back. Sign in to continue.' : 'Create your career acceleration account.'}
+            {isLogin ? 'Welcome back. Sign in to your developer workspace.' : 'Create your engineer portfolio & career workspace.'}
           </p>
         </div>
 
