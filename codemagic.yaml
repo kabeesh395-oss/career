@@ -1,55 +1,18 @@
 workflows:
   android-workflow:
-    name: CareerPilot Android APK Build
+    name: CareerHub Native Android APK Build
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
       vars:
-        PACKAGE_NAME: "ai.careerpilot.app"
-      node: 22
+        PACKAGE_NAME: "com.aistudio.careerpilot.vynwkq"
       java: 21
     scripts:
-      - name: Install client dependencies and build web app
+      - name: Build Native Android Release APK
         script: |
-          cd client
-          node --version
-          npm --version
-          npm cache clean --force 2>/dev/null || true
-          rm -rf node_modules
-          npm install --include=optional
-          npm run build
-      - name: Sync Capacitor Android
-        script: |
-          cd client
-          npx @capacitor/cli sync android || npx @capacitor/cli copy android
-      - name: Set up Keystore for Release Signing
-        script: |
-          cd client/android
-          if [ -z "$CM_KEYSTORE_PATH" ] && [ -z "$KEYSTORE_PATH" ]; then
-            echo "Auto-generating release keystore for Android build..."
-            KEYSTORE_FILE="$PWD/app/release-key.jks"
-            keytool -genkeypair -v \
-              -keystore "$KEYSTORE_FILE" \
-              -alias "release_alias" \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storepass "android" \
-              -keypass "android" \
-              -dname "CN=CareerPilot, OU=Engineering, O=CareerPilot, L=SanFrancisco, S=California, C=US"
-            
-            echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> $CM_ENV
-            echo "KEY_ALIAS=release_alias" >> $CM_ENV
-            echo "KEYSTORE_PASSWORD=android" >> $CM_ENV
-            echo "KEY_PASSWORD=android" >> $CM_ENV
-          fi
-      - name: Build Unified Android Release APK
-        script: |
-          cd client/android
-          mkdir -p app/src/main/res/drawable
-          chmod +x gradlew
+          chmod +x gradlew || true
           ./gradlew clean assembleRelease -x lint -x lintVitalRelease
-          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CareerPilot.apk 2>/dev/null || true
-          rm -f app/build/outputs/apk/release/app-release-unsigned.apk 2>/dev/null || true
+          cp -f app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CareerHub.apk 2>/dev/null || true
     artifacts:
-      - client/android/app/build/outputs/apk/release/CareerPilot.apk
+      - app/build/outputs/apk/release/CareerHub.apk
+      - app/build/outputs/apk/release/*.apk

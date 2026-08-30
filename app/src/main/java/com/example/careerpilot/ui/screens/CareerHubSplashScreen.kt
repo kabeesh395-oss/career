@@ -5,6 +5,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -127,115 +128,57 @@ fun CareerHubSplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(horizontal = 24.dp)
         ) {
-            // Animated Hub Emblem
+            // Animated Approved Hub Emblem
             Box(
                 modifier = Modifier
-                    .size(110.dp)
+                    .size(100.dp)
                     .scale(logoScale.value)
                     .alpha(logoAlpha.value),
                 contentAlignment = Alignment.Center
             ) {
-                // Central Geometric Hexagon & Node Hub Canvas
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val w = size.width
-                    val h = size.height
-                    val cx = w / 2f
-                    val cy = h / 2f
-
-                    // Cross axis nodes
-                    drawLine(
-                        color = Color(0xFF60A5FA),
-                        start = Offset(cx, cy - 36.dp.toPx()),
-                        end = Offset(cx, cy + 36.dp.toPx()),
-                        strokeWidth = 3.5.dp.toPx()
-                    )
-                    drawLine(
-                        color = Color(0xFF60A5FA),
-                        start = Offset(cx - 36.dp.toPx(), cy),
-                        end = Offset(cx + 36.dp.toPx(), cy),
-                        strokeWidth = 3.5.dp.toPx()
-                    )
-                    drawLine(
-                        color = Color(0xFF60A5FA).copy(alpha = 0.6f),
-                        start = Offset(cx - 25.dp.toPx(), cy - 25.dp.toPx()),
-                        end = Offset(cx + 25.dp.toPx(), cy + 25.dp.toPx()),
-                        strokeWidth = 2.5.dp.toPx()
-                    )
-                    drawLine(
-                        color = Color(0xFF60A5FA).copy(alpha = 0.6f),
-                        start = Offset(cx - 25.dp.toPx(), cy + 25.dp.toPx()),
-                        end = Offset(cx + 25.dp.toPx(), cy - 25.dp.toPx()),
-                        strokeWidth = 2.5.dp.toPx()
-                    )
-
-                    // Outer node circles
-                    val nodeRadius = 6.dp.toPx()
-                    val nodes = listOf(
-                        Offset(cx, cy - 36.dp.toPx()),
-                        Offset(cx, cy + 36.dp.toPx()),
-                        Offset(cx - 36.dp.toPx(), cy),
-                        Offset(cx + 36.dp.toPx(), cy)
-                    )
-
-                    nodes.forEach { pt ->
-                        drawCircle(color = Color(0xFF0F172A), center = pt, radius = nodeRadius)
-                        drawCircle(color = Color(0xFF38BDF8), center = pt, radius = nodeRadius, style = Stroke(width = 2.dp.toPx()))
-                        drawCircle(color = Color.White, center = pt, radius = 2.5.dp.toPx())
-                    }
-
-                    // Central Solid Hexagon
-                    val hexRadius = 22.dp.toPx()
-                    val hexPath = Path().apply {
-                        for (i in 0 until 6) {
-                            val angle = Math.toRadians((i * 60.0) + 30.0)
-                            val x = cx + hexRadius * Math.cos(angle).toFloat()
-                            val y = cy + hexRadius * Math.sin(angle).toFloat()
-                            if (i == 0) moveTo(x, y) else lineTo(x, y)
-                        }
-                        close()
-                    }
-                    drawPath(path = hexPath, color = Color(0xFF1D4ED8))
-                    drawPath(path = hexPath, color = Color(0xFF93C5FD), style = Stroke(width = 2.5.dp.toPx()))
-
-                    // Center 4-point star emblem
-                    val starPath = Path().apply {
-                        moveTo(cx, cy - 10.dp.toPx())
-                        lineTo(cx + 3.dp.toPx(), cy - 3.dp.toPx())
-                        lineTo(cx + 10.dp.toPx(), cy)
-                        lineTo(cx + 3.dp.toPx(), cy + 3.dp.toPx())
-                        lineTo(cx, cy + 10.dp.toPx())
-                        lineTo(cx - 3.dp.toPx(), cy + 3.dp.toPx())
-                        lineTo(cx - 10.dp.toPx(), cy)
-                        lineTo(cx - 3.dp.toPx(), cy - 3.dp.toPx())
-                        close()
-                    }
-                    drawPath(path = starPath, color = Color.White)
-                }
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.ic_careerhub_logo),
+                    contentDescription = "CareerHub Logo",
+                    modifier = Modifier.fillMaxSize()
+                )
             }
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // App Name Animation: "Career Hub"
+            // App Name Animation: Approved "Career" + "Hub" Wordmark
             AnimatedVisibility(
                 visible = animationStage >= 1,
                 enter = fadeIn(tween(400)) + slideInVertically(initialOffsetY = { 30 }, animationSpec = tween(400))
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Career Hub",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary,
-                        fontSize = 32.sp,
-                        letterSpacing = 0.5.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Career",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextPrimary,
+                            fontSize = 32.sp,
+                            letterSpacing = (-0.02).sp
+                        )
+                        Text(
+                            text = "Hub",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = AccentCyanGlow,
+                            fontSize = 32.sp,
+                            letterSpacing = (-0.02).sp
+                        )
+                    }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Engineering Portfolio & Career Operating System",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = TextSecondary,
-                        fontSize = 13.sp
+                        text = "PROFESSIONAL NETWORK",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextMuted,
+                        fontSize = 11.sp,
+                        letterSpacing = 1.5.sp
                     )
                 }
             }

@@ -27,6 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.careerpilot.ui.animation.*
+import com.example.careerpilot.ui.components.*
 import com.example.careerpilot.ui.screens.*
 import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
@@ -90,45 +91,15 @@ fun CareerPilotApp(
                 topBar = {
                     TopAppBar(
                         title = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(PrimaryBlue.copy(alpha = 0.15f))
-                                        .border(1.dp, PrimaryBlue.copy(alpha = 0.35f), RoundedCornerShape(8.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Hub,
-                                        contentDescription = null,
-                                        tint = PrimaryBlueGlow,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                Column {
-                                    Text(
-                                        text = "Career Hub",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
-                                    )
-                                    Text(
-                                        text = "Engineering Portfolio & Career OS",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TextSecondary,
-                                        fontSize = 10.sp
-                                    )
-                                }
-                            }
+                            CareerHubLogo(
+                                size = 32.dp,
+                                showSubtitle = true
+                            )
                         },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = BgSurface,
-                        titleContentColor = TextPrimary
-                    ),
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = BgSurface,
+                            titleContentColor = TextPrimary
+                        ),
                     modifier = Modifier
                         .drawBehind {
                             drawLine(

@@ -4,50 +4,71 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Hub Interconnecting Pathways -->
+    
+    <!-- Outer Base Circle -->
     <path
-        android:strokeColor="#60A5FA"
-        android:strokeWidth="3.5"
+        android:fillColor="#0B2545"
+        android:strokeColor="#134074"
+        android:strokeWidth="1.6"
+        android:pathData="M 54,20 A 34,34 0 1,0 54,88 A 34,34 0 1,0 54,20 Z" />
+
+    <!-- Constellation Lines -->
+    <path
+        android:strokeColor="#1D4ED8"
+        android:strokeWidth="1.2"
+        android:strokeAlpha="0.7"
+        android:pathData="M 54,30 L 54,45 M 54,63 L 54,78 M 30,54 L 45,54 M 63,54 L 78,54" />
+    <path
+        android:strokeColor="#2563EB"
+        android:strokeWidth="1.2"
+        android:strokeAlpha="0.7"
+        android:pathData="M 37,37 L 46,46 M 62,62 L 71,71 M 71,37 L 62,46 M 46,62 L 37,71" />
+
+    <!-- Core Node Circle -->
+    <path
+        android:fillColor="#0F172A"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2.0"
+        android:pathData="M 54,45 A 9,9 0 1,0 54,63 A 9,9 0 1,0 54,45 Z" />
+
+    <!-- Letter C in Center -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 57.5,50.5 C 56.7,49.5 55.5,49 54,49 C 51.3,49 49.5,51 49.5,54 C 49.5,57 51.3,59 54,59 C 55.5,59 56.7,58.5 57.5,57.5 L 56,56.2 C 55.5,56.8 54.8,57.2 54,57.2 C 52.3,57.2 51.1,55.8 51.1,54 C 51.1,52.2 52.3,50.8 54,50.8 C 54.8,50.8 55.5,51.2 56,51.8 Z" />
+
+    <!-- Outer Nodes -->
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M 54,27.5 A 2.6,2.6 0 1,0 54,32.7 A 2.6,2.6 0 1,0 54,27.5 Z" />
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M 54,75.3 A 2.6,2.6 0 1,0 54,80.5 A 2.6,2.6 0 1,0 54,75.3 Z" />
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M 30,51.4 A 2.6,2.6 0 1,0 30,56.6 A 2.6,2.6 0 1,0 30,51.4 Z" />
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M 78,51.4 A 2.6,2.6 0 1,0 78,56.6 A 2.6,2.6 0 1,0 78,51.4 Z" />
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M 37,34.8 A 2.2,2.2 0 1,0 37,39.2 A 2.2,2.2 0 1,0 37,34.8 Z" />
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M 71,68.8 A 2.2,2.2 0 1,0 71,73.2 A 2.2,2.2 0 1,0 71,68.8 Z" />
+    <path
+        android:fillColor="#93C5FD"
+        android:pathData="M 37,68.8 A 2.2,2.2 0 1,0 37,73.2 A 2.2,2.2 0 1,0 37,68.8 Z" />
+
+    <!-- Growth Arrow -->
+    <path
+        android:strokeColor="#00B4D8"
+        android:strokeWidth="3.0"
+        android:strokeLineCap="round"
+        android:pathData="M 42,66 L 66,42" />
+    <path
+        android:strokeColor="#00B4D8"
+        android:strokeWidth="3.0"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M 54,30 L 54,78 M 30,54 L 78,54 M 36,36 L 72,72 M 36,72 L 72,36" />
-    
-    <!-- Outer Node Rings -->
-    <path
-        android:strokeColor="#38BDF8"
-        android:strokeWidth="2"
-        android:fillColor="#0F172A"
-        android:pathData="M 54,22 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
-    <path
-        android:strokeColor="#38BDF8"
-        android:strokeWidth="2"
-        android:fillColor="#0F172A"
-        android:pathData="M 54,86 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
-    <path
-        android:strokeColor="#38BDF8"
-        android:strokeWidth="2"
-        android:fillColor="#0F172A"
-        android:pathData="M 22,54 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
-    <path
-        android:strokeColor="#38BDF8"
-        android:strokeWidth="2"
-        android:fillColor="#0F172A"
-        android:pathData="M 86,54 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0" />
-
-    <!-- Node Center Points -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 54,22 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 54,86 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 22,54 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0 M 86,54 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
-
-    <!-- Central Core Hexagon / Hub Platform -->
-    <path
-        android:fillColor="#1D4ED8"
-        android:strokeColor="#93C5FD"
-        android:strokeWidth="2.5"
-        android:pathData="M 54,39 L 67,46.5 L 67,61.5 L 54,69 L 41,61.5 L 41,46.5 Z" />
-
-    <!-- Central Emblem / Rocket / Star Point -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 54,44 L 57.5,52 L 64,54 L 57.5,56 L 54,64 L 50.5,56 L 44,54 L 50.5,52 Z" />
+        android:pathData="M 54,42 L 66,42 L 66,54" />
 </vector>

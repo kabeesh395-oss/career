@@ -14,9 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -33,13 +30,13 @@ import com.example.careerpilot.ui.animation.*
 import com.example.careerpilot.ui.theme.*
 
 /**
- * Standard Enterprise Surface Card
- * Features refined slate backing with subtle hairline border
+ * Standard Native Slate Card
+ * Clean, consistent enterprise surface with crisp hairline border
  */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(16.dp),
+    shape: Shape = RoundedCornerShape(14.dp),
     borderColor: Color = BorderSubtle,
     backgroundColor: Color = BgCard,
     glowColor: Color? = null,
@@ -47,17 +44,6 @@ fun GlassCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val cardModifier = modifier
-        .then(
-            if (glowColor != null) {
-                Modifier.drawBehind {
-                    drawCircle(
-                        color = glowColor.copy(alpha = 0.08f),
-                        radius = size.maxDimension * 0.5f,
-                        center = Offset(size.width * 0.5f, size.height * 0.5f)
-                    )
-                }
-            } else Modifier
-        )
         .then(
             if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
         )
@@ -73,15 +59,15 @@ fun GlassCard(
 }
 
 /**
- * Surface Card with Focused Accent Gradient (Hero cards, Key Takeaways, CTA)
+ * Surface Card with Focused Subtle Gradient Accent (Hero/Callout cards)
  */
 @Composable
 fun GradientGlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(16.dp),
-    startColor: Color = PrimaryBlue.copy(alpha = 0.15f),
+    shape: Shape = RoundedCornerShape(14.dp),
+    startColor: Color = PrimaryBlue.copy(alpha = 0.08f),
     endColor: Color = BgCard,
-    borderColor: Color = PrimaryBlue.copy(alpha = 0.35f),
+    borderColor: Color = PrimaryBlue.copy(alpha = 0.3f),
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -103,12 +89,12 @@ fun GradientGlassCard(
 }
 
 /**
- * Focused Highlight Card for Key Insights
+ * Focused Highlight Card for Key Insights / Recommended Actions
  */
 @Composable
 fun AnimatedGlowingGlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(16.dp),
+    shape: Shape = RoundedCornerShape(14.dp),
     backgroundColor: Color = BgCardHover,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -120,14 +106,14 @@ fun AnimatedGlowingGlassCard(
             )
             .clip(shape)
             .background(backgroundColor)
-            .border(1.dp, BorderHighlight.copy(alpha = 0.4f), shape)
+            .border(1.dp, PrimaryBlue.copy(alpha = 0.35f), shape)
             .padding(16.dp),
         content = content
     )
 }
 
 /**
- * Glassmorphic Metric Stat Display
+ * Native Standard Metric Stat Display
  */
 @Composable
 fun MetricCard(
@@ -138,14 +124,7 @@ fun MetricCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    val shape = RoundedCornerShape(16.dp)
-    val specularBorder = Brush.linearGradient(
-        listOf(
-            Color.White.copy(alpha = 0.3f),
-            accentColor.copy(alpha = 0.4f),
-            Color.White.copy(alpha = 0.05f)
-        )
-    )
+    val shape = RoundedCornerShape(14.dp)
 
     Column(
         modifier = modifier
@@ -154,27 +133,8 @@ fun MetricCard(
                 if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
             )
             .clip(shape)
-            .background(GlassCardBase)
-            .drawBehind {
-                // Ambient accent glow in top right
-                drawCircle(
-                    color = accentColor.copy(alpha = 0.15f),
-                    radius = size.width * 0.55f,
-                    center = Offset(size.width * 0.9f, 0f)
-                )
-                // Frosted top sheen
-                drawRect(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.07f),
-                            Color.Transparent
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(size.width * 0.5f, size.height * 0.5f)
-                    )
-                )
-            }
-            .border(1.dp, specularBorder, shape)
+            .background(BgCard)
+            .border(1.dp, BorderSubtle, shape)
             .padding(16.dp)
     ) {
         Row(
@@ -193,10 +153,9 @@ fun MetricCard(
                     .size(8.dp)
                     .clip(CircleShape)
                     .background(accentColor)
-                    .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
@@ -434,7 +393,7 @@ fun EmptyStateCard(
 ) {
     GlassCard(
         modifier = modifier.fillMaxWidth(),
-        backgroundColor = GlassCardBase.copy(alpha = 0.5f)
+        backgroundColor = BgCard
     ) {
         Column(
             modifier = Modifier
@@ -447,8 +406,8 @@ fun EmptyStateCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(PrimaryBlue.copy(alpha = 0.18f))
-                    .border(1.dp, PrimaryBlueGlow.copy(alpha = 0.4f), CircleShape),
+                    .background(PrimaryBlue.copy(alpha = 0.15f))
+                    .border(1.dp, PrimaryBlue.copy(alpha = 0.3f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -479,7 +438,7 @@ fun EmptyStateCard(
                 Button(
                     onClick = onActionClick,
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(text = actionLabel, fontWeight = FontWeight.SemiBold)
                 }

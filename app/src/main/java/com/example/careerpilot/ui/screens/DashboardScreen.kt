@@ -83,23 +83,29 @@ fun DashboardScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Hero Header
+        // User Greeting Header
         item {
-            Column {
-                Text(
-                    text = "Welcome back, ${profile?.fullName?.split(" ")?.firstOrNull() ?: "Engineer"}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Tracking toward: ${profile?.targetRole ?: "Full Stack Engineer"}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AccentCyan
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Welcome back, ${profile?.fullName?.split(" ")?.firstOrNull() ?: "Engineer"}",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Target: ${profile?.targetRole ?: "Full Stack Engineer"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = PrimaryBlueGlow
+                    )
+                }
             }
         }
 
@@ -109,7 +115,7 @@ fun DashboardScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(136.dp)
+                    .height(132.dp)
                     .clip(heroShape)
                     .border(1.dp, BorderSubtle, heroShape)
             ) {
@@ -125,8 +131,8 @@ fun DashboardScreen(
                         .background(
                             Brush.horizontalGradient(
                                 listOf(
-                                    BgSurface.copy(alpha = 0.95f),
-                                    BgSurface.copy(alpha = 0.70f),
+                                    BgSurface.copy(alpha = 0.96f),
+                                    BgSurface.copy(alpha = 0.80f),
                                     Color.Transparent
                                 )
                             )
@@ -145,6 +151,7 @@ fun DashboardScreen(
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Live skill calibration & portfolio tracking",
                             style = MaterialTheme.typography.bodySmall,
@@ -162,8 +169,8 @@ fun DashboardScreen(
                     .fillMaxWidth()
                     .clickable { onNavigate("audit") }
                     .testTag("dashboard_audit_banner"),
-                borderColor = if (auditSummary.criticalCount > 0) AccentRed.copy(alpha = 0.6f) else PrimaryBlueGlow.copy(alpha = 0.4f),
-                backgroundColor = BgSurfaceElevated
+                borderColor = if (auditSummary.criticalCount > 0) DangerRed.copy(alpha = 0.5f) else PrimaryBlue.copy(alpha = 0.35f),
+                backgroundColor = BgCard
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -171,15 +178,16 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (auditSummary.criticalCount > 0) AccentRed.copy(alpha = 0.15f)
+                                    if (auditSummary.criticalCount > 0) DangerRed.copy(alpha = 0.15f)
                                     else PrimaryBlue.copy(alpha = 0.15f)
                                 ),
                             contentAlignment = Alignment.Center
@@ -187,7 +195,7 @@ fun DashboardScreen(
                             Icon(
                                 imageVector = if (auditSummary.criticalCount > 0) Icons.Default.GppMaybe else Icons.Default.VerifiedUser,
                                 contentDescription = null,
-                                tint = if (auditSummary.criticalCount > 0) AccentRed else PrimaryBlueGlow,
+                                tint = if (auditSummary.criticalCount > 0) DangerRedGlow else PrimaryBlueGlow,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -205,12 +213,12 @@ fun DashboardScreen(
                                 )
                                 if (auditSummary.totalDemerits < 0) {
                                     Surface(
-                                        color = AccentRed.copy(alpha = 0.15f),
+                                        color = DangerRed.copy(alpha = 0.15f),
                                         shape = RoundedCornerShape(6.dp)
                                     ) {
                                         Text(
                                             text = "${auditSummary.totalDemerits} pts",
-                                            color = AccentRed,
+                                            color = DangerRedGlow,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -218,8 +226,9 @@ fun DashboardScreen(
                                     }
                                 }
                             }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = if (auditSummary.netAuditScore != null) "Net Readiness: ${auditSummary.netAuditScore}% • ${auditSummary.criticalCount} Critical, ${auditSummary.highCount} High Issues" else "Net Readiness: Not enough data yet • Add skills to calculate score",
+                                text = if (auditSummary.netAuditScore != null) "Net Readiness: ${auditSummary.netAuditScore}% • ${auditSummary.criticalCount} Critical, ${auditSummary.highCount} High Issues" else "Net Readiness: Add skills & resume to calculate score",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary
                             )
@@ -236,7 +245,7 @@ fun DashboardScreen(
             }
         }
 
-        // Next Best Action Card with Animated Gradient Glow & Pulsing AI Orb
+        // Next Best Action Card
         if (nextAction != null) {
             item {
                 AnimatedGlowingGlassCard(
@@ -254,7 +263,7 @@ fun DashboardScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            PulsingLiveBadge(text = "RECOMMENDED FOCUS", color = AccentCyan)
+                            StatusBadge(text = "RECOMMENDED FOCUS", statusType = "primary")
                             StatusBadge(text = nextAction!!.priority, statusType = nextAction!!.priority)
                         }
                         Text(
@@ -265,32 +274,19 @@ fun DashboardScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        PulsingAiOrb(
-                            size = 54.dp,
-                            baseColor = PrimaryBlueGlow,
-                            secondaryColor = AccentCyan
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = nextAction!!.title,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = nextAction!!.whyItMatters,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextSecondary,
-                                lineHeight = 18.sp
-                            )
-                        }
-                    }
+                    Text(
+                        text = nextAction!!.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = nextAction!!.whyItMatters,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary,
+                        lineHeight = 18.sp
+                    )
 
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
@@ -326,8 +322,8 @@ fun DashboardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("dashboard_roadmap_progress_tracker"),
-                borderColor = PrimaryBlueGlow.copy(alpha = 0.4f),
-                backgroundColor = BgSurfaceElevated
+                borderColor = BorderSubtle,
+                backgroundColor = BgCard
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -391,8 +387,8 @@ fun DashboardScreen(
                     }
 
                     Surface(
-                        color = BgCard,
-                        shape = RoundedCornerShape(16.dp),
+                        color = BgSurface,
+                        shape = RoundedCornerShape(8.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
                     ) {
                         Row(
@@ -422,15 +418,15 @@ fun DashboardScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .background(BgCard)
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(BgSurface)
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
                             .fillMaxWidth(animatedRoadmapProgress.coerceAtLeast(0.02f))
-                            .clip(RoundedCornerShape(5.dp))
+                            .clip(RoundedCornerShape(4.dp))
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
@@ -461,7 +457,7 @@ fun DashboardScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isPhaseDone) SuccessGreen.copy(alpha = 0.1f) else BgCard)
+                                    .background(if (isPhaseDone) SuccessGreen.copy(alpha = 0.1f) else BgSurface)
                                     .border(
                                         1.dp,
                                         if (isPhaseDone) SuccessGreen.copy(alpha = 0.35f) else BorderSubtle,
@@ -513,7 +509,7 @@ fun DashboardScreen(
                 if (nextPendingRoadmapTask != null) {
                     Spacer(modifier = Modifier.height(14.dp))
                     Surface(
-                        color = BgCard,
+                        color = BgSurface,
                         shape = RoundedCornerShape(10.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
                         modifier = Modifier.fillMaxWidth()
@@ -563,7 +559,7 @@ fun DashboardScreen(
         item {
             SectionHeader(
                 title = "Career Performance Metrics",
-                subtitle = "Real-time readiness telemetry across 6 dimensions"
+                subtitle = "Readiness telemetry across key dimensions"
             )
         }
 
@@ -637,15 +633,15 @@ fun DashboardScreen(
             }
         }
 
-        // Search Grounding Live Market Intelligence Teaser
+        // Market Intelligence Teaser
         item {
             GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onNavigate("market") }
                     .testTag("dashboard_search_grounding_teaser"),
-                borderColor = AccentCyan.copy(alpha = 0.5f),
-                backgroundColor = BgSurfaceElevated
+                borderColor = BorderSubtle,
+                backgroundColor = BgCard
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -653,8 +649,9 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Box(
                             modifier = Modifier
@@ -673,7 +670,7 @@ fun DashboardScreen(
 
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                PulsingLiveBadge(text = "LIVE GOOGLE SEARCH", color = AccentCyan)
+                                StatusBadge(text = "LIVE SEARCH", color = AccentCyan)
                                 Text(
                                     text = "Market Intel",
                                     style = MaterialTheme.typography.titleMedium,
@@ -681,8 +678,9 @@ fun DashboardScreen(
                                     color = TextPrimary
                                 )
                             }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Grounded via gemini-3.5-flash: 2026 FAANG comp & interview loops",
+                                text = "Live compensation benchmarks & hiring loop trends",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary
                             )
@@ -729,7 +727,7 @@ fun DashboardScreen(
             )
 
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(quickLinks) { (title, icon, route) ->
@@ -765,7 +763,7 @@ fun DashboardScreen(
                 val timeFormat = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault())
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = BgCard.copy(alpha = 0.6f)
+                    backgroundColor = BgCard
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -807,11 +805,11 @@ private fun QuickHubItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(BgCard)
-            .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
+            .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
             .clickable { onClick() }
-            .padding(vertical = 14.dp, horizontal = 16.dp)
+            .padding(vertical = 12.dp, horizontal = 12.dp)
             .width(88.dp)
     ) {
         Box(
