@@ -14,6 +14,7 @@ import LearningPage from './components/Learning/LearningPage';
 import IntegrationsPage from './components/Integrations/IntegrationsPage';
 import AnalyticsPage from './components/Analytics/AnalyticsPage';
 import ProfilePage from './components/Profile/ProfilePage';
+import MobileUiTemplates from './components/Templates/MobileUiTemplates';
 import './index.css';
 
 function AppContent() {
@@ -94,6 +95,8 @@ function AppContent() {
         return <IntegrationsPage />;
       case 'analytics':
         return <AnalyticsPage />;
+      case 'templates':
+        return <MobileUiTemplates />;
       case 'profile':
         return <ProfilePage />;
       default:
