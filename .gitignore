@@ -4,6 +4,8 @@ node_modules/
 # Build outputs
 dist/
 build/
+.gradle/
+.kotlin/
 
 # APK / Android build artifacts
 *.apk

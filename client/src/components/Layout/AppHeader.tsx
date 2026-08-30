@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { motion, Variants } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, Sparkles, RefreshCw, Command, CheckCircle2, ShieldCheck, Layers } from 'lucide-react';
+import { Search, Bell, RefreshCw, Command } from 'lucide-react';
 
 interface AppHeaderProps {
-  activePage: string;
+  activePage?: string;
   onNavigate: (page: string) => void;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({ activePage, onNavigate }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
   const { user } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
@@ -19,7 +19,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ activePage, onNavigate }) 
   };
 
   // Animation variants for container orchestration
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -30,7 +30,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ activePage, onNavigate }) 
     },
   };
 
-  const iconVariants = {
+  const iconVariants: Variants = {
     hidden: { scale: 0, rotate: -25, opacity: 0 },
     visible: {
       scale: 1,
@@ -44,7 +44,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ activePage, onNavigate }) 
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: -10 },
     visible: {
       opacity: 1,
@@ -57,7 +57,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ activePage, onNavigate }) 
     },
   };
 
-  const letterContainerVariants = {
+  const letterContainerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -68,7 +68,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ activePage, onNavigate }) 
     },
   };
 
-  const letterVariants = {
+  const letterVariants: Variants = {
     hidden: { opacity: 0, y: 8, filter: 'blur(4px)' },
     visible: {
       opacity: 1,
@@ -76,7 +76,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ activePage, onNavigate }) 
       filter: 'blur(0px)',
       transition: {
         duration: 0.35,
-        ease: [0.2, 0.65, 0.3, 0.9],
+        ease: [0.2, 0.65, 0.3, 0.9] as any,
       },
     },
   };
