@@ -85,7 +85,20 @@ fun InterviewScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            PulsingAiOrb(size = 46.dp, baseColor = PrimaryBlueGlow, secondaryColor = AccentCyan)
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(RoundedCornerShape(Dimens.RadiusSm))
+                                    .background(PrimaryBlue.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.RecordVoiceOver,
+                                    contentDescription = null,
+                                    tint = PrimaryBlueLighter,
+                                    modifier = Modifier.size(Dimens.IconLg)
+                                )
+                            }
                             Column {
                                 PulsingLiveBadge(text = "LIVE AI PROBING", color = SuccessGreen)
                                 Spacer(modifier = Modifier.height(3.dp))

@@ -14,7 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
@@ -26,94 +25,95 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.careerpilot.ui.animation.*
 import com.example.careerpilot.ui.theme.*
+import com.example.careerpilot.ui.theme.Dimens
+
+// ── Cards ─────────────────────────────────────────────────────────
 
 /**
- * Standard Native Slate Card
- * Clean, consistent enterprise surface with crisp hairline border
+ * Standard CareerHub card surface.
+ * Use for all card-like groupings throughout the app.
  */
+@Composable
+fun CareerCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(Dimens.RadiusMd),
+    borderColor: Color = BorderSubtle,
+    backgroundColor: Color = BgCard,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val cardModifier = modifier
+        .clip(shape)
+        .background(backgroundColor)
+        .border(Dimens.CardBorderWidth, borderColor, shape)
+        .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+        .padding(Dimens.CardPadding)
+
+    Column(
+        modifier = cardModifier,
+        content = content
+    )
+}
+
+/**
+ * Highlighted card for primary actions or key insights.
+ */
+@Composable
+fun CareerCardHighlight(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(Dimens.RadiusMd),
+    borderColor: Color = PrimaryBlue.copy(alpha = 0.35f),
+    backgroundColor: Color = BgCardHover,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    CareerCard(
+        modifier = modifier,
+        shape = shape,
+        borderColor = borderColor,
+        backgroundColor = backgroundColor,
+        onClick = onClick,
+        content = content
+    )
+}
+
+// Backward-compatible aliases
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(14.dp),
+    shape: Shape = RoundedCornerShape(Dimens.RadiusMd),
     borderColor: Color = BorderSubtle,
     backgroundColor: Color = BgCard,
     glowColor: Color? = null,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
-) {
-    val cardModifier = modifier
-        .then(
-            if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
-        )
-        .clip(shape)
-        .background(backgroundColor)
-        .border(1.dp, borderColor, shape)
-        .padding(16.dp)
+) = CareerCard(modifier, shape, borderColor, backgroundColor, onClick, content)
 
-    Column(
-        modifier = cardModifier,
-        content = content
-    )
-}
-
-/**
- * Surface Card with Focused Subtle Gradient Accent (Hero/Callout cards)
- */
 @Composable
 fun GradientGlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(14.dp),
+    shape: Shape = RoundedCornerShape(Dimens.RadiusMd),
     startColor: Color = PrimaryBlue.copy(alpha = 0.08f),
     endColor: Color = BgCard,
     borderColor: Color = PrimaryBlue.copy(alpha = 0.3f),
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
-) {
-    val cardModifier = modifier
-        .then(
-            if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
-        )
-        .clip(shape)
-        .background(
-            Brush.verticalGradient(listOf(startColor, endColor))
-        )
-        .border(1.dp, borderColor, shape)
-        .padding(16.dp)
+) = CareerCard(modifier, shape, borderColor, BgCard, onClick, content)
 
-    Column(
-        modifier = cardModifier,
-        content = content
-    )
-}
-
-/**
- * Focused Highlight Card for Key Insights / Recommended Actions
- */
 @Composable
 fun AnimatedGlowingGlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(14.dp),
+    shape: Shape = RoundedCornerShape(Dimens.RadiusMd),
     backgroundColor: Color = BgCardHover,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = modifier
-            .then(
-                if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
-            )
-            .clip(shape)
-            .background(backgroundColor)
-            .border(1.dp, PrimaryBlue.copy(alpha = 0.35f), shape)
-            .padding(16.dp),
-        content = content
-    )
-}
+) = CareerCardHighlight(modifier, shape, backgroundColor = backgroundColor, onClick = onClick, content = content)
+
+// ── Metrics ───────────────────────────────────────────────────────
 
 /**
- * Native Standard Metric Stat Display
+ * Compact metric display card.
  */
 @Composable
 fun MetricCard(
@@ -124,18 +124,9 @@ fun MetricCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    val shape = RoundedCornerShape(14.dp)
-
-    Column(
-        modifier = modifier
-            .testTag("metric_${label.lowercase().replace(' ', '_')}")
-            .then(
-                if (onClick != null) Modifier.bouncyClickable { onClick() } else Modifier
-            )
-            .clip(shape)
-            .background(BgCard)
-            .border(1.dp, BorderSubtle, shape)
-            .padding(16.dp)
+    CareerCard(
+        modifier = modifier.testTag("metric_${label.lowercase().replace(' ', '_')}"),
+        onClick = onClick
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -155,14 +146,14 @@ fun MetricCard(
                     .background(accentColor)
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(Dimens.SpaceSm))
         Text(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
             color = TextPrimary,
             fontWeight = FontWeight.ExtraBold
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(Dimens.SpaceXs))
         Text(
             text = detail,
             style = MaterialTheme.typography.labelSmall,
@@ -172,31 +163,40 @@ fun MetricCard(
     }
 }
 
-/**
- * Refined Pill Status Badge
- */
+// ── Badges ────────────────────────────────────────────────────────
+
 @Composable
 fun StatusBadge(
     text: String,
     statusType: String = "neutral",
     modifier: Modifier = Modifier
 ) {
-    val (bgColor, txtColor, borderColor) = when (statusType.lowercase()) {
-        "urgent", "danger", "high", "critical" -> Triple(DangerRed.copy(alpha = 0.12f), DangerRedGlow, DangerRed.copy(alpha = 0.3f))
-        "medium", "warning", "in_progress" -> Triple(WarningAmber.copy(alpha = 0.12f), WarningAmberGlow, WarningAmber.copy(alpha = 0.3f))
-        "success", "completed", "verified", "low", "resolved" -> Triple(SuccessGreen.copy(alpha = 0.12f), SuccessGreenGlow, SuccessGreen.copy(alpha = 0.3f))
-        "primary", "active" -> Triple(PrimaryBlue.copy(alpha = 0.12f), PrimaryBlueGlow, PrimaryBlue.copy(alpha = 0.3f))
-        "accent" -> Triple(AccentPurple.copy(alpha = 0.12f), AccentPurpleGlow, AccentPurple.copy(alpha = 0.3f))
+    val (bgColor, txtColor, bdColor) = when (statusType.lowercase()) {
+        "urgent", "danger", "high", "critical" -> Triple(
+            DangerRed.copy(alpha = 0.12f), DangerRedLight, DangerRed.copy(alpha = 0.3f)
+        )
+        "medium", "warning", "in_progress" -> Triple(
+            WarningAmber.copy(alpha = 0.12f), WarningAmberLight, WarningAmber.copy(alpha = 0.3f)
+        )
+        "success", "completed", "verified", "low", "resolved" -> Triple(
+            SuccessGreen.copy(alpha = 0.12f), SuccessGreenLight, SuccessGreen.copy(alpha = 0.3f)
+        )
+        "primary", "active" -> Triple(
+            PrimaryBlue.copy(alpha = 0.12f), PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.3f)
+        )
+        "accent" -> Triple(
+            AccentPurple.copy(alpha = 0.12f), AccentPurple, AccentPurple.copy(alpha = 0.3f)
+        )
         else -> Triple(BgMuted, TextSecondary, BorderSubtle)
     }
 
-    val shape = RoundedCornerShape(6.dp)
+    val shape = RoundedCornerShape(Dimens.BadgeRadius)
     Box(
         modifier = modifier
             .clip(shape)
             .background(bgColor)
-            .border(1.dp, borderColor, shape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .border(1.dp, bdColor, shape)
+            .padding(horizontal = Dimens.BadgePaddingHorizontal, vertical = Dimens.BadgePaddingVertical),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -215,13 +215,13 @@ fun StatusBadge(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(6.dp)
+    val shape = RoundedCornerShape(Dimens.BadgeRadius)
     Box(
         modifier = modifier
             .clip(shape)
             .background(color.copy(alpha = 0.12f))
             .border(1.dp, color.copy(alpha = 0.3f), shape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .padding(horizontal = Dimens.BadgePaddingHorizontal, vertical = Dimens.BadgePaddingVertical),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -251,13 +251,13 @@ fun PulsingLiveBadge(
         label = "dotAlpha"
     )
 
-    val shape = RoundedCornerShape(6.dp)
+    val shape = RoundedCornerShape(Dimens.BadgeRadius)
     Box(
         modifier = modifier
             .clip(shape)
             .background(color.copy(alpha = 0.12f))
             .border(1.dp, color.copy(alpha = 0.3f), shape)
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+            .padding(horizontal = Dimens.BadgePaddingHorizontal, vertical = Dimens.BadgePaddingVertical),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -281,6 +281,8 @@ fun PulsingLiveBadge(
     }
 }
 
+// ── Score Gauge ────────────────────────────────────────────────────
+
 @Composable
 fun CircularScoreGauge(
     score: Int,
@@ -302,12 +304,10 @@ fun CircularScoreGauge(
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokePx = strokeWidth.toPx()
-            // Track
             drawCircle(
-                color = Color(0xFF1E293B),
+                color = BorderSubtle,
                 style = Stroke(width = strokePx)
             )
-            // Progress arc
             drawArc(
                 color = primaryColor,
                 startAngle = -90f,
@@ -338,6 +338,8 @@ fun CircularScoreGauge(
     }
 }
 
+// ── Section Header ────────────────────────────────────────────────
+
 @Composable
 fun SectionHeader(
     title: String,
@@ -354,15 +356,15 @@ fun SectionHeader(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
             if (subtitle != null) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(Dimens.SpaceXxs))
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
             }
@@ -370,7 +372,7 @@ fun SectionHeader(
         if (actionText != null && onActionClick != null) {
             TextButton(
                 onClick = onActionClick,
-                colors = ButtonDefaults.textButtonColors(contentColor = PrimaryBlueGlow)
+                colors = ButtonDefaults.textButtonColors(contentColor = PrimaryBlueLighter)
             ) {
                 Text(
                     text = actionText,
@@ -382,6 +384,12 @@ fun SectionHeader(
     }
 }
 
+// ── Empty State ───────────────────────────────────────────────────
+
+/**
+ * Standard empty state — NOT wrapped in a card.
+ * Use when a feature has no data to display.
+ */
 @Composable
 fun EmptyStateCard(
     icon: ImageVector,
@@ -391,57 +399,51 @@ fun EmptyStateCard(
     onActionClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    GlassCard(
-        modifier = modifier.fillMaxWidth(),
-        backgroundColor = BgCard
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = Dimens.SpaceXxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .size(Dimens.AvatarLg)
+                .clip(CircleShape)
+                .background(PrimaryBlue.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(PrimaryBlue.copy(alpha = 0.15f))
-                    .border(1.dp, PrimaryBlue.copy(alpha = 0.3f), CircleShape),
-                contentAlignment = Alignment.Center
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = PrimaryBlueLighter,
+                modifier = Modifier.size(Dimens.IconLg)
+            )
+        }
+        Spacer(modifier = Modifier.height(Dimens.SpaceMd))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(Dimens.SpaceXs))
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = Dimens.SpaceLg)
+        )
+        if (actionLabel != null && onActionClick != null) {
+            Spacer(modifier = Modifier.height(Dimens.SpaceLg))
+            Button(
+                onClick = onActionClick,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                shape = RoundedCornerShape(Dimens.RadiusSm)
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = PrimaryBlueGlow,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            if (actionLabel != null && onActionClick != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onActionClick,
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(text = actionLabel, fontWeight = FontWeight.SemiBold)
-                }
+                Text(text = actionLabel, fontWeight = FontWeight.SemiBold)
             }
         }
     }

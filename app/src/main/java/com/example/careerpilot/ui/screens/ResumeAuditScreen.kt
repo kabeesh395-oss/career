@@ -53,27 +53,7 @@ fun ResumeAuditScreen(
     var importResumeText by remember { mutableStateOf(ResumeParser.SAMPLE_IMPORT_RESUMES.first()) }
 
     var resumeTextInput by remember {
-        mutableStateOf(
-            """ALEX CHEN — Senior Full Stack & Mobile Engineer
-alex.chen@dev.io | github.com/alexchen | linkedin.com/in/alexchen
-
-EXPERIENCE
-Software Engineer | CloudScale Systems (2022 – Present)
-• Architected and developed high-throughput microservices in Kotlin and TypeScript handling 40M+ daily events.
-• Reduced p99 database query latency by 45% by restructuring PostgreSQL indexes and implementing a Redis cache cluster.
-• Built reactive cross-platform Android mobile interfaces using Jetpack Compose and Room local persistence with 99.9% crash-free sessions.
-• Led migration of legacy build tools to automated CI/CD pipelines with multi-stage Docker containers, reducing build times by 60%.
-
-PROJECTS
-• Distributed Task Queue: High-throughput task orchestrator with Redis and Prometheus telemetry.
-• Collaborative Canvas: Real-time whiteboard engine using WebSockets and CRDT conflict resolution.
-
-SKILLS
-Kotlin, TypeScript, Python, React, Jetpack Compose, Node.js, Express, PostgreSQL, Redis, Docker, Kubernetes, AWS, System Design, REST APIs, GraphQL, TDD, Unit Testing.
-
-EDUCATION
-B.S. in Computer Science — University of California (GPA: 3.8/4.0)"""
-        )
+        mutableStateOf("")
     }
 
     // Custom Job Description Dialog State

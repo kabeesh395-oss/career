@@ -7,35 +7,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.careerpilot.ui.theme.AccentCyanGlow
+import com.example.careerpilot.ui.theme.AccentCyanLight
+import com.example.careerpilot.ui.theme.Dimens
 import com.example.careerpilot.ui.theme.TextMuted
 import com.example.careerpilot.ui.theme.TextPrimary
 
 /**
- * Standard Approved CareerHub Logo Component
- * Renders the exact approved constellation logo emblem and brand typography
+ * Canonical CareerHub logo component.
+ * Always references the single approved ic_careerhub_logo asset.
  */
 @Composable
 fun CareerHubLogo(
     modifier: Modifier = Modifier,
     iconOnly: Boolean = false,
-    size: Dp = 36.dp,
-    showSubtitle: Boolean = true
+    size: Dp = 32.dp,
+    showSubtitle: Boolean = false
 ) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)
     ) {
-        // Exact Emblem Asset
         Image(
             painter = painterResource(id = R.drawable.ic_careerhub_logo),
             contentDescription = "CareerHub Logo",
@@ -43,29 +41,21 @@ fun CareerHubLogo(
         )
 
         if (!iconOnly) {
-            Column(
-                verticalArrangement = Arrangement.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            Column(verticalArrangement = Arrangement.Center) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "Career",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary,
-                        fontSize = (size.value * 0.46f).sp,
-                        letterSpacing = (-0.02).sp,
-                        lineHeight = (size.value * 0.52f).sp
+                        letterSpacing = (-0.02).sp
                     )
                     Text(
                         text = "Hub",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = AccentCyanGlow, // #38BDF8 matching the approved brand spec
-                        fontSize = (size.value * 0.46f).sp,
-                        letterSpacing = (-0.02).sp,
-                        lineHeight = (size.value * 0.52f).sp
+                        color = AccentCyanLight,
+                        letterSpacing = (-0.02).sp
                     )
                 }
                 if (showSubtitle) {
@@ -74,9 +64,7 @@ fun CareerHubLogo(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = TextMuted,
-                        fontSize = (size.value * 0.22f).coerceAtLeast(8f).sp,
-                        letterSpacing = 1.2.sp,
-                        lineHeight = (size.value * 0.26f).sp
+                        letterSpacing = 1.2.sp
                     )
                 }
             }

@@ -4,142 +4,177 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.careerpilot.ui.animation.bouncyClickable
+import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.theme.*
-import com.example.careerpilot.ui.viewmodel.CareerViewModel
+import com.example.careerpilot.ui.theme.Dimens
 
-enum class HubTab(val title: String, val icon: ImageVector) {
-    MARKET("Market Insights", Icons.Default.TravelExplore),
-    SKILLS("Skill Matrix", Icons.Default.Assessment),
-    APPLICATIONS("Applications", Icons.Default.WorkOutline),
-    COMPENSATION("Offer Negotiator", Icons.Default.MonetizationOn),
-    EXPORTS("Export Portfolio", Icons.Default.FileDownload),
-    SANDBOX("Code Sandbox", Icons.Default.Terminal),
-    SPRINTS("Skill Sprints", Icons.Default.EmojiEvents),
-    PEERS("Peer Mocks", Icons.Default.People),
-    ROADMAP("Roadmap", Icons.Default.Timeline),
-    PROJECTS("Projects", Icons.Default.Code),
-    LEARNING("Learning", Icons.Default.MenuBook),
-    INTEGRATIONS("Sync Integrations", Icons.Default.Sync),
-    PROFILE("Profile & Settings", Icons.Default.Person)
-}
+private data class HubItem(
+    val title: String,
+    val icon: ImageVector,
+    val route: String,
+    val iconTint: Color,
+    val iconBg: Color
+)
 
 @Composable
 fun HubScreen(
-    viewModel: CareerViewModel,
-    initialTab: HubTab = HubTab.SKILLS,
+    onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedTab by remember { mutableStateOf(initialTab) }
+    val careerSection = listOf(
+        HubItem("Skill Matrix", Icons.Default.Assessment, "career", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
+        HubItem("Roadmap", Icons.Default.Timeline, "roadmap", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f)),
+        HubItem("Market Intel", Icons.Default.TravelExplore, "market", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
+        HubItem("Audit Center", Icons.Default.Shield, "audit", WarningAmberLight, WarningAmber.copy(alpha = 0.12f))
+    )
 
-    Column(
+    val practiceSection = listOf(
+        HubItem("Code Sandbox", Icons.Default.Terminal, "sandbox", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
+        HubItem("Skill Sprints", Icons.Default.EmojiEvents, "sprints", WarningAmberLight, WarningAmber.copy(alpha = 0.12f)),
+        HubItem("Peer Mocks", Icons.Default.People, "peers", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
+        HubItem("Negotiator", Icons.Default.MonetizationOn, "negotiator", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f))
+    )
+
+    val portfolioSection = listOf(
+        HubItem("Projects", Icons.Default.Code, "projects", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
+        HubItem("Learning", Icons.Default.MenuBook, "learning", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
+        HubItem("Applications", Icons.Default.WorkOutline, "applications", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
+        HubItem("Export", Icons.Default.FileDownload, "export", TextSecondary, BgMuted)
+    )
+
+    val settingsSection = listOf(
+        HubItem("Profile", Icons.Default.Person, "profile", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
+        HubItem("Integrations", Icons.Default.Sync, "integrations", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f))
+    )
+
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Transparent)
+            .padding(horizontal = Dimens.ContentHorizontalPadding),
+        contentPadding = PaddingValues(
+            top = Dimens.ContentTopPadding,
+            bottom = Dimens.ContentBottomPadding
+        ),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXl)
     ) {
-        // Modern Horizontal Scrollable Tab Selector
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BgSurface)
-                .drawBehind {
-                    drawLine(
-                        color = BorderSubtle,
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                }
-        ) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                itemsIndexed(HubTab.values()) { _, tab ->
-                    val isSelected = selectedTab == tab
-                    val shape = RoundedCornerShape(8.dp)
+        item {
+            SectionHeader(title = "Career Analysis")
+        }
+        item {
+            HubGrid(items = careerSection, onNavigate = onNavigate)
+        }
 
-                    Box(
-                        modifier = Modifier
-                            .clip(shape)
-                            .background(
-                                if (isSelected) PrimaryBlue.copy(alpha = 0.15f)
-                                else BgCard
-                            )
-                            .border(
-                                1.dp,
-                                if (isSelected) PrimaryBlue.copy(alpha = 0.4f) else BorderSubtle,
-                                shape
-                            )
-                            .bouncyClickable { selectedTab = tab }
-                            .padding(horizontal = 12.dp, vertical = 7.dp)
-                            .testTag("hub_tab_${tab.name.lowercase()}"),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = null,
-                                tint = if (isSelected) PrimaryBlueGlow else TextSecondary,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Text(
-                                text = tab.title,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) TextPrimary else TextSecondary,
-                                fontSize = 12.sp
-                            )
-                        }
+        item {
+            SectionHeader(title = "Practice & Prep")
+        }
+        item {
+            HubGrid(items = practiceSection, onNavigate = onNavigate)
+        }
+
+        item {
+            SectionHeader(title = "Portfolio")
+        }
+        item {
+            HubGrid(items = portfolioSection, onNavigate = onNavigate)
+        }
+
+        item {
+            SectionHeader(title = "Settings")
+        }
+        item {
+            HubGrid(items = settingsSection, onNavigate = onNavigate)
+        }
+    }
+}
+
+@Composable
+private fun HubGrid(
+    items: List<HubItem>,
+    onNavigate: (String) -> Unit
+) {
+    val columns = 2
+    val rows = (items.size + columns - 1) / columns
+
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)) {
+        for (row in 0 until rows) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+            ) {
+                for (col in 0 until columns) {
+                    val index = row * columns + col
+                    if (index < items.size) {
+                        HubGridItem(
+                            item = items[index],
+                            onClick = { onNavigate(items[index].route) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
         }
+    }
+}
 
-        // Selected Subscreen Content
+@Composable
+private fun HubGridItem(
+    item: HubItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(Dimens.RadiusMd)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .clip(shape)
+            .background(BgCard)
+            .border(Dimens.CardBorderWidth, BorderSubtle, shape)
+            .clickable { onClick() }
+            .padding(vertical = Dimens.SpaceLg, horizontal = Dimens.SpaceMd)
+            .testTag("hub_item_${item.route}")
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .weight(1f)
+                .size(Dimens.AvatarMd)
+                .clip(RoundedCornerShape(Dimens.RadiusSm))
+                .background(item.iconBg),
+            contentAlignment = Alignment.Center
         ) {
-            when (selectedTab) {
-                HubTab.MARKET -> MarketIntelligenceScreen(viewModel = viewModel)
-                HubTab.SKILLS -> CareerAnalysisScreen(viewModel = viewModel)
-                HubTab.APPLICATIONS -> ApplicationTrackerScreen(viewModel = viewModel)
-                HubTab.COMPENSATION -> SalaryNegotiatorScreen(viewModel = viewModel)
-                HubTab.EXPORTS -> ExportCenterScreen(viewModel = viewModel)
-                HubTab.SANDBOX -> CodingSandboxScreen(viewModel = viewModel)
-                HubTab.SPRINTS -> SkillSprintsScreen(viewModel = viewModel)
-                HubTab.PEERS -> PeerMockScreen(viewModel = viewModel)
-                HubTab.ROADMAP -> RoadmapScreen(viewModel = viewModel)
-                HubTab.PROJECTS -> ProjectsScreen(viewModel = viewModel)
-                HubTab.LEARNING -> LearningScreen(viewModel = viewModel)
-                HubTab.INTEGRATIONS -> IntegrationsScreen(viewModel = viewModel)
-                HubTab.PROFILE -> ProfileScreen(viewModel = viewModel)
-            }
+            Icon(
+                imageVector = item.icon,
+                contentDescription = item.title,
+                tint = item.iconTint,
+                modifier = Modifier.size(Dimens.IconMd)
+            )
         }
+        Spacer(modifier = Modifier.height(Dimens.SpaceSm))
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = TextPrimary,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
     }
 }

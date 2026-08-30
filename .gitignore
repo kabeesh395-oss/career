@@ -46,3 +46,6 @@ coverage/
 # Temp
 tmp/
 .tmp/
+
+# Android Local Config
+local.properties

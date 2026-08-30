@@ -80,7 +80,20 @@ fun MarketIntelligenceScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        PulsingAiOrb(size = 48.dp, baseColor = AccentCyan, secondaryColor = PrimaryBlueGlow)
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(Dimens.RadiusSm))
+                                .background(AccentCyan.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.TravelExplore,
+                                contentDescription = null,
+                                tint = AccentCyan,
+                                modifier = Modifier.size(Dimens.IconLg)
+                            )
+                        }
                         Column {
                             PulsingLiveBadge(text = "SEARCH GROUNDING ACTIVE", color = AccentCyan)
                             Spacer(modifier = Modifier.height(2.dp))
@@ -223,32 +236,9 @@ fun MarketIntelligenceScreen(
         // Search Results & Grounded Evidence
         item {
             if (isSearching) {
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    borderColor = PrimaryBlueGlow.copy(alpha = 0.5f)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        PulsingAiOrb(size = 64.dp, baseColor = PrimaryBlueGlow, secondaryColor = AccentCyan)
-                        Text(
-                            text = "Grounding query with Google Search...",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Retrieving verified compensation bands, interview questions, and tech trends via gemini-3.5-flash",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMuted,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
+                LoadingState(
+                    message = "Grounding query with Google Search...\nRetrieving verified compensation bands, interview questions, and tech trends..."
+                )
             } else if (searchResult != null) {
                 val result = searchResult!!
                 GlassCard(

@@ -14,7 +14,7 @@ private val DarkColorScheme = darkColorScheme(
     primary = PrimaryBlue,
     onPrimary = TextPrimary,
     primaryContainer = BgCard,
-    onPrimaryContainer = PrimaryBlueGlow,
+    onPrimaryContainer = PrimaryBlueLighter,
     secondary = AccentCyan,
     onSecondary = BgBase,
     secondaryContainer = BgMuted,
@@ -26,8 +26,13 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = TextPrimary,
     surfaceVariant = BgCard,
     onSurfaceVariant = TextSecondary,
+    surfaceContainerLow = BgCard,
+    surfaceContainer = BgCardHover,
+    surfaceContainerHigh = BgSurfaceElevated,
     outline = BorderSubtle,
-    error = DangerRed
+    outlineVariant = BorderMedium,
+    error = DangerRed,
+    onError = TextPrimary
 )
 
 @Composable

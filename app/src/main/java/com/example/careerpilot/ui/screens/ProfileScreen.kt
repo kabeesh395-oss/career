@@ -35,16 +35,16 @@ fun ProfileScreen(
     val authUser by viewModel.authUserState.collectAsState()
     val syncStatus by viewModel.cloudSyncStatus.collectAsState()
 
-    var fullName by remember(profile) { mutableStateOf(profile?.fullName ?: "Alex Chen") }
-    var headline by remember(profile) { mutableStateOf(profile?.headline ?: "Aspiring Senior Full Stack Engineer") }
-    var bio by remember(profile) { mutableStateOf(profile?.bio ?: "Passionate engineer focusing on modern architectures.") }
-    var location by remember(profile) { mutableStateOf(profile?.location ?: "San Francisco, CA") }
-    var education by remember(profile) { mutableStateOf(profile?.education ?: "B.S. Computer Science") }
-    var expYears by remember(profile) { mutableStateOf(profile?.experienceYears?.toString() ?: "2.5") }
-    var targetRole by remember(profile) { mutableStateOf(profile?.targetRole ?: "Full Stack Engineer") }
-    var targetIndustry by remember(profile) { mutableStateOf(profile?.targetIndustry ?: "Fintech & Cloud Infrastructure") }
-    var targetSalary by remember(profile) { mutableStateOf(profile?.targetSalary ?: "$140,000 - $175,000") }
-    var targetCompanyTier by remember(profile) { mutableStateOf(profile?.targetCompanyTier ?: "Tier-1 Tech / Scaleups") }
+    var fullName by remember(profile) { mutableStateOf(profile?.fullName ?: "") }
+    var headline by remember(profile) { mutableStateOf(profile?.headline ?: "") }
+    var bio by remember(profile) { mutableStateOf(profile?.bio ?: "") }
+    var location by remember(profile) { mutableStateOf(profile?.location ?: "") }
+    var education by remember(profile) { mutableStateOf(profile?.education ?: "") }
+    var expYears by remember(profile) { mutableStateOf(profile?.experienceYears?.toString() ?: "") }
+    var targetRole by remember(profile) { mutableStateOf(profile?.targetRole ?: "") }
+    var targetIndustry by remember(profile) { mutableStateOf(profile?.targetIndustry ?: "") }
+    var targetSalary by remember(profile) { mutableStateOf(profile?.targetSalary ?: "") }
+    var targetCompanyTier by remember(profile) { mutableStateOf(profile?.targetCompanyTier ?: "") }
 
     LazyColumn(
         modifier = modifier

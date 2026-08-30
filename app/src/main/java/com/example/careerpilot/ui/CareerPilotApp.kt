@@ -1,21 +1,16 @@
 package com.example.careerpilot.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -26,7 +21,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.careerpilot.ui.animation.*
 import com.example.careerpilot.ui.components.*
 import com.example.careerpilot.ui.screens.*
 import com.example.careerpilot.ui.theme.*
@@ -38,7 +32,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Resume : Screen("resume", "Resume", Icons.Default.Description)
     object Interview : Screen("interview", "Interviews", Icons.Default.RecordVoiceOver)
     object Market : Screen("market", "Market", Icons.Default.TravelExplore)
-    object Hub : Screen("hub", "Career Hub", Icons.Default.Hub)
+    object Hub : Screen("hub", "More", Icons.Default.GridView)
     object Career : Screen("career", "Skills", Icons.Default.Assessment)
     object Roadmap : Screen("roadmap", "Roadmap", Icons.Default.Timeline)
     object Projects : Screen("projects", "Projects", Icons.Default.Code)
@@ -59,6 +53,39 @@ val primaryNavItems = listOf(
     Screen.Interview,
     Screen.Hub
 )
+
+/** Routes that are primary (shown in bottom nav) — no back arrow needed. */
+private val primaryRoutes = primaryNavItems.map { it.route }.toSet()
+
+/** Routes that belong to the "More" section. */
+private val hubChildRoutes = setOf(
+    "career", "roadmap", "projects", "learning", "integrations",
+    "profile", "hub", "applications", "sandbox", "sprints",
+    "peers", "negotiator", "export", "market", "audit"
+)
+
+/** Get a readable title for any route. */
+private fun screenTitleFor(route: String?): String = when (route) {
+    "dashboard" -> "Home"
+    "resume" -> "Resume"
+    "interview" -> "Interviews"
+    "hub" -> "More"
+    "audit" -> "Audit Center"
+    "career" -> "Skill Matrix"
+    "roadmap" -> "Roadmap"
+    "projects" -> "Projects"
+    "learning" -> "Learning"
+    "integrations" -> "Integrations"
+    "profile" -> "Profile"
+    "applications" -> "Applications"
+    "sandbox" -> "Code Sandbox"
+    "sprints" -> "Skill Sprints"
+    "peers" -> "Peer Mocks"
+    "negotiator" -> "Salary Negotiator"
+    "export" -> "Export Center"
+    "market" -> "Market Intel"
+    else -> "CareerHub"
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,74 +108,80 @@ fun CareerPilotApp(
         }
     }
 
+    val isDashboard = currentRoute == Screen.Dashboard.route
+    val isSubScreen = !primaryRoutes.contains(currentRoute)
+
     if (showSplashScreen) {
         CareerHubSplashScreen(
             onSplashFinished = { showSplashScreen = false }
         )
     } else {
-        AmbientGlassBackground {
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = {
-                            CareerHubLogo(
-                                size = 32.dp,
-                                showSubtitle = true
+        Scaffold(
+            containerColor = BgBase,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        if (isDashboard) {
+                            CareerHubLogo(size = 28.dp)
+                        } else {
+                            Text(
+                                text = screenTitleFor(currentRoute),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
                             )
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = BgSurface,
-                            titleContentColor = TextPrimary
-                        ),
-                    modifier = Modifier
-                        .drawBehind {
-                            drawLine(
-                                color = BorderSubtle,
-                                start = Offset(0f, size.height),
-                                end = Offset(size.width, size.height),
-                                strokeWidth = 1.dp.toPx()
-                            )
-                        },
-                    actions = {
-                        IconButton(
-                            onClick = { viewModel.triggerCloudSync() },
-                            modifier = Modifier
-                                .testTag("topbar_sync_btn")
-                                .bouncyClickable { viewModel.triggerCloudSync() }
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(SuccessGreen.copy(alpha = 0.12f))
-                                    .border(1.dp, SuccessGreen.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
+                        }
+                    },
+                    navigationIcon = {
+                        if (isSubScreen) {
+                            IconButton(
+                                onClick = { navController.popBackStack() }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.CloudSync,
-                                    contentDescription = "Cloud Firestore Sync",
-                                    tint = SuccessGreenGlow,
-                                    modifier = Modifier.size(18.dp)
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = TextPrimary
                                 )
                             }
                         }
-                        IconButton(
-                            onClick = { navController.navigate(Screen.Profile.route) },
-                            modifier = Modifier.bouncyClickable { navController.navigate(Screen.Profile.route) }
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(BgCard)
-                                    .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = BgSurface,
+                        titleContentColor = TextPrimary
+                    ),
+                    modifier = Modifier.drawBehind {
+                        drawLine(
+                            color = BorderSubtle,
+                            start = Offset(0f, size.height),
+                            end = Offset(size.width, size.height),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    },
+                    actions = {
+                        if (isDashboard) {
+                            IconButton(
+                                onClick = { viewModel.triggerCloudSync() },
+                                modifier = Modifier.testTag("topbar_sync_btn")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CloudSync,
+                                    contentDescription = "Cloud Sync",
+                                    tint = SuccessGreen,
+                                    modifier = Modifier.size(Dimens.IconLg)
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    navController.navigate(Screen.Profile.route) {
+                                        launchSingleTop = true
+                                    }
+                                }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AccountCircle,
                                     contentDescription = "Profile",
                                     tint = TextSecondary,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(Dimens.IconLg)
                                 )
                             }
                         }
@@ -159,19 +192,18 @@ fun CareerPilotApp(
                 NavigationBar(
                     containerColor = BgSurface,
                     tonalElevation = 0.dp,
-                    modifier = Modifier
-                        .drawBehind {
-                            drawLine(
-                                color = BorderSubtle,
-                                start = Offset(0f, 0f),
-                                end = Offset(size.width, 0f),
-                                strokeWidth = 1.dp.toPx()
-                            )
-                        }
+                    modifier = Modifier.drawBehind {
+                        drawLine(
+                            color = BorderSubtle,
+                            start = Offset(0f, 0f),
+                            end = Offset(size.width, 0f),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    }
                 ) {
                     primaryNavItems.forEach { screen ->
-                        val selected = currentRoute == screen.route || 
-                            (screen == Screen.Hub && listOf("career", "roadmap", "projects", "learning", "integrations", "profile", "hub", "applications", "sandbox", "sprints", "peers", "negotiator", "export").contains(currentRoute))
+                        val selected = currentRoute == screen.route ||
+                            (screen == Screen.Hub && hubChildRoutes.contains(currentRoute))
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
@@ -192,13 +224,13 @@ fun CareerPilotApp(
                             label = {
                                 Text(
                                     text = screen.title,
-                                    fontSize = 11.sp,
+                                    style = MaterialTheme.typography.labelSmall,
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryBlueGlow,
-                                selectedTextColor = PrimaryBlueGlow,
+                                selectedIconColor = PrimaryBlueLighter,
+                                selectedTextColor = PrimaryBlueLighter,
                                 indicatorColor = PrimaryBlue.copy(alpha = 0.15f),
                                 unselectedIconColor = TextMuted,
                                 unselectedTextColor = TextMuted
@@ -208,8 +240,7 @@ fun CareerPilotApp(
                     }
                 }
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            containerColor = Color.Transparent
+            snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { innerPadding ->
             NavHost(
                 navController = navController,
@@ -220,9 +251,7 @@ fun CareerPilotApp(
                     DashboardScreen(
                         viewModel = viewModel,
                         onNavigate = { route ->
-                            navController.navigate(route) {
-                                launchSingleTop = true
-                            }
+                            navController.navigate(route) { launchSingleTop = true }
                         }
                     )
                 }
@@ -230,9 +259,7 @@ fun CareerPilotApp(
                     AuditCenterScreen(
                         viewModel = viewModel,
                         onNavigate = { route ->
-                            navController.navigate(route) {
-                                launchSingleTop = true
-                            }
+                            navController.navigate(route) { launchSingleTop = true }
                         }
                     )
                 }
@@ -246,14 +273,16 @@ fun CareerPilotApp(
                     MarketIntelligenceScreen(
                         viewModel = viewModel,
                         onNavigate = { route ->
-                            navController.navigate(route) {
-                                launchSingleTop = true
-                            }
+                            navController.navigate(route) { launchSingleTop = true }
                         }
                     )
                 }
                 composable(Screen.Hub.route) {
-                    HubScreen(viewModel = viewModel)
+                    HubScreen(
+                        onNavigate = { route ->
+                            navController.navigate(route) { launchSingleTop = true }
+                        }
+                    )
                 }
                 composable(Screen.Career.route) {
                     CareerAnalysisScreen(viewModel = viewModel)
@@ -294,5 +323,4 @@ fun CareerPilotApp(
             }
         }
     }
-}
 }
