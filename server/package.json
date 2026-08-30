@@ -7,7 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test:security": "tsx tests/security_and_e2e.test.ts"
+    "test:security": "tsx tests/security_and_e2e.test.ts",
+    "test:phase3": "tsx tests/ai_queue_and_v1_api.test.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -16,6 +17,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "pdf-parse": "^1.1.1",
