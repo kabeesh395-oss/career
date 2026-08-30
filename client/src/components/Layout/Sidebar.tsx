@@ -18,6 +18,7 @@ const navItems: NavItem[] = [
   { id: 'learning', label: 'Learning', icon: '◇' },
   { id: 'integrations', label: 'Integrations', icon: '⬢' },
   { id: 'analytics', label: 'Analytics', icon: '▦' },
+  { id: 'templates', label: 'UI Templates', icon: '❖' },
   { id: 'profile', label: 'Profile', icon: '○' },
 ];
 

@@ -13,7 +13,10 @@ workflows:
         script: |
           cd client
           node --version
-          npm install
+          npm --version
+          npm cache clean --force
+          rm -rf node_modules
+          npm install --include=optional
           npm run build
       - name: Sync Capacitor Android
         script: |
