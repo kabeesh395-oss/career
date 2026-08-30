@@ -96,7 +96,8 @@ class CareerLogicTest {
         assertNotNull(issues)
         assertTrue("Should detect missing ATS resume", issues.any { it.ruleId == "RULE_RES_AUDIT_MISSING" })
         assertTrue("Should detect missing interview telemetry", issues.any { it.ruleId == "RULE_INTERVIEW_TELEMETRY_DEFICIT" })
-        assertTrue("Net audit score should be calculated", summary.netAuditScore <= summary.readinessScore)
+        assertNotNull("Net audit score should be calculated", summary.netAuditScore)
+        assertTrue("Net audit score should be <= readinessScore", summary.netAuditScore!! <= (summary.readinessScore ?: 100))
         assertTrue("Evidence coverage percent should be > 0", summary.evidenceCoveragePercent > 0)
     }
 
