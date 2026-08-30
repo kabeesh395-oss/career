@@ -20,10 +20,16 @@ import kotlinx.coroutines.launch
 class CareerViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: CareerRepository
+    val userPreferencesManager: com.example.careerpilot.data.local.UserPreferencesManager = com.example.careerpilot.data.local.UserPreferencesManager(application)
     val authManager: FirebaseAuthManager = FirebaseAuthManager(application)
     val syncManager: FirestoreSyncManager = FirestoreSyncManager(authManager)
 
     val authUserState: StateFlow<AuthUserState> = authManager.userState
+    val customGeminiApiKey: StateFlow<String> = userPreferencesManager.customGeminiApiKey.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ""
+    )
     
     private val _cloudSyncStatus = MutableStateFlow(CloudSyncStatus())
     val cloudSyncStatus: StateFlow<CloudSyncStatus> = _cloudSyncStatus.asStateFlow()
@@ -963,6 +969,13 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             } finally {
                 _isSearchingGrounding.value = false
             }
+        }
+    }
+
+    fun saveCustomGeminiApiKey(apiKey: String) {
+        viewModelScope.launch {
+            userPreferencesManager.setCustomGeminiApiKey(apiKey)
+            _userMessage.value = "Google AI Studio Key updated. Gemini Search Grounding Active."
         }
     }
 }

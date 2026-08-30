@@ -545,6 +545,107 @@ fun IntegrationsScreen(
                 }
             }
         }
+
+        // ==========================================
+        // GOOGLE AI STUDIO (GEMINI 1.5 FLASH) CARD
+        // ==========================================
+        item {
+            val customApiKey by viewModel.customGeminiApiKey.collectAsState()
+            var apiKeyInput by remember(customApiKey) { mutableStateOf(customApiKey) }
+            val hasCustomKey = customApiKey.isNotBlank()
+
+            GlassCard(
+                modifier = Modifier.fillMaxWidth(),
+                borderColor = if (hasCustomKey) AccentCyan.copy(alpha = 0.5f) else BorderSubtle
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(BgCard),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "Google AI Studio",
+                                    tint = AccentCyan,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "Google AI Studio (Gemini)",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = "Live Search Grounding & ATS Telemetry API",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+
+                        StatusBadge(
+                            text = if (hasCustomKey) "ACTIVE" else "BUILT-IN",
+                            statusType = if (hasCustomKey) "primary" else "neutral"
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedTextField(
+                        value = apiKeyInput,
+                        onValueChange = { apiKeyInput = it },
+                        label = { Text("Google AI Studio API Key (AIzaSy...)") },
+                        placeholder = { Text("Paste Gemini API Key from Google AI Studio") },
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Key, contentDescription = null, tint = TextMuted)
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/app/apikey"))
+                                context.startActivity(intent)
+                            }) {
+                                Icon(imageVector = Icons.Default.OpenInNew, contentDescription = "Get Key", tint = AccentCyan)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Button(
+                        onClick = {
+                            viewModel.saveCustomGeminiApiKey(apiKeyInput)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Save Google AI Studio Key", fontSize = 14.sp)
+                    }
+                }
+            }
+        }
     }
 }
 

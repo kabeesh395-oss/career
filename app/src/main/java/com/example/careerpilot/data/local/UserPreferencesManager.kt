@@ -21,6 +21,11 @@ class UserPreferencesManager(private val context: Context) {
         val OFFLINE_MODE = booleanPreferencesKey("offline_mode")
         val LAST_SYNC_TIMESTAMP = longPreferencesKey("last_sync_timestamp")
         val AUTO_SYNC_ENABLED = booleanPreferencesKey("auto_sync_enabled")
+        val CUSTOM_GEMINI_API_KEY = stringPreferencesKey("custom_gemini_api_key")
+    }
+
+    val customGeminiApiKey: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[CUSTOM_GEMINI_API_KEY] ?: ""
     }
 
     val isDarkMode: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -70,6 +75,12 @@ class UserPreferencesManager(private val context: Context) {
     suspend fun setAutoSyncEnabled(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[AUTO_SYNC_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setCustomGeminiApiKey(apiKey: String) {
+        context.dataStore.edit { prefs ->
+            prefs[CUSTOM_GEMINI_API_KEY] = apiKey.trim()
         }
     }
 }
