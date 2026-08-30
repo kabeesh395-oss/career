@@ -1,25 +1,6 @@
 workflows:
-  native-android-workflow:
-    name: Native Kotlin Android APK & AAB Build
-    max_build_duration: 60
-    instance_type: mac_mini_m1
-    environment:
-      vars:
-        PACKAGE_NAME: "ai.careerpilot.app"
-      java: 21
-    scripts:
-      - name: Build Native Kotlin Android Release APK & Play Store AAB
-        script: |
-          chmod +x gradlew
-          ./gradlew clean assembleRelease bundleRelease -x lint -x lintVitalRelease
-          cp -f app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CareerPilot-Native.apk 2>/dev/null || true
-          cp -f app/build/outputs/bundle/release/app-release.aab app/build/outputs/bundle/release/CareerPilot-Native.aab 2>/dev/null || true
-    artifacts:
-      - app/build/outputs/apk/release/*.apk
-      - app/build/outputs/bundle/release/*.aab
-
-  capacitor-android-workflow:
-    name: Capacitor Mobile Android APK & AAB Build
+  android-workflow:
+    name: CareerPilot Android APK Build
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
@@ -28,7 +9,7 @@ workflows:
       node: 22
       java: 21
     scripts:
-      - name: Install client dependencies and build mobile web bundle
+      - name: Install client dependencies and build web app
         script: |
           cd client
           node --version
@@ -62,14 +43,13 @@ workflows:
             echo "KEYSTORE_PASSWORD=android" >> $CM_ENV
             echo "KEY_PASSWORD=android" >> $CM_ENV
           fi
-      - name: Build Unified Android Release APK and AAB
+      - name: Build Unified Android Release APK
         script: |
           cd client/android
           mkdir -p app/src/main/res/drawable
           chmod +x gradlew
-          ./gradlew clean assembleRelease bundleRelease -x lint -x lintVitalRelease
-          cp -f app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CareerPilot-Capacitor.apk 2>/dev/null || true
-          cp -f app/build/outputs/bundle/release/app-release.aab app/build/outputs/bundle/release/CareerPilot-Capacitor.aab 2>/dev/null || true
+          ./gradlew clean assembleRelease -x lint -x lintVitalRelease
+          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CareerPilot.apk 2>/dev/null || true
+          rm -f app/build/outputs/apk/release/app-release-unsigned.apk 2>/dev/null || true
     artifacts:
-      - client/android/app/build/outputs/apk/release/*.apk
-      - client/android/app/build/outputs/bundle/release/*.aab
+      - client/android/app/build/outputs/apk/release/CareerPilot.apk
