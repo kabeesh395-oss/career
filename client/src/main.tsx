@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthPage from './components/Auth/AuthPage';
 import Sidebar from './components/Layout/Sidebar';
+import AppHeader from './components/Layout/AppHeader';
 import DashboardPage from './components/Dashboard/DashboardPage';
 import CareerPage from './components/Career/CareerPage';
 import RoadmapPage from './components/Roadmap/RoadmapPage';
@@ -106,10 +107,11 @@ function AppContent() {
       <main style={{
         flex: 1,
         marginLeft: 240, // Match sidebar width
-        padding: '32px 40px',
-        maxWidth: 1200,
+        padding: '24px 36px 48px',
+        maxWidth: 1240,
         width: 'calc(100% - 240px)'
       }}>
+        <AppHeader activePage={activePage} onNavigate={navigateTo} />
         {renderPage()}
       </main>
     </div>
