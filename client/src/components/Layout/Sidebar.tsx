@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { CareerHubLogo } from '../Common/CareerHubLogo';
 
 interface NavItem {
   id: string;
@@ -59,38 +60,12 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          padding: '8px 12px',
+          padding: '8px 8px',
           marginBottom: 26,
           cursor: 'pointer',
         }}
       >
-        <motion.div
-          whileHover={{ scale: 1.1, rotate: 10 }}
-          whileTap={{ scale: 0.95 }}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 16,
-            fontWeight: 800,
-            color: '#fff',
-            boxShadow: '0 0 16px rgba(59, 130, 246, 0.4)',
-          }}
-        >
-          ⬡
-        </motion.div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em' }} className="gradient-text">
-            Career Hub
-          </span>
-          <span style={{ fontSize: 9.5, color: '#64748b', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            Developer OS
-          </span>
-        </div>
+        <CareerHubLogo size={36} showSubtitle={true} />
       </motion.div>
 
       {/* Navigation list */}

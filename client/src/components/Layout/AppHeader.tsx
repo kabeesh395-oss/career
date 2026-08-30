@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { Search, Bell, RefreshCw, Command } from 'lucide-react';
+import { CareerHubLogo } from '../Common/CareerHubLogo';
 
 interface AppHeaderProps {
   activePage?: string;
@@ -30,20 +31,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
     },
   };
 
-  const iconVariants: Variants = {
-    hidden: { scale: 0, rotate: -25, opacity: 0 },
-    visible: {
-      scale: 1,
-      rotate: 0,
-      opacity: 1,
-      transition: {
-        type: 'spring',
-        stiffness: 260,
-        damping: 18,
-      },
-    },
-  };
-
   const itemVariants: Variants = {
     hidden: { opacity: 0, y: -10 },
     visible: {
@@ -56,32 +43,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
       },
     },
   };
-
-  const letterContainerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.035,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const letterVariants: Variants = {
-    hidden: { opacity: 0, y: 8, filter: 'blur(4px)' },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: 'blur(0px)',
-      transition: {
-        duration: 0.35,
-        ease: [0.2, 0.65, 0.3, 0.9] as any,
-      },
-    },
-  };
-
-  const titleWords = ['Career', 'Hub'];
 
   return (
     <motion.header
@@ -106,126 +67,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
       }}
     >
       {/* Left: Animated Brand & Geometric Node */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <motion.div
-          variants={iconVariants}
-          whileHover={{ scale: 1.06, rotate: 6 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onNavigate('dashboard')}
-          style={{
-            position: 'relative',
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 24px rgba(59, 130, 246, 0.45)',
-            cursor: 'pointer',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Animated Background Shimmer */}
-          <motion.div
-            animate={{
-              x: ['-100%', '200%'],
-            }}
-            transition={{
-              repeat: Infinity,
-              duration: 3.5,
-              ease: 'easeInOut',
-              delay: 1,
-            }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '60%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)',
-              transform: 'skewX(-20deg)',
-            }}
-          />
-          <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-            ⬡
-          </span>
-        </motion.div>
-
-        {/* Staggered Brand Typography */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <motion.div
-            variants={letterContainerVariants}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-          >
-            {titleWords.map((word, wordIdx) => (
-              <span key={wordIdx} style={{ display: 'inline-flex' }}>
-                {word.split('').map((char, charIdx) => (
-                  <motion.span
-                    key={charIdx}
-                    variants={letterVariants}
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 800,
-                      letterSpacing: '-0.02em',
-                      fontFamily: '"Plus Jakarta Sans", sans-serif',
-                      color: wordIdx === 0 ? '#f8fafc' : '#38bdf8',
-                      textShadow: wordIdx === 1 ? '0 0 16px rgba(56, 189, 248, 0.4)' : 'none',
-                    }}
-                  >
-                    {char}
-                  </motion.span>
-                ))}
-              </span>
-            ))}
-
-            <motion.div
-              variants={itemVariants}
-              style={{
-                marginLeft: 6,
-                padding: '2px 8px',
-                borderRadius: 6,
-                background: 'rgba(59, 130, 246, 0.15)',
-                border: '1px solid rgba(59, 130, 246, 0.35)',
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                color: '#60a5fa',
-                textTransform: 'uppercase',
-              }}
-            >
-              OS v2.4
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontSize: 11,
-              fontWeight: 500,
-              color: '#94a3b8',
-              letterSpacing: '0.02em',
-            }}
-          >
-            <span>Engineering Portfolio & Career OS</span>
-            <span style={{ color: '#475569' }}>•</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#34d399', fontSize: 10.5 }}>
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: '#10b981',
-                  boxShadow: '0 0 8px #10b981',
-                }}
-              />
-              Synced Local / Cloud
-            </span>
-          </motion.div>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => onNavigate('dashboard')}>
+        <CareerHubLogo size={40} showSubtitle={true} />
       </div>
 
       {/* Right: Quick Command Search, Live Stats & Action Controls */}
