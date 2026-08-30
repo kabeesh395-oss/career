@@ -9,6 +9,7 @@ import com.example.careerpilot.data.firebase.FirebaseAuthManager
 import com.example.careerpilot.data.firebase.FirestoreSyncManager
 import com.example.careerpilot.data.local.AppDatabase
 import com.example.careerpilot.data.model.*
+import com.example.careerpilot.data.remote.gemini.GeminiClient
 import com.example.careerpilot.data.remote.gemini.SearchGroundedResult
 import com.example.careerpilot.data.remote.gemini.SearchGroundingService
 import com.example.careerpilot.data.remote.github.GitHubRepoItem
@@ -206,6 +207,12 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
                     totalIssuesCount = issues.size,
                     lastEvaluatedAt = System.currentTimeMillis()
                 )
+            }
+        }
+
+        viewModelScope.launch {
+            customGeminiApiKey.collect { key ->
+                GeminiClient.setCustomApiKey(key)
             }
         }
     }

@@ -51,7 +51,16 @@ object GeminiClient {
             .create(GeminiApiService::class.java)
     }
 
+    private var customApiKey: String = ""
+
+    fun setCustomApiKey(key: String) {
+        customApiKey = key.trim()
+    }
+
     fun getApiKey(): String {
+        if (customApiKey.isNotBlank()) {
+            return customApiKey
+        }
         return try {
             BuildConfig.GEMINI_API_KEY
         } catch (e: Exception) {
