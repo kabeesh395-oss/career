@@ -422,17 +422,18 @@ fun AuditDashboardSummaryCard(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "${summary.netAuditScore}",
+                            text = if (summary.netAuditScore != null) "${summary.netAuditScore}" else "N/A",
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Black,
                             color = when {
+                                summary.netAuditScore == null -> TextMuted
                                 summary.netAuditScore >= 80 -> AccentGreen
                                 summary.netAuditScore >= 65 -> PrimaryBlueGlow
                                 else -> AccentAmber
                             }
                         )
                         Text(
-                            text = "/ 100",
+                            text = if (summary.netAuditScore != null) "/ 100" else "Not evaluated",
                             style = MaterialTheme.typography.titleMedium,
                             color = TextMuted,
                             modifier = Modifier.padding(bottom = 8.dp)

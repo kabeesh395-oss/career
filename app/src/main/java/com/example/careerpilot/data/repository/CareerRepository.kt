@@ -38,45 +38,8 @@ class CareerRepository(private val dao: CareerDao) {
     suspend fun initializeDefaultDataIfEmpty() = withContext(Dispatchers.IO) {
         val existingProfile = dao.getUserProfile()
         if (existingProfile == null) {
-            val initialProfile = UserProfile()
+            val initialProfile = UserProfile(readinessScore = null)
             dao.insertOrUpdateProfile(initialProfile)
-
-            // Initial Skills
-            val defaultSkills = listOf(
-                UserSkill(skillName = "TypeScript", category = "Programming Languages", proficiencyLevel = 4, verified = false),
-                UserSkill(skillName = "React", category = "Frontend", proficiencyLevel = 4, verified = false),
-                UserSkill(skillName = "Kotlin & Coroutines", category = "Mobile", proficiencyLevel = 4, verified = false),
-                UserSkill(skillName = "Jetpack Compose", category = "Mobile", proficiencyLevel = 4, verified = false),
-                UserSkill(skillName = "Node.js / Express", category = "Backend", proficiencyLevel = 3, verified = false),
-                UserSkill(skillName = "PostgreSQL", category = "Databases", proficiencyLevel = 3, verified = false),
-                UserSkill(skillName = "Docker & Containers", category = "DevOps & Cloud", proficiencyLevel = 2, verified = false),
-                UserSkill(skillName = "System Design & Architecture", category = "Architecture", proficiencyLevel = 2, verified = false)
-            )
-            dao.insertUserSkills(defaultSkills)
-
-            // Initial Projects
-            dao.insertProject(
-                PortfolioProject(
-                    title = "Distributed Task Queue & Telemetry Hub",
-                    description = "High-throughput asynchronous task orchestrator with Redis backed retry queues and live metrics dashboard.",
-                    repositoryUrl = "https://github.com/alexchen/distributed-queue",
-                    liveUrl = "https://queue-demo.dev.io",
-                    status = "in_progress",
-                    technologies = "Kotlin, Coroutines, Redis, Docker, Prometheus",
-                    skillsTargeted = "Backend, Distributed Systems, Concurrency"
-                )
-            )
-            dao.insertProject(
-                PortfolioProject(
-                    title = "Real-time Collaborative Canvas Engine",
-                    description = "Low-latency whiteboard application leveraging WebSockets, CRDT conflict resolution, and Jetpack Compose canvas rendering.",
-                    repositoryUrl = "https://github.com/alexchen/crdt-canvas",
-                    liveUrl = "https://canvas.dev.io",
-                    status = "in_progress",
-                    technologies = "Jetpack Compose, WebSockets, TypeScript, Node.js",
-                    skillsTargeted = "Frontend, Real-time Systems, UI Performance"
-                )
-            )
 
             // Initial Learning Resources (Proper functional lifecycle: Not Started -> In Progress -> Verified Completed)
             val learningList = listOf(
@@ -211,7 +174,7 @@ class CareerRepository(private val dao: CareerDao) {
                 val match = JobMatcherEngine.evaluateJobMatch(
                     jobPosting = job,
                     userProfile = initialProfile,
-                    skills = defaultSkills,
+                    skills = dao.getUserSkills(),
                     projects = dao.getProjects(),
                     latestResume = null
                 )

@@ -6,19 +6,19 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "user_profile")
 data class UserProfile(
     @PrimaryKey val id: String = "default_user",
-    val fullName: String = "Alex Chen",
-    val email: String = "alex.chen@dev.io",
-    val headline: String = "Aspiring Senior Full Stack Engineer",
-    val bio: String = "Passionate engineer focusing on cloud-native architectures, distributed systems, and modern web applications.",
-    val location: String = "San Francisco, CA",
-    val education: String = "B.S. Computer Science",
-    val experienceYears: Float = 2.5f,
+    val fullName: String = "",
+    val email: String = "",
+    val headline: String = "",
+    val bio: String = "",
+    val location: String = "",
+    val education: String = "",
+    val experienceYears: Float = 0.0f,
     val targetRole: String = "Full Stack Engineer",
-    val targetIndustry: String = "Fintech & Cloud Infrastructure",
-    val targetSalary: String = "$140,000 - $175,000",
-    val targetCompanyTier: String = "Tier-1 Tech / High-Growth Scaleups",
-    val readinessScore: Int = 68,
-    val onboardingCompleted: Boolean = true
+    val targetIndustry: String = "",
+    val targetSalary: String = "",
+    val targetCompanyTier: String = "Top Tech",
+    val readinessScore: Int? = null,
+    val onboardingCompleted: Boolean = false
 )
 
 @Entity(tableName = "user_skills")
@@ -220,18 +220,19 @@ data class AuditIssue(
 )
 
 data class AuditScoreSummary(
-    val readinessScore: Int = 76,
-    val netAuditScore: Int = 68,
-    val totalDemerits: Int = -8,
+    val readinessScore: Int? = null,
+    val netAuditScore: Int? = null,
+    val totalDemerits: Int = 0,
     val criticalCount: Int = 0,
     val highCount: Int = 0,
     val mediumCount: Int = 0,
     val lowCount: Int = 0,
     val resolvedCount: Int = 0,
     val totalIssuesCount: Int = 0,
-    val evidenceCoveragePercent: Int = 68,
-    val profileConfidence: String = "HIGH",
+    val evidenceCoveragePercent: Int = 0,
+    val profileConfidence: String = "NOT_EVALUATED",
     val isOfflineEvaluated: Boolean = true,
+    val hasEvaluatedData: Boolean = false,
     val lastEvaluatedAt: Long = System.currentTimeMillis()
 )
 

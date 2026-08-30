@@ -219,7 +219,7 @@ fun DashboardScreen(
                                 }
                             }
                             Text(
-                                text = "Net Readiness: ${auditSummary.netAuditScore}% • ${auditSummary.criticalCount} Critical, ${auditSummary.highCount} High Issues",
+                                text = if (auditSummary.netAuditScore != null) "Net Readiness: ${auditSummary.netAuditScore}% • ${auditSummary.criticalCount} Critical, ${auditSummary.highCount} High Issues" else "Net Readiness: Not enough data yet • Add skills to calculate score",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary
                             )

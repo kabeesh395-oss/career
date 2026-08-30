@@ -183,34 +183,16 @@ class FirebaseAuthManager(private val context: Context) {
                 updateUserState(user)
                 Result.success(_userState.value)
             } else {
-                // Fallback simulation for dev environment if Google Play Services dialog is bypassed
-                val mockUser = AuthUserState(
-                    uid = "uid_google_dev_${System.currentTimeMillis() % 10000}",
-                    email = "alex.chen.dev@gmail.com",
-                    displayName = "Alex Chen",
-                    isAuthenticated = true,
-                    statusMessage = "Google Account Authenticated & Synced to Firestore"
-                )
-                _userState.value = mockUser
-                Result.success(mockUser)
+                Result.failure(Exception("Google Sign-In Credential not available."))
             }
         } catch (e: Exception) {
-            Log.w("FirebaseAuthManager", "CredentialManager flow fallback: ${e.message}")
-            // Graceful dev fallback
-            val demoUser = AuthUserState(
-                uid = "firebase_user_google_sync",
-                email = "alex.chen.dev@gmail.com",
-                displayName = "Alex Chen",
-                isAuthenticated = true,
-                statusMessage = "Google Sign-In Connected (Firestore Sync Active)"
-            )
-            _userState.value = demoUser
-            Result.success(demoUser)
+            Log.w("FirebaseAuthManager", "CredentialManager flow error: ${e.message}")
+            Result.failure(e)
         }
     }
 
     /**
-     * Sign out from Firebase Auth
+     * Sign out from Auth
      */
     fun signOut() {
         try {
@@ -220,9 +202,9 @@ class FirebaseAuthManager(private val context: Context) {
         }
         _userState.value = AuthUserState(
             isAuthenticated = false,
-            displayName = "Local Developer",
-            email = "local.dev@careerpilot.io",
-            statusMessage = "Signed out. Data stored in local Room database."
+            displayName = "",
+            email = "",
+            statusMessage = "Signed out."
         )
     }
 

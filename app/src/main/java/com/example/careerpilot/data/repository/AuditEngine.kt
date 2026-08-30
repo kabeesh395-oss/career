@@ -332,18 +332,6 @@ object AuditEngine {
         // Deduplication: Filter duplicate ruleIds if any accidentally collided
         val deduplicatedIssues = generatedIssues.distinctBy { it.ruleId }
 
-        // Calculate Totals & Summary
-        val openIssues = deduplicatedIssues.filter { it.status != "RESOLVED" }
-        val totalDemerits = openIssues.sumOf { it.scoreImpact }
-        val baseReadiness = profile?.readinessScore ?: 76
-        val netAuditScore = max(0, min(100, baseReadiness + totalDemerits))
-
-        val criticalCount = openIssues.count { it.severity == "CRITICAL" }
-        val highCount = openIssues.count { it.severity == "HIGH" }
-        val mediumCount = openIssues.count { it.severity == "MEDIUM" }
-        val lowCount = openIssues.count { it.severity == "LOW" }
-        val resolvedCount = deduplicatedIssues.count { it.status == "RESOLVED" }
-
         // Evidence coverage calculation: ratio of verified or present data points
         var evidencePoints = 0
         val maxPoints = 6
@@ -352,14 +340,29 @@ object AuditEngine {
         if (latestResume != null) evidencePoints++
         if (isGithubConnected) evidencePoints++
         if (interviewAnswers.isNotEmpty()) evidencePoints++
-        if (skills.any { it.verified }) evidencePoints++
+        if (skills.isNotEmpty()) evidencePoints++
 
+        val hasEvaluatedData = evidencePoints > 0 || profile?.readinessScore != null
         val coveragePercent = ((evidencePoints.toFloat() / maxPoints.toFloat()) * 100f).roundToInt()
+        
         val profileConfidence = when {
+            !hasEvaluatedData -> "NOT_EVALUATED"
             coveragePercent >= 75 -> "HIGH"
             coveragePercent >= 45 -> "MEDIUM"
             else -> "LOW"
         }
+
+        // Calculate Totals & Summary
+        val openIssues = if (hasEvaluatedData) deduplicatedIssues.filter { it.status != "RESOLVED" } else emptyList()
+        val totalDemerits = openIssues.sumOf { it.scoreImpact }
+        val baseReadiness = profile?.readinessScore
+        val netAuditScore = if (baseReadiness != null) max(0, min(100, baseReadiness + totalDemerits)) else null
+
+        val criticalCount = openIssues.count { it.severity == "CRITICAL" }
+        val highCount = openIssues.count { it.severity == "HIGH" }
+        val mediumCount = openIssues.count { it.severity == "MEDIUM" }
+        val lowCount = openIssues.count { it.severity == "LOW" }
+        val resolvedCount = deduplicatedIssues.count { it.status == "RESOLVED" }
 
         val summary = AuditScoreSummary(
             readinessScore = baseReadiness,
@@ -370,10 +373,11 @@ object AuditEngine {
             mediumCount = mediumCount,
             lowCount = lowCount,
             resolvedCount = resolvedCount,
-            totalIssuesCount = deduplicatedIssues.size,
+            totalIssuesCount = if (hasEvaluatedData) deduplicatedIssues.size else 0,
             evidenceCoveragePercent = coveragePercent,
             profileConfidence = profileConfidence,
             isOfflineEvaluated = true,
+            hasEvaluatedData = hasEvaluatedData,
             lastEvaluatedAt = System.currentTimeMillis()
         )
 
