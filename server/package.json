@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test:security": "tsx tests/security_and_e2e.test.ts",
-    "test:phase3": "tsx tests/ai_queue_and_v1_api.test.ts"
+    "test:phase3": "tsx tests/ai_queue_and_v1_api.test.ts",
+    "test:load": "tsx tests/production_load_and_chaos.test.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -19,6 +19,7 @@ import interviewRoutes from './routes/interview.routes.js';
 import learningRoutes from './routes/learning.routes.js';
 import integrationsRoutes from './routes/integrations.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 dotenv.config();
 
@@ -102,7 +103,8 @@ const routePairs: Array<[string, express.Router]> = [
   ['/interview', interviewRoutes],
   ['/learning', learningRoutes],
   ['/integrations', integrationsRoutes],
-  ['/analytics', analyticsRoutes]
+  ['/analytics', analyticsRoutes],
+  ['/user', userRoutes]
 ];
 
 for (const [pathPrefix, router] of routePairs) {
