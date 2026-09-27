@@ -27,9 +27,10 @@ import com.example.careerpilot.data.model.*
         JobApplication::class,
         CodingChallenge::class,
         PeerMatch::class,
-        SkillSprint::class
+        SkillSprint::class,
+        CareerOpportunity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

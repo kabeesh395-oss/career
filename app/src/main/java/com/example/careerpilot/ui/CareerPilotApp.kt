@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -21,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.careerpilot.ui.animation.MotionGlassAuroraBackdrop
 import com.example.careerpilot.ui.components.*
 import com.example.careerpilot.ui.screens.*
 import com.example.careerpilot.ui.theme.*
@@ -44,6 +47,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Sprints : Screen("sprints", "Sprints", Icons.Default.EmojiEvents)
     object Peers : Screen("peers", "Peer Mocks", Icons.Default.People)
     object Negotiator : Screen("negotiator", "Negotiator", Icons.Default.MonetizationOn)
+    object Opportunities : Screen("opportunities", "Opportunities", Icons.Default.Stars)
     object Export : Screen("export", "Export", Icons.Default.FileDownload)
 }
 
@@ -54,14 +58,14 @@ val primaryNavItems = listOf(
     Screen.Hub
 )
 
-/** Routes that are primary (shown in bottom nav) — no back arrow needed. */
+/** Routes that are primary (shown in bottom nav) - no back arrow needed. */
 private val primaryRoutes = primaryNavItems.map { it.route }.toSet()
 
 /** Routes that belong to the "More" section. */
 private val hubChildRoutes = setOf(
     "career", "roadmap", "projects", "learning", "integrations",
     "profile", "hub", "applications", "sandbox", "sprints",
-    "peers", "negotiator", "export", "market", "audit"
+    "peers", "negotiator", "export", "market", "audit", "opportunities"
 )
 
 /** Get a readable title for any route. */
@@ -82,9 +86,10 @@ private fun screenTitleFor(route: String?): String = when (route) {
     "sprints" -> "Skill Sprints"
     "peers" -> "Peer Mocks"
     "negotiator" -> "Salary Negotiator"
+    "opportunities" -> "Opportunities & Credentials"
     "export" -> "Export Center"
     "market" -> "Market Intel"
-    else -> "CareerHub"
+    else -> "CareerPilot"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,91 +121,92 @@ fun CareerPilotApp(
             onSplashFinished = { showSplashScreen = false }
         )
     } else {
-        Scaffold(
-            containerColor = BgBase,
-            topBar = {
-                TopAppBar(
-                    title = {
-                        if (isDashboard) {
-                            CareerHubLogo(size = 28.dp)
-                        } else {
-                            Text(
-                                text = screenTitleFor(currentRoute),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+        MotionGlassAuroraBackdrop {
+            Scaffold(
+                containerColor = Color.Transparent,
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            if (isDashboard) {
+                                CareerHubLogo(size = 28.dp)
+                            } else {
+                                Text(
+                                    text = screenTitleFor(currentRoute),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
+                        },
+                        navigationIcon = {
+                            if (isSubScreen) {
+                                IconButton(
+                                    onClick = { navController.popBackStack() }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back",
+                                        tint = TextPrimary
+                                    )
+                                }
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = BgSurface,
+                            titleContentColor = TextPrimary
+                        ),
+                        modifier = Modifier.drawBehind {
+                            drawLine(
+                                color = BorderSubtle,
+                                start = Offset(0f, size.height),
+                                end = Offset(size.width, size.height),
+                                strokeWidth = 1.dp.toPx()
+                            )
+                        },
+                        actions = {
+                            if (isDashboard) {
+                                IconButton(
+                                    onClick = { viewModel.triggerCloudSync() },
+                                    modifier = Modifier.testTag("topbar_sync_btn")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudSync,
+                                        contentDescription = "Cloud Sync",
+                                        tint = SuccessGreen,
+                                        modifier = Modifier.size(Dimens.IconLg)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        navController.navigate(Screen.Profile.route) {
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccountCircle,
+                                        contentDescription = "Profile",
+                                        tint = TextSecondary,
+                                        modifier = Modifier.size(Dimens.IconLg)
+                                    )
+                                }
+                            }
+                        }
+                    )
+                },
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = BgSurface,
+                        tonalElevation = 0.dp,
+                        modifier = Modifier.drawBehind {
+                            drawLine(
+                                color = BorderSubtle,
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, 0f),
+                                strokeWidth = 1.dp.toPx()
                             )
                         }
-                    },
-                    navigationIcon = {
-                        if (isSubScreen) {
-                            IconButton(
-                                onClick = { navController.popBackStack() }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = TextPrimary
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = BgSurface,
-                        titleContentColor = TextPrimary
-                    ),
-                    modifier = Modifier.drawBehind {
-                        drawLine(
-                            color = BorderSubtle,
-                            start = Offset(0f, size.height),
-                            end = Offset(size.width, size.height),
-                            strokeWidth = 1.dp.toPx()
-                        )
-                    },
-                    actions = {
-                        if (isDashboard) {
-                            IconButton(
-                                onClick = { viewModel.triggerCloudSync() },
-                                modifier = Modifier.testTag("topbar_sync_btn")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CloudSync,
-                                    contentDescription = "Cloud Sync",
-                                    tint = SuccessGreen,
-                                    modifier = Modifier.size(Dimens.IconLg)
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    navController.navigate(Screen.Profile.route) {
-                                        launchSingleTop = true
-                                    }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = "Profile",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(Dimens.IconLg)
-                                )
-                            }
-                        }
-                    }
-                )
-            },
-            bottomBar = {
-                NavigationBar(
-                    containerColor = BgSurface,
-                    tonalElevation = 0.dp,
-                    modifier = Modifier.drawBehind {
-                        drawLine(
-                            color = BorderSubtle,
-                            start = Offset(0f, 0f),
-                            end = Offset(size.width, 0f),
-                            strokeWidth = 1.dp.toPx()
-                        )
-                    }
-                ) {
+                    ) {
                     primaryNavItems.forEach { screen ->
                         val selected = currentRoute == screen.route ||
                             (screen == Screen.Hub && hubChildRoutes.contains(currentRoute))
@@ -229,11 +235,11 @@ fun CareerPilotApp(
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryBlueLighter,
+                                selectedIconColor = PrimaryBlue,
                                 selectedTextColor = PrimaryBlueLighter,
                                 indicatorColor = PrimaryBlue.copy(alpha = 0.15f),
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted
+                                unselectedIconColor = TextSecondary,
+                                unselectedTextColor = TextSecondary
                             ),
                             modifier = Modifier.testTag("nav_${screen.route}")
                         )
@@ -245,7 +251,27 @@ fun CareerPilotApp(
             NavHost(
                 navController = navController,
                 startDestination = Screen.Dashboard.route,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = {
+                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)) +
+                    androidx.compose.animation.slideInHorizontally(
+                        animationSpec = androidx.compose.animation.core.tween(250),
+                        initialOffsetX = { 40 }
+                    )
+                },
+                exitTransition = {
+                    androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
+                },
+                popEnterTransition = {
+                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(250)) +
+                    androidx.compose.animation.slideInHorizontally(
+                        animationSpec = androidx.compose.animation.core.tween(250),
+                        initialOffsetX = { -40 }
+                    )
+                },
+                popExitTransition = {
+                    androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(200))
+                }
             ) {
                 composable(Screen.Dashboard.route) {
                     DashboardScreen(
@@ -317,10 +343,14 @@ fun CareerPilotApp(
                 composable(Screen.Negotiator.route) {
                     SalaryNegotiatorScreen(viewModel = viewModel)
                 }
+                composable(Screen.Opportunities.route) {
+                    OpportunitiesScreen(viewModel = viewModel)
+                }
                 composable(Screen.Export.route) {
                     ExportCenterScreen(viewModel = viewModel)
                 }
             }
         }
     }
+}
 }

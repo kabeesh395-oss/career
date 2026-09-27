@@ -318,12 +318,17 @@ fun SalaryNegotiatorScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                         shape = RoundedCornerShape(6.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                         modifier = Modifier.testTag("copy_counter_email_button")
                     ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Copy Email", fontSize = 11.sp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Copy Email", fontSize = 11.sp)
+                        }
                     }
                 }
 
@@ -340,12 +345,23 @@ fun SalaryNegotiatorScreen(
 
                 if (showCopiedToast) {
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "✓ Counter-offer email copied to clipboard!",
-                        fontSize = 11.sp,
-                        color = SuccessGreen,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = SuccessGreen,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Text(
+                            text = "Counter-offer email copied to clipboard!",
+                            fontSize = 11.sp,
+                            color = SuccessGreen,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

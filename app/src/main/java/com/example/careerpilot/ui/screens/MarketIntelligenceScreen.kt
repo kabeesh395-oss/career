@@ -162,9 +162,6 @@ fun MarketIntelligenceScreen(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .height(56.dp)
-                            .bouncyClickable {
-                                if (searchQuery.isNotBlank()) viewModel.querySearchGrounding(searchQuery)
-                            }
                             .testTag("market_search_button")
                     ) {
                         if (isSearching) {
@@ -296,7 +293,7 @@ fun MarketIntelligenceScreen(
                                         .background(PrimaryBlue.copy(alpha = 0.15f))
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
-                                    Text(text = "🔍 $query", color = TextSecondary, fontSize = 10.sp)
+                                    Text(text = query, color = TextSecondary, fontSize = 10.sp)
                                 }
                             }
                         }
@@ -406,14 +403,16 @@ fun MarketIntelligenceScreen(
                     // Next steps CTA
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedButton(
                             onClick = { onNavigate("interview") },
                             modifier = Modifier
                                 .weight(1f)
-                                .bouncyClickable { onNavigate("interview") },
+                                .defaultMinSize(minHeight = 44.dp),
                             shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlueGlow)
                         ) {
                             Text("Launch Mock Interview", fontSize = 12.sp)
@@ -423,8 +422,9 @@ fun MarketIntelligenceScreen(
                             onClick = { onNavigate("negotiator") },
                             modifier = Modifier
                                 .weight(1f)
-                                .bouncyClickable { onNavigate("negotiator") },
+                                .defaultMinSize(minHeight = 44.dp),
                             shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                         ) {
                             Text("Simulate Offer", fontSize = 12.sp)

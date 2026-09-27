@@ -1,6 +1,9 @@
 package com.example.careerpilot.data.remote.gemini
 
+import android.util.Log
 import com.example.BuildConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -13,8 +16,8 @@ import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
 interface GeminiApiService {
-    @POST("v1beta/models/gemini-1.5-flash:generateContent")
-    suspend fun generateContentWithSearch(
+    @POST("v1beta/models/gemini-3.5-flash:generateContent")
+    suspend fun generateContent(
         @Query("key") apiKey: String,
         @Body request: GeminiGenerateRequest
     ): GeminiGenerateResponse
@@ -67,4 +70,36 @@ object GeminiClient {
             ""
         }
     }
+
+    fun hasValidApiKey(): Boolean {
+        val key = getApiKey()
+        return key.isNotBlank() && key != "YOUR_GEMINI_API_KEY_HERE"
+    }
+
+    suspend fun generateText(prompt: String, systemPrompt: String? = null): String? = withContext(Dispatchers.IO) {
+        if (!hasValidApiKey()) return@withContext null
+        try {
+            val request = GeminiGenerateRequest(
+                contents = listOf(
+                    GeminiContent(
+                        role = "user",
+                        parts = listOf(GeminiPart(text = prompt))
+                    )
+                ),
+                systemInstruction = if (systemPrompt != null) {
+                    GeminiContent(parts = listOf(GeminiPart(text = systemPrompt)))
+                } else null,
+                generationConfig = GeminiGenerationConfig(
+                    temperature = 0.4f,
+                    maxOutputTokens = 2048
+                )
+            )
+            val response = service.generateContent(getApiKey(), request)
+            response.candidates?.firstOrNull()?.content?.parts?.joinToString("\n") { it.text ?: "" }
+        } catch (e: Exception) {
+            Log.w("GeminiClient", "generateText failed: ${e.message}")
+            null
+        }
+    }
 }
+

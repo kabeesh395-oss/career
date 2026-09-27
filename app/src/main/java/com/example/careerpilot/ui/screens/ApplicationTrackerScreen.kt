@@ -118,7 +118,7 @@ fun ApplicationTrackerScreen(
                 ) {
                     PipelineMetricBadge("Active", "${applications.filter { it.stage != "REJECTED" }.size}", PrimaryBlueGlow)
                     PipelineMetricBadge("Screening", "${applications.filter { it.stage == "SCREENING" }.size}", WarningAmber)
-                    PipelineMetricBadge("Technical", "${applications.filter { it.stage == "TECHNICAL" }.size}", AccentPurple)
+                    PipelineMetricBadge("Technical", "${applications.filter { it.stage == "TECHNICAL" }.size}", PrimaryBlueLighter)
                     PipelineMetricBadge("Offers", "${applications.filter { it.stage == "OFFER" }.size}", SuccessGreen)
                 }
 
@@ -272,7 +272,7 @@ fun ApplicationTrackerScreen(
                             Button(
                                 onClick = {
                                     clipboardManager.setText(AnnotatedString(outreachData.linkedInInMail))
-                                    copiedToast = "✓ LinkedIn InMail copied to clipboard!"
+                                    copiedToast = "LinkedIn InMail copied to clipboard."
                                 },
                                 shape = RoundedCornerShape(6.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
@@ -305,7 +305,7 @@ fun ApplicationTrackerScreen(
                             Button(
                                 onClick = {
                                     clipboardManager.setText(AnnotatedString(outreachData.tailoredCoverLetter))
-                                    copiedToast = "✓ Cover letter copied to clipboard!"
+                                    copiedToast = "Cover letter copied to clipboard."
                                 },
                                 shape = RoundedCornerShape(6.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
@@ -557,7 +557,7 @@ private fun ApplicationCard(
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                         shape = RoundedCornerShape(6.dp)
                     ) {
-                        Text("Offer Received 🎉", fontSize = 10.sp)
+                        Text("Offer Received", fontSize = 10.sp)
                     }
                 }
             }

@@ -28,6 +28,16 @@ export function initDatabase(): DatabaseType {
   const schemaSql = fs.readFileSync(schemaPath, 'utf8');
   db.exec(schemaSql);
 
+  // Safe incremental migration for roadmap_items new fields
+  const newColumns = ['skill', 'why_it_matters', 'learning_objective', 'practice_suggestion', 'interview_relevance'];
+  for (const col of newColumns) {
+    try {
+      db.exec(`ALTER TABLE roadmap_items ADD COLUMN ${col} TEXT;`);
+    } catch {
+      // Column already exists
+    }
+  }
+
   // Seed canonical master skills and verified learning resources
   seedCanonicalSkills();
   seedVerifiedLearningResources();

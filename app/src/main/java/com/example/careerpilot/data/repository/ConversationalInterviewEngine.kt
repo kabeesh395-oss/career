@@ -2,6 +2,10 @@ package com.example.careerpilot.data.repository
 
 import com.example.careerpilot.data.model.ConversationMessage
 import com.example.careerpilot.data.model.ProbingChallenge
+import com.example.careerpilot.data.remote.gemini.GeminiClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.util.UUID
 
 object ConversationalInterviewEngine {
@@ -56,6 +60,60 @@ object ConversationalInterviewEngine {
         } ?: PROBING_CATALOG.random()
     }
 
+    suspend fun evaluateAnswerAndGenerateResponseWithAi(
+        currentQuestion: String,
+        userAnswer: String,
+        isFollowUp: Boolean = false
+    ): Pair<ConversationMessage, Int> = withContext(Dispatchers.IO) {
+        val offlineFallback = evaluateAnswerAndGenerateResponse(currentQuestion, userAnswer, isFollowUp)
+
+        if (!GeminiClient.hasValidApiKey()) {
+            return@withContext offlineFallback
+        }
+
+        try {
+            val systemPrompt = """
+                You are a Principal Software Engineering Bar Raiser conducting an elite technical interview.
+                Evaluate the candidate's answer for technical accuracy, distributed systems trade-offs, and scalability depth.
+                ${if (!isFollowUp) "Generate an intelligent follow-up probing question drilling into potential failure modes or scale limits in their design." else "Provide a final grade (0-100) and actionable architectural feedback on their response to the follow-up probe."}
+                
+                Return ONLY valid JSON matching this schema:
+                {
+                   "score": 88,
+                   "feedbackSnippet": "Strong breakdown of lock contention...",
+                   "aiMessage": "Detailed response or follow-up question here"
+                }
+            """.trimIndent()
+
+            val prompt = """
+                Original Interview Question: "$currentQuestion"
+                Candidate's Answer: "$userAnswer"
+                Is Follow-Up Round: $isFollowUp
+            """.trimIndent()
+
+            val rawResponse = GeminiClient.generateText(prompt, systemPrompt) ?: return@withContext offlineFallback
+            val cleanJson = rawResponse.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+            val json = JSONObject(cleanJson)
+
+            val score = json.optInt("score", offlineFallback.second).coerceIn(30, 100)
+            val feedback = json.optString("feedbackSnippet", offlineFallback.first.feedbackSnippet)
+            val aiMessage = json.optString("aiMessage", offlineFallback.first.content)
+
+            val message = ConversationMessage(
+                id = "msg_${UUID.randomUUID().toString().take(6)}",
+                sender = "AI",
+                content = aiMessage,
+                timestamp = System.currentTimeMillis(),
+                isProbingQuestion = !isFollowUp,
+                feedbackSnippet = feedback
+            )
+
+            Pair(message, score)
+        } catch (e: Exception) {
+            offlineFallback
+        }
+    }
+
     fun evaluateAnswerAndGenerateResponse(
         currentQuestion: String,
         userAnswer: String,
@@ -88,9 +146,9 @@ object ConversationalInterviewEngine {
         val aiContent = if (!isFollowUp) {
             val probe = detectFollowUpProbe(userAnswer)
             """
-                Good initial foundation! Let's probe deeper on your architecture:
+                Follow-up architectural challenge:
                 
-                👉 **Follow-Up Challenge**: ${probe.probeQuestion}
+                **Follow-Up Challenge**: ${probe.probeQuestion}
                 
                 *(Evaluation focus: ${probe.category})*
             """.trimIndent()
@@ -117,3 +175,4 @@ object ConversationalInterviewEngine {
         return Pair(message, finalScore)
     }
 }
+

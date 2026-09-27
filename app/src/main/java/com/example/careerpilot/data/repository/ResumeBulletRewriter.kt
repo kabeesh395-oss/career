@@ -2,6 +2,11 @@ package com.example.careerpilot.data.repository
 
 import com.example.careerpilot.data.model.BulletAnalysis
 import com.example.careerpilot.data.model.BulletRewriteOption
+import com.example.careerpilot.data.remote.gemini.GeminiClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.UUID
 
 object ResumeBulletRewriter {
@@ -15,6 +20,98 @@ object ResumeBulletRewriter {
         "Architected", "Engineered", "Optimized", "Spearheaded", "Refactored",
         "Automated", "Pioneered", "Accelerated", "Orchestrated", "Scaled"
     )
+
+    suspend fun analyzeAndRewriteWithAi(
+        bulletText: String,
+        targetRole: String = "Full Stack Engineer"
+    ): BulletAnalysis = withContext(Dispatchers.IO) {
+        val baseAnalysis = analyzeAndRewriteBullet(bulletText, targetRole)
+
+        if (!GeminiClient.hasValidApiKey()) {
+            return@withContext baseAnalysis
+        }
+
+        try {
+            val systemPrompt = """
+                You are a Principal Tech Recruiter and Resume Specialist.
+                Analyze the user's raw resume bullet point and generate 3 top-tier Google X-Y-Z formula variants (Accomplished [X], Measured by [Y], by doing [Z]).
+                Return ONLY a JSON object with this schema:
+                {
+                   "weaknessFlags": ["weakness 1", "weakness 2"],
+                   "options": [
+                      {
+                        "style": "METRIC_MAX",
+                        "rewrittenText": "bullet text here",
+                        "accomplishedX": "X",
+                        "measuredByY": "Y",
+                        "actionZ": "Z",
+                        "powerVerb": "Optimized",
+                        "impactScore": 96
+                      },
+                      {
+                        "style": "ARCHITECTURE_FOCUSED",
+                        "rewrittenText": "bullet text here",
+                        "accomplishedX": "X",
+                        "measuredByY": "Y",
+                        "actionZ": "Z",
+                        "powerVerb": "Architected",
+                        "impactScore": 94
+                      },
+                      {
+                        "style": "SCALE_AND_QUALITY",
+                        "rewrittenText": "bullet text here",
+                        "accomplishedX": "X",
+                        "measuredByY": "Y",
+                        "actionZ": "Z",
+                        "powerVerb": "Spearheaded",
+                        "impactScore": 92
+                      }
+                   ]
+                }
+            """.trimIndent()
+
+            val prompt = "Raw bullet: \"$bulletText\"\nTarget Role: \"$targetRole\""
+            val aiResponse = GeminiClient.generateText(prompt, systemPrompt) ?: return@withContext baseAnalysis
+
+            val cleanJson = aiResponse.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+            val jsonObj = JSONObject(cleanJson)
+
+            val flagsArray = jsonObj.optJSONArray("weaknessFlags") ?: JSONArray()
+            val aiFlags = mutableListOf<String>()
+            for (i in 0 until flagsArray.length()) {
+                aiFlags.add(flagsArray.getString(i))
+            }
+
+            val optionsArray = jsonObj.optJSONArray("options") ?: JSONArray()
+            val aiOptions = mutableListOf<BulletRewriteOption>()
+            for (i in 0 until optionsArray.length()) {
+                val opt = optionsArray.getJSONObject(i)
+                aiOptions.add(
+                    BulletRewriteOption(
+                        id = "opt_ai_${UUID.randomUUID().toString().take(6)}",
+                        style = opt.optString("style", "AI_ENHANCED"),
+                        rewrittenText = opt.optString("rewrittenText", ""),
+                        accomplishedX = opt.optString("accomplishedX", ""),
+                        measuredByY = opt.optString("measuredByY", ""),
+                        actionZ = opt.optString("actionZ", ""),
+                        powerVerb = opt.optString("powerVerb", "Engineered"),
+                        impactScore = opt.optInt("impactScore", 95)
+                    )
+                )
+            }
+
+            if (aiOptions.isNotEmpty()) {
+                baseAnalysis.copy(
+                    weaknessFlags = if (aiFlags.isNotEmpty()) aiFlags else baseAnalysis.weaknessFlags,
+                    options = aiOptions
+                )
+            } else {
+                baseAnalysis
+            }
+        } catch (e: Exception) {
+            baseAnalysis
+        }
+    }
 
     fun analyzeAndRewriteBullet(bulletText: String, targetRole: String = "Full Stack Engineer"): BulletAnalysis {
         val trimmed = bulletText.trim().removePrefix("-").removePrefix("•").trim()
@@ -30,10 +127,10 @@ object ResumeBulletRewriter {
             passiveVoiceDetected = true
         }
 
-        // Check for quantitative metrics
-        val containsMetric = lower.contains("%") || lower.contains("ms") || lower.contains("qps") ||
-                lower.contains("k") || lower.contains("m") || lower.contains("x") ||
-                Regex("""\d+""").containsMatchIn(lower)
+        // Check for quantitative metrics (percentages, numbers, dollar values, latency/throughput units)
+        val containsMetric = lower.contains("%") || lower.contains("$") ||
+                Regex("""\b\d+""").containsMatchIn(lower) ||
+                Regex("""\d+\s*(ms|s|qps|k|m|x|rps|gb|tb)""", RegexOption.IGNORE_CASE).containsMatchIn(lower)
 
         if (!containsMetric) {
             weaknessFlags.add("Zero quantified metrics (e.g., latency %, throughput, cost savings, test coverage)")
@@ -114,3 +211,4 @@ object ResumeBulletRewriter {
         "Managed Redis caching layer to make the application faster."
     )
 }
+

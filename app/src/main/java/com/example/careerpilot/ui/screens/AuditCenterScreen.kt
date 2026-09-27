@@ -1,6 +1,7 @@
 package com.example.careerpilot.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -88,7 +89,7 @@ fun AuditCenterScreen(
     }
 
     Scaffold(
-        containerColor = BgBase
+        containerColor = Color.Transparent
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -347,9 +348,9 @@ fun AuditDashboardSummaryCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("audit_dashboard_summary_card"),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = BgSurfaceElevated),
-        border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(BorderSubtle, PrimaryBlue.copy(alpha = 0.4f))))
+        border = BorderStroke(1.dp, BorderSubtle)
     ) {
         Column(
             modifier = Modifier
@@ -446,14 +447,7 @@ fun AuditDashboardSummaryCard(
                     onClick = onExplainClick,
                     shape = RoundedCornerShape(12.dp),
                     color = if (summary.totalDemerits < 0) AccentRed.copy(alpha = 0.12f) else AccentGreen.copy(alpha = 0.12f),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = Brush.horizontalGradient(
-                            listOf(
-                                if (summary.totalDemerits < 0) AccentRed.copy(alpha = 0.4f) else AccentGreen.copy(alpha = 0.4f),
-                                Color.Transparent
-                            )
-                        )
-                    ),
+                    border = BorderStroke(1.dp, if (summary.totalDemerits < 0) AccentRed.copy(alpha = 0.35f) else AccentGreen.copy(alpha = 0.35f)),
                     modifier = Modifier.testTag("explain_score_delta_button")
                 ) {
                     Row(
@@ -468,12 +462,29 @@ fun AuditDashboardSummaryCard(
                                 fontWeight = FontWeight.Bold,
                                 color = if (summary.totalDemerits < 0) AccentRed else AccentGreen
                             )
-                            Text(
-                                text = "Base ${summary.readinessScore} → Net ${summary.netAuditScore}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
-                                fontSize = 10.sp
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text(
+                                    text = "Base ${summary.readinessScore}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary,
+                                    fontSize = 10.sp
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(10.dp)
+                                )
+                                Text(
+                                    text = "Net ${summary.netAuditScore}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary,
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -586,16 +597,9 @@ fun SeverityPill(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(8.dp),
         color = if (isSelected) color.copy(alpha = 0.22f) else BgSurface,
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = Brush.horizontalGradient(
-                listOf(
-                    if (isSelected) color else BorderSubtle,
-                    if (isSelected) color else BorderSubtle
-                )
-            )
-        ),
+        border = BorderStroke(1.dp, if (isSelected) color else BorderSubtle),
         modifier = modifier.testTag("severity_pill_$label")
     ) {
         Column(
@@ -642,18 +646,11 @@ fun AuditIssueCard(
             .fillMaxWidth()
             .clickable { onInspectClick() }
             .testTag("audit_issue_${issue.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isResolved) BgSurface.copy(alpha = 0.6f) else BgSurface
         ),
-        border = CardDefaults.outlinedCardBorder().copy(
-            brush = Brush.horizontalGradient(
-                listOf(
-                    if (isResolved) AccentGreen.copy(alpha = 0.4f) else severityColor.copy(alpha = 0.5f),
-                    BorderSubtle
-                )
-            )
-        )
+        border = BorderStroke(1.dp, if (isResolved) AccentGreen.copy(alpha = 0.35f) else severityColor.copy(alpha = 0.35f))
     ) {
         Column(
             modifier = Modifier
@@ -819,11 +816,9 @@ fun AuditIssueDetailDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(16.dp),
             color = BgSurfaceElevated,
-            border = CardDefaults.outlinedCardBorder().copy(
-                brush = Brush.horizontalGradient(listOf(BorderSubtle, severityColor.copy(alpha = 0.5f)))
-            ),
+            border = BorderStroke(1.dp, severityColor.copy(alpha = 0.4f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
@@ -952,14 +947,7 @@ fun AuditIssueDetailDialog(
                             onClick = { onStatusChange(st) },
                             shape = RoundedCornerShape(8.dp),
                             color = if (isCurr) PrimaryBlue.copy(alpha = 0.25f) else BgBase,
-                            border = CardDefaults.outlinedCardBorder().copy(
-                                brush = Brush.horizontalGradient(
-                                    listOf(
-                                        if (isCurr) PrimaryBlueGlow else BorderSubtle,
-                                        if (isCurr) PrimaryBlueGlow else BorderSubtle
-                                    )
-                                )
-                            ),
+                            border = BorderStroke(1.dp, if (isCurr) PrimaryBlue else BorderSubtle),
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("status_selector_$st")
@@ -987,6 +975,7 @@ fun AuditIssueDetailDialog(
                     onClick = onStartFix,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                         .testTag("dialog_start_fix_btn"),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -994,17 +983,28 @@ fun AuditIssueDetailDialog(
                         contentColor = TextPrimary
                     )
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "${issue.ctaText} →",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = issue.ctaText.replace("→", "").trim(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
                 }
             }
         }
@@ -1277,7 +1277,7 @@ fun EmptyAuditStateCard(
                     onClick = onClearFilters,
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlueGlow),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(PrimaryBlue, PrimaryBlueGlow)))
+                    border = BorderStroke(1.dp, PrimaryBlue)
                 ) {
                     Text("Clear Filters", fontSize = 12.sp)
                 }

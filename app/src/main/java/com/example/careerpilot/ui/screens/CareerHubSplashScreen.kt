@@ -89,19 +89,19 @@ fun CareerHubSplashScreen(
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = TextPrimary,
-                            letterSpacing = (-0.02).sp
+                            letterSpacing = (-0.5).sp
                         )
                         Text(
-                            text = "Hub",
+                            text = "Pilot",
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = AccentCyanLight,
-                            letterSpacing = (-0.02).sp
+                            letterSpacing = (-0.5).sp
                         )
                     }
                     Spacer(modifier = Modifier.height(Dimens.SpaceSm))
                     Text(
-                        text = "PROFESSIONAL NETWORK",
+                        text = "AI CAREER & INTERVIEW COPILOT",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = TextMuted,

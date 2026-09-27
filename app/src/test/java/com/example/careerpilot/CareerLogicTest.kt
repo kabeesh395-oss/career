@@ -124,4 +124,22 @@ class CareerLogicTest {
         assertFalse(resource.isCompleted)
         assertEquals(0, resource.quizCorrectIndex)
     }
+
+    @Test
+    fun testInitialOpportunitiesCatalog() {
+        val opportunities = BenchmarkCatalog.INITIAL_OPPORTUNITIES
+        assertTrue("Opportunities catalog should not be empty", opportunities.isNotEmpty())
+        assertTrue("Should have certifications", opportunities.any { it.category == "CERTIFICATION" })
+        assertTrue("Should have hackathons", opportunities.any { it.category == "HACKATHON" })
+        assertTrue("Should have fellowships", opportunities.any { it.category == "FELLOWSHIP" })
+        assertTrue("Should have open source programs", opportunities.any { it.category == "OPEN_SOURCE" })
+
+        // Check required fields & URLs
+        opportunities.forEach { opp ->
+            assertTrue("Opportunity must have title", opp.title.isNotBlank())
+            assertTrue("Opportunity must have provider", opp.providerOrHost.isNotBlank())
+            assertTrue("Opportunity must have official URL", opp.officialUrl.startsWith("http"))
+            assertTrue("Opportunity must have match score between 0 and 100", opp.matchScore in 0..100)
+        }
+    }
 }

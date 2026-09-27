@@ -109,7 +109,18 @@ fun CodingSandboxScreen(
                                     color = AccentPurple
                                 )
                                 if (challenge.isCompleted) {
-                                    Text("✓ Done", fontSize = 10.sp, color = SuccessGreen, fontWeight = FontWeight.Bold)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = SuccessGreen,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Text("Done", fontSize = 10.sp, color = SuccessGreen, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                             Spacer(modifier = Modifier.height(4.dp))
@@ -234,7 +245,9 @@ fun CodingSandboxScreen(
                         OutlinedButton(
                             onClick = { showSolution = !showSolution },
                             shape = RoundedCornerShape(8.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                            modifier = Modifier.defaultMinSize(minHeight = 44.dp)
                         ) {
                             Text(if (showSolution) "Hide Hint" else "Show Reference", fontSize = 12.sp, color = TextSecondary)
                         }
@@ -242,17 +255,25 @@ fun CodingSandboxScreen(
                         Button(
                             onClick = {
                                 isRunningTests = true
-                                testResultOutput = "Running AST Analyzer & Concurrent Unit Tests...\n✓ Thread-safety Mutex verification: PASS\n✓ Complexity bound: ${current.timeComplexityTarget} VERIFIED\n✓ Edge cases (empty payload, timeout, eviction): 100% PASS"
+                                testResultOutput = "Running AST Analyzer & Concurrent Unit Tests...\n[PASS] Thread-safety Mutex verification\n[PASS] Complexity bound: ${current.timeComplexityTarget} VERIFIED\n[PASS] Edge cases (empty payload, timeout, eviction): 100%"
                                 viewModel.toggleCodingChallenge(current.id)
                                 isRunningTests = false
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                             shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.testTag("run_code_tests_button")
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 44.dp)
+                                .testTag("run_code_tests_button")
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Run Tests & Verify", fontSize = 12.sp)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Run Tests & Verify", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
                         }
                     }
 

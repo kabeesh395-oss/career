@@ -17,13 +17,48 @@ import com.example.careerpilot.data.remote.github.GitHubValidationResult
 import com.example.careerpilot.data.repository.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.UUID
+
+data class UploadedPdfInfo(
+    val fileName: String,
+    val fileSizeFormatted: String,
+    val pageCount: Int,
+    val charCount: Int,
+    val rawText: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val parsedData: ParsedResumeData? = null,
+    val isAiEnhanced: Boolean = false
+)
+
+sealed interface ResumeUploadState {
+    object Idle : ResumeUploadState
+    data class DragHover(val isDraggingOver: Boolean = true) : ResumeUploadState
+    data class Processing(
+        val fileName: String,
+        val step: String,
+        val progress: Float, // 0.0f to 1.0f
+        val details: String = ""
+    ) : ResumeUploadState
+    data class Success(
+        val info: UploadedPdfInfo,
+        val message: String
+    ) : ResumeUploadState
+    data class Error(
+        val errorMessage: String,
+        val reasonCode: String? = null,
+        val canRetry: Boolean = true
+    ) : ResumeUploadState
+}
 
 class CareerViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: CareerRepository
     val userPreferencesManager: com.example.careerpilot.data.local.UserPreferencesManager = com.example.careerpilot.data.local.UserPreferencesManager(application)
     val authManager: FirebaseAuthManager = FirebaseAuthManager(application)
-    val syncManager: FirestoreSyncManager = FirestoreSyncManager(authManager)
+    val syncManager: FirestoreSyncManager = FirestoreSyncManager(
+        authManager = authManager,
+        dao = AppDatabase.getDatabase(application).careerDao()
+    )
 
     val authUserState: StateFlow<AuthUserState> = authManager.userState
     val customGeminiApiKey: StateFlow<String> = userPreferencesManager.customGeminiApiKey.stateIn(
@@ -40,6 +75,14 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _isSearchingGrounding = MutableStateFlow(false)
     val isSearchingGrounding: StateFlow<Boolean> = _isSearchingGrounding.asStateFlow()
+
+    private val _uploadedPdfInfo = MutableStateFlow<UploadedPdfInfo?>(null)
+    val uploadedPdfInfo: StateFlow<UploadedPdfInfo?> = _uploadedPdfInfo.asStateFlow()
+
+    private val _resumeUploadState = MutableStateFlow<ResumeUploadState>(ResumeUploadState.Idle)
+    val resumeUploadState: StateFlow<ResumeUploadState> = _resumeUploadState.asStateFlow()
+
+    private var lastUploadedUri: android.net.Uri? = null
 
     val userProfile: StateFlow<UserProfile?>
     val userSkills: StateFlow<List<UserSkill>>
@@ -60,6 +103,16 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
     val codingChallenges: StateFlow<List<CodingChallenge>>
     val peerMatches: StateFlow<List<PeerMatch>>
     val skillSprints: StateFlow<List<SkillSprint>>
+    val opportunities: StateFlow<List<CareerOpportunity>>
+
+    private val _selectedOpportunityCategory = MutableStateFlow("ALL")
+    val selectedOpportunityCategory: StateFlow<String> = _selectedOpportunityCategory.asStateFlow()
+
+    private val _opportunitySearchQuery = MutableStateFlow("")
+    val opportunitySearchQuery: StateFlow<String> = _opportunitySearchQuery.asStateFlow()
+
+    private val _selectedOpportunity = MutableStateFlow<CareerOpportunity?>(null)
+    val selectedOpportunity: StateFlow<CareerOpportunity?> = _selectedOpportunity.asStateFlow()
 
     private val _selectedJobPosting = MutableStateFlow<TargetJobPosting?>(null)
     val selectedJobPosting: StateFlow<TargetJobPosting?> = _selectedJobPosting.asStateFlow()
@@ -162,6 +215,9 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
         skillSprints = repository.skillSprintsFlow.stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+        opportunities = repository.opportunitiesFlow.stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
 
@@ -291,6 +347,15 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             repository.updateProfile(updated)
             refreshNextBestAction()
             _userMessage.value = "Profile updated and calibrated for $targetRole."
+        }
+    }
+
+    fun initializeDefaultDataIfEmpty() {
+        viewModelScope.launch {
+            repository.initializeDefaultDataIfEmpty()
+            val summary = repository.recalibrateAudit()
+            _auditSummary.value = summary
+            refreshNextBestAction()
         }
     }
 
@@ -623,9 +688,19 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
 
     // === FEATURE 2: AI RESUME BULLET REWRITER ===
     fun analyzeResumeBullet(bulletText: String) {
-        val role = userProfile.value?.targetRole ?: "Full Stack Engineer"
-        val analysis = repository.analyzeBullet(bulletText, role)
-        _bulletAnalysis.value = analysis
+        viewModelScope.launch {
+            _isAnalyzing.value = true
+            try {
+                val role = userProfile.value?.targetRole ?: "Full Stack Engineer"
+                val analysis = repository.analyzeBulletWithAi(bulletText, role)
+                _bulletAnalysis.value = analysis
+            } catch (e: Exception) {
+                val role = userProfile.value?.targetRole ?: "Full Stack Engineer"
+                _bulletAnalysis.value = repository.analyzeBullet(bulletText, role)
+            } finally {
+                _isAnalyzing.value = false
+            }
+        }
     }
 
     fun clearBulletAnalysis() {
@@ -761,11 +836,206 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // === RESUME IMPORTER & PARSER ===
+    // === RESUME IMPORTER, PDF UPLOADER & PARSER ===
+    fun setDragHovering(isHovering: Boolean) {
+        if (_resumeUploadState.value is ResumeUploadState.Idle || _resumeUploadState.value is ResumeUploadState.DragHover) {
+            _resumeUploadState.value = if (isHovering) ResumeUploadState.DragHover(true) else ResumeUploadState.Idle
+        }
+    }
+
+    fun resetResumeUploadState() {
+        _resumeUploadState.value = ResumeUploadState.Idle
+    }
+
+    fun retryLastPdfUpload(context: android.content.Context) {
+        val uri = lastUploadedUri
+        if (uri != null) {
+            importResumeFromPdfUri(uri, context)
+        } else {
+            _resumeUploadState.value = ResumeUploadState.Idle
+        }
+    }
+
+    fun importResumeFromPdfUri(uri: android.net.Uri, context: android.content.Context) {
+        lastUploadedUri = uri
+        viewModelScope.launch {
+            _isAnalyzing.value = true
+            _resumeUploadState.value = ResumeUploadState.Processing(
+                fileName = "Scanning Document...",
+                step = "Reading PDF file & inspecting streams...",
+                progress = 0.25f,
+                details = "Opening native PDF render descriptors"
+            )
+            _userMessage.value = "Extracting text from PDF resume..."
+            try {
+                // Step 1: Extract text from PDF URI
+                val result = PdfResumeExtractor.extractFromUri(context, uri)
+                if (result.isSuccess && result.rawText.isNotBlank()) {
+                    _resumeUploadState.value = ResumeUploadState.Processing(
+                        fileName = result.fileName,
+                        step = "Gemini AI ATS parsing skills, roles & experience...",
+                        progress = 0.65f,
+                        details = "Recognizing technical competencies & career metrics"
+                    )
+
+                    val parsed = ResumeParser.parseResumeWithAi(result.rawText)
+                    
+                    _resumeUploadState.value = ResumeUploadState.Processing(
+                        fileName = result.fileName,
+                        step = "Calibrating ATS benchmark score & skill matrix...",
+                        progress = 0.90f,
+                        details = "Running keyword density and readability audits"
+                    )
+
+                    val pdfInfo = UploadedPdfInfo(
+                        fileName = result.fileName,
+                        fileSizeFormatted = result.fileSizeFormatted,
+                        pageCount = result.pageCount,
+                        charCount = result.characterCount,
+                        rawText = result.rawText,
+                        parsedData = parsed,
+                        isAiEnhanced = parsed.aiParsed
+                    )
+                    _uploadedPdfInfo.value = pdfInfo
+
+                    val currentProfile = userProfile.value ?: UserProfile()
+                    val updatedProfile = currentProfile.copy(
+                        fullName = parsed.fullName,
+                        email = parsed.email,
+                        targetRole = parsed.targetRole,
+                        headline = parsed.headline,
+                        bio = parsed.bio,
+                        education = parsed.education,
+                        experienceYears = parsed.experienceYears
+                    )
+                    repository.updateProfile(updatedProfile)
+
+                    parsed.skillsDetected.forEach { skillName ->
+                        repository.addOrUpdateUserSkill(
+                            UserSkill(
+                                skillName = skillName,
+                                category = "PDF Extracted",
+                                proficiencyLevel = 4,
+                                verified = true,
+                                source = "pdf_parsed"
+                            )
+                        )
+                    }
+
+                    repository.analyzeResumeText(
+                        rawText = parsed.rawText,
+                        filename = result.fileName
+                    )
+                    repository.recalibrateAudit()
+                    refreshNextBestAction()
+                    
+                    _resumeUploadState.value = ResumeUploadState.Success(
+                        info = pdfInfo,
+                        message = "PDF '${result.fileName}' parsed. ATS Audit calibrated."
+                    )
+                    _userMessage.value = "PDF '${result.fileName}' uploaded and parsed successfully. ATS Audit score updated."
+                } else {
+                    val errMsg = result.errorMessage ?: "Could not extract text. Ensure file is not scanned-image only."
+                    _resumeUploadState.value = ResumeUploadState.Error(
+                        errorMessage = errMsg,
+                        reasonCode = "TEXT_EXTRACTION_EMPTY"
+                    )
+                    _userMessage.value = "Could not extract text: $errMsg"
+                }
+            } catch (e: Exception) {
+                val errMsg = e.localizedMessage ?: "Failed to process PDF resume"
+                _resumeUploadState.value = ResumeUploadState.Error(
+                    errorMessage = errMsg,
+                    reasonCode = "EXCEPTION"
+                )
+                _userMessage.value = "PDF upload error: $errMsg"
+            } finally {
+                _isAnalyzing.value = false
+            }
+        }
+    }
+
+    fun importResumeFromSamplePdf(sample: SamplePdfResume) {
+        viewModelScope.launch {
+            _isAnalyzing.value = true
+            _resumeUploadState.value = ResumeUploadState.Processing(
+                fileName = sample.fileName,
+                step = "Loading preloaded candidate profile...",
+                progress = 0.50f,
+                details = "Simulating enterprise PDF extraction"
+            )
+            _userMessage.value = "Loading sample PDF: ${sample.fileName}..."
+            try {
+                val parsed = ResumeParser.parseResumeWithAi(sample.rawContent)
+                val pdfInfo = UploadedPdfInfo(
+                    fileName = sample.fileName,
+                    fileSizeFormatted = sample.fileSizeFormatted,
+                    pageCount = sample.pageCount,
+                    charCount = sample.rawContent.length,
+                    rawText = sample.rawContent,
+                    parsedData = parsed,
+                    isAiEnhanced = parsed.aiParsed
+                )
+                _uploadedPdfInfo.value = pdfInfo
+
+                val currentProfile = userProfile.value ?: UserProfile()
+                val updatedProfile = currentProfile.copy(
+                    fullName = parsed.fullName,
+                    email = parsed.email,
+                    targetRole = parsed.targetRole,
+                    headline = parsed.headline,
+                    bio = parsed.bio,
+                    education = parsed.education,
+                    experienceYears = parsed.experienceYears
+                )
+                repository.updateProfile(updatedProfile)
+
+                parsed.skillsDetected.forEach { skillName ->
+                    repository.addOrUpdateUserSkill(
+                        UserSkill(
+                            skillName = skillName,
+                            category = "PDF Extracted",
+                            proficiencyLevel = 4,
+                            verified = true,
+                            source = "sample_pdf"
+                        )
+                    )
+                }
+
+                repository.analyzeResumeText(
+                    rawText = parsed.rawText,
+                    filename = sample.fileName
+                )
+                repository.recalibrateAudit()
+                refreshNextBestAction()
+
+                _resumeUploadState.value = ResumeUploadState.Success(
+                    info = pdfInfo,
+                    message = "Sample candidate '${sample.fileName}' loaded successfully."
+                )
+                _userMessage.value = "Sample PDF '${sample.fileName}' loaded and analyzed. ATS Audit calibrated."
+            } catch (e: Exception) {
+                _resumeUploadState.value = ResumeUploadState.Error(
+                    errorMessage = e.localizedMessage ?: "Failed to parse sample PDF",
+                    reasonCode = "SAMPLE_PARSE_ERROR"
+                )
+                _userMessage.value = "Error parsing sample: ${e.message}"
+            } finally {
+                _isAnalyzing.value = false
+            }
+        }
+    }
+
+    fun clearUploadedPdf() {
+        _uploadedPdfInfo.value = null
+        _resumeUploadState.value = ResumeUploadState.Idle
+        lastUploadedUri = null
+    }
+
     fun importResumeFromText(rawText: String) {
         viewModelScope.launch {
             _isAnalyzing.value = true
-            val parsed = ResumeParser.parseResumeText(rawText)
+            val parsed = ResumeParser.parseResumeWithAi(rawText)
             
             val currentProfile = userProfile.value ?: UserProfile()
             val updatedProfile = currentProfile.copy(
@@ -815,7 +1085,7 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
     // === REMINDER NOTIFICATION SIMULATION ===
     fun scheduleInterviewReminder(app: JobApplication, timeframe: String = "24h") {
         viewModelScope.launch {
-            _userMessage.value = "✓ Push reminder set for ${app.company} interview ($timeframe before session)."
+            _userMessage.value = "Push reminder set for ${app.company} interview ($timeframe before session)."
         }
     }
 
@@ -834,7 +1104,7 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
                             email = user?.email ?: currentProfile.email
                         )
                     )
-                    _userMessage.value = "✓ Signed in successfully as ${user?.displayName ?: "User"}."
+                    _userMessage.value = "Signed in successfully as ${user?.displayName ?: "User"}."
                     triggerCloudSync()
                 } else {
                     _userMessage.value = "Sign-in note: ${result.exceptionOrNull()?.message}"
@@ -861,7 +1131,7 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
                             email = email.ifEmpty { user?.email ?: "user@careerhub.io" }
                         )
                     )
-                    _userMessage.value = "✓ Account created successfully! Welcome, ${name.ifEmpty { "Engineer" }}."
+                    _userMessage.value = "Account created successfully. Welcome, ${name.ifEmpty { "Engineer" }}."
                     triggerCloudSync()
                 } else {
                     _userMessage.value = "Sign-up note: ${result.exceptionOrNull()?.message}"
@@ -881,7 +1151,7 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
                 val result = authManager.signInWithGoogle(webClientId)
                 if (result.isSuccess) {
                     val user = result.getOrNull()
-                    _userMessage.value = "✓ Successfully signed in with Google (${user?.displayName ?: "User"})."
+                    _userMessage.value = "Successfully signed in with Google (${user?.displayName ?: "User"})."
                     // Trigger Firestore sync upon login
                     triggerCloudSync()
                 } else {
@@ -907,9 +1177,17 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             val profile = userProfile.value ?: UserProfile()
             val apps = jobApplications.value
             val skills = userSkills.value
-            val result = syncManager.triggerFullCloudSync(profile, apps, skills)
+            val currentProjects = projects.value
+            val currentInterviews = interviews.value
+            val result = syncManager.triggerFullCloudSync(
+                profile = profile,
+                apps = apps,
+                skills = skills,
+                projects = currentProjects,
+                interviews = currentInterviews
+            )
             _cloudSyncStatus.value = result
-            _userMessage.value = "Cloud Firestore sync complete (${result.itemsSynced} records)."
+            _userMessage.value = result.syncStatus
         }
     }
 
@@ -921,7 +1199,7 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
                 val result = SearchGroundingService.queryMarketIntelligence(prompt)
                 _searchGroundedResult.value = result
                 _userMessage.value = if (result.isLiveSearch) {
-                    "✓ Google Search Grounded intelligence fetched via gemini-3.5-flash (${result.sources.size} web sources cited)"
+                    "Google Search Grounded intelligence fetched via gemini-3.5-flash (${result.sources.size} web sources cited)"
                 } else {
                     "Market intelligence retrieved with verified benchmark sources."
                 }
@@ -940,7 +1218,7 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 val result = SearchGroundingService.fetchCompanyInterviewIntel(company, role)
                 _searchGroundedResult.value = result
-                _userMessage.value = "✓ Loaded Google Search grounded interview intelligence for $company."
+                _userMessage.value = "Loaded Google Search grounded interview intelligence for $company."
             } catch (e: Exception) {
                 _userMessage.value = "Error fetching company intel: ${e.message}"
             } finally {
@@ -955,7 +1233,7 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 val result = SearchGroundingService.fetchCompensationBenchmarks(role, location, level)
                 _searchGroundedResult.value = result
-                _userMessage.value = "✓ Loaded Google Search grounded compensation benchmarks for $level in $location."
+                _userMessage.value = "Loaded Google Search grounded compensation benchmarks for $level in $location."
             } catch (e: Exception) {
                 _userMessage.value = "Error fetching compensation intel: ${e.message}"
             } finally {
@@ -970,7 +1248,7 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 val result = SearchGroundingService.fetchTrendingTechSkills()
                 _searchGroundedResult.value = result
-                _userMessage.value = "✓ Loaded real-time high demand engineering stacks via Google Search."
+                _userMessage.value = "Loaded real-time high demand engineering stacks via Google Search."
             } catch (e: Exception) {
                 _userMessage.value = "Error fetching tech trends: ${e.message}"
             } finally {
@@ -983,6 +1261,101 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             userPreferencesManager.setCustomGeminiApiKey(apiKey)
             _userMessage.value = "Google AI Studio Key updated. Gemini Search Grounding Active."
+        }
+    }
+
+    // === FEATURE 8: OPPORTUNITIES (CERTIFICATES, HACKATHONS, FELLOWSHIPS) ===
+    fun setOpportunityCategoryFilter(category: String) {
+        _selectedOpportunityCategory.value = category
+    }
+
+    fun setOpportunitySearchQuery(query: String) {
+        _opportunitySearchQuery.value = query
+    }
+
+    fun selectOpportunity(opp: CareerOpportunity?) {
+        _selectedOpportunity.value = opp
+    }
+
+    fun updateOpportunityStatus(opportunityId: String, newStatus: String) {
+        viewModelScope.launch {
+            repository.updateOpportunityStatus(opportunityId, newStatus)
+            _selectedOpportunity.value?.let { current ->
+                if (current.id == opportunityId) {
+                    _selectedOpportunity.value = current.copy(status = newStatus)
+                }
+            }
+            _userMessage.value = "Updated status to $newStatus"
+        }
+    }
+
+    fun toggleOpportunityBookmark(opportunityId: String) {
+        viewModelScope.launch {
+            val opp = opportunities.value.find { it.id == opportunityId }
+            if (opp != null) {
+                val newStatus = if (opp.status == "BOOKMARKED") "EXPLORING" else "BOOKMARKED"
+                repository.updateOpportunityStatus(opportunityId, newStatus)
+                if (_selectedOpportunity.value?.id == opportunityId) {
+                    _selectedOpportunity.value = _selectedOpportunity.value?.copy(status = newStatus)
+                }
+                _userMessage.value = if (newStatus == "BOOKMARKED") "Added to saved opportunities" else "Removed from saved opportunities"
+            }
+        }
+    }
+
+    fun updateOpportunityNotes(opportunityId: String, notes: String) {
+        viewModelScope.launch {
+            repository.updateOpportunityNotes(opportunityId, notes)
+            if (_selectedOpportunity.value?.id == opportunityId) {
+                _selectedOpportunity.value = _selectedOpportunity.value?.copy(userNotes = notes)
+            }
+            _userMessage.value = "Notes saved."
+        }
+    }
+
+    fun toggleOpportunityReminder(opportunityId: String, reminderSet: Boolean) {
+        viewModelScope.launch {
+            repository.toggleOpportunityReminder(opportunityId, reminderSet)
+            if (_selectedOpportunity.value?.id == opportunityId) {
+                _selectedOpportunity.value = _selectedOpportunity.value?.copy(reminderSet = reminderSet)
+            }
+            _userMessage.value = if (reminderSet) "Deadline reminder enabled" else "Reminder disabled"
+        }
+    }
+
+    fun addCustomOpportunity(
+        title: String,
+        category: String,
+        provider: String,
+        officialUrl: String,
+        registrationUrl: String = "",
+        syllabusUrl: String = "",
+        costOrPrize: String = "Free",
+        difficulty: String = "Intermediate",
+        mode: String = "Online / Remote",
+        description: String = "",
+        skills: List<String> = emptyList()
+    ) {
+        viewModelScope.launch {
+            val newOpp = CareerOpportunity(
+                id = "custom_opp_${UUID.randomUUID().toString().take(8)}",
+                title = title.trim(),
+                category = category,
+                providerOrHost = provider.trim(),
+                description = description.trim(),
+                officialUrl = officialUrl.trim(),
+                registrationUrl = if (registrationUrl.isNotBlank()) registrationUrl.trim() else officialUrl.trim(),
+                syllabusOrDocsUrl = syllabusUrl.trim(),
+                costOrPrize = costOrPrize.trim(),
+                difficulty = difficulty,
+                mode = mode,
+                skillsTargeted = skills,
+                status = "BOOKMARKED",
+                matchScore = 90
+            )
+            repository.addCustomOpportunity(newOpp)
+            _selectedOpportunity.value = newOpp
+            _userMessage.value = "Added custom opportunity: ${newOpp.title}"
         }
     }
 }

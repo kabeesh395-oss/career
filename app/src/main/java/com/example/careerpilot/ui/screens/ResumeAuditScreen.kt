@@ -1,5 +1,9 @@
 package com.example.careerpilot.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,11 +31,16 @@ import com.example.careerpilot.data.model.BulletRewriteOption
 import com.example.careerpilot.data.model.TargetJobPosting
 import com.example.careerpilot.data.repository.ResumeBulletRewriter
 import com.example.careerpilot.data.repository.ResumeParser
+import com.example.careerpilot.data.repository.SamplePdfResume
 import com.example.careerpilot.ui.components.CircularScoreGauge
+import com.example.careerpilot.ui.components.CareerCardHighlight
+import com.example.careerpilot.ui.components.EmptyStateCard
 import com.example.careerpilot.ui.components.GlassCard
+import com.example.careerpilot.ui.components.ResumeFilePickerDropZone
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.components.StatusBadge
-import com.example.careerpilot.ui.theme.*
+import com.example.careerpilot.ui.theme.DesignSystem
+import com.example.careerpilot.ui.theme.PrimaryBlueGlow
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -39,6 +49,7 @@ fun ResumeAuditScreen(
     viewModel: CareerViewModel,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val profile by viewModel.userProfile.collectAsState()
     val latestAudit by viewModel.latestResumeAudit.collectAsState()
     val isAnalyzing by viewModel.isAnalyzing.collectAsState()
@@ -46,14 +57,24 @@ fun ResumeAuditScreen(
     val selectedPosting by viewModel.selectedJobPosting.collectAsState()
     val activeJobMatch by viewModel.activeJobMatch.collectAsState()
     val bulletAnalysis by viewModel.bulletAnalysis.collectAsState()
+    val uploadedPdf by viewModel.uploadedPdfInfo.collectAsState()
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0: ATS Audit, 1: Job Matcher, 2: X-Y-Z Bullet Rewriter, 3: Import Resume
-    val tabTitles = listOf("ATS Audit", "Job Matcher", "X-Y-Z Rewriter", "Import Resume")
+    val tabTitles = listOf("ATS Audit", "Job Matcher", "X-Y-Z Rewriter", "PDF Upload")
 
     var importResumeText by remember { mutableStateOf(ResumeParser.SAMPLE_IMPORT_RESUMES.first()) }
 
     var resumeTextInput by remember {
         mutableStateOf("")
+    }
+
+    // PDF Document Picker Launcher
+    val pdfPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.importResumeFromPdfUri(uri, context)
+        }
     }
 
     // Custom Job Description Dialog State
@@ -69,24 +90,27 @@ fun ResumeAuditScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = DesignSystem.Spacing.screenHorizontal),
+        contentPadding = PaddingValues(
+            top = DesignSystem.Spacing.screenTop,
+            bottom = DesignSystem.Spacing.screenBottom
+        ),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sectionSpacing)
     ) {
         // Title & Header
         item {
             Column {
                 Text(
                     text = "Resume & Career Intelligence",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = DesignSystem.TypographyTokens.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = DesignSystem.Colors.TextPrimary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                 Text(
                     text = "ATS scoring, Target Job Matcher, and Google X-Y-Z bullet optimization",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    style = DesignSystem.TypographyTokens.bodyMedium,
+                    color = DesignSystem.Colors.TextSecondary
                 )
             }
         }
@@ -95,11 +119,11 @@ fun ResumeAuditScreen(
         item {
             TabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = BgCard,
-                contentColor = PrimaryBlueGlow,
+                containerColor = DesignSystem.Colors.Card,
+                contentColor = DesignSystem.Colors.PrimaryLight,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(DesignSystem.Shapes.shapeMd)
             ) {
                 tabTitles.forEachIndexed { index, title ->
                     Tab(
@@ -109,8 +133,8 @@ fun ResumeAuditScreen(
                             Text(
                                 text = title,
                                 fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
-                                color = if (selectedTab == index) PrimaryBlueGlow else TextSecondary,
-                                fontSize = 13.sp
+                                color = if (selectedTab == index) DesignSystem.Colors.PrimaryLight else DesignSystem.Colors.TextSecondary,
+                                fontSize = DesignSystem.TypographyTokens.fontMd
                             )
                         },
                         icon = {
@@ -122,7 +146,7 @@ fun ResumeAuditScreen(
                                     else -> Icons.Default.FileUpload
                                 },
                                 contentDescription = title,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(DesignSystem.Components.iconMd)
                             )
                         }
                     )
@@ -135,48 +159,48 @@ fun ResumeAuditScreen(
             // Latest Audit Results Card (if exists)
             if (latestAudit != null) {
                 item {
-                    GlassCard(
+                    CareerCardHighlight(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("resume_score_card"),
-                        borderColor = PrimaryBlueGlow.copy(alpha = 0.5f)
+                            .testTag("resume_score_card")
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(20.dp)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.xl)
                         ) {
                             CircularScoreGauge(
                                 score = latestAudit!!.overallScore,
-                                size = 100.dp,
+                                size = 104.dp,
                                 strokeWidth = 8.dp,
-                                label = "ATS SCORE"
+                                label = "ATS SCORE",
+                                primaryColor = if (latestAudit!!.overallScore >= 80) DesignSystem.Colors.Success else DesignSystem.Colors.Primary
                             )
 
                             Column(modifier = Modifier.weight(1f)) {
                                 StatusBadge(text = "TARGET: ${latestAudit!!.targetRole}", statusType = "primary")
-                                Spacer(modifier = Modifier.height(6.dp))
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                                 Text(
                                     text = "ATS Compatibility Score",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = DesignSystem.TypographyTokens.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = DesignSystem.Colors.TextPrimary
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                                 Text(
                                     text = "Analyzed against top-tier tech screening algorithms.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary
+                                    style = DesignSystem.TypographyTokens.bodySmall,
+                                    color = DesignSystem.Colors.TextSecondary
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.lg))
 
                         // 3 Dimensional Breakdown
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                         ) {
                             ScoreSubCard(
                                 label = "Impact & Metrics",
@@ -203,16 +227,16 @@ fun ResumeAuditScreen(
                         GlassCard(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 text = "Detected Technical Keywords",
-                                style = MaterialTheme.typography.titleMedium,
+                                style = DesignSystem.TypographyTokens.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = DesignSystem.Colors.TextPrimary
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
 
                             val skillsList = latestAudit!!.skillsDetected.split(",").map { it.trim() }
                             FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm),
+                                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 skillsList.forEach { skill ->
@@ -227,37 +251,73 @@ fun ResumeAuditScreen(
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.md)
                     ) {
                         // Strengths
                         GlassCard(
                             modifier = Modifier.weight(1f),
-                            borderColor = SuccessGreen.copy(alpha = 0.3f)
+                            borderColor = DesignSystem.Colors.Success.copy(alpha = 0.3f)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(18.dp))
-                                Text("Strengths", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = SuccessGreen)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.xs)
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = DesignSystem.Colors.Success,
+                                    modifier = Modifier.size(DesignSystem.Components.iconMd)
+                                )
+                                Text(
+                                    "Strengths",
+                                    style = DesignSystem.TypographyTokens.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DesignSystem.Colors.Success
+                                )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                             latestAudit!!.strengths.split("\n").filter { it.isNotBlank() }.forEach { str ->
-                                Text("• $str", style = MaterialTheme.typography.bodySmall, color = TextPrimary, lineHeight = 16.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "• $str",
+                                    style = DesignSystem.TypographyTokens.bodySmall,
+                                    color = DesignSystem.Colors.TextPrimary,
+                                    lineHeight = 16.sp
+                                )
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                             }
                         }
 
                         // Weaknesses
                         GlassCard(
                             modifier = Modifier.weight(1f),
-                            borderColor = WarningAmber.copy(alpha = 0.3f)
+                            borderColor = DesignSystem.Colors.Warning.copy(alpha = 0.3f)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Icon(Icons.Default.Warning, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(18.dp))
-                                Text("Gaps to Fix", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = WarningAmber)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.xs)
+                            ) {
+                                Icon(
+                                    Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = DesignSystem.Colors.Warning,
+                                    modifier = Modifier.size(DesignSystem.Components.iconMd)
+                                )
+                                Text(
+                                    "Gaps to Fix",
+                                    style = DesignSystem.TypographyTokens.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DesignSystem.Colors.Warning
+                                )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                             latestAudit!!.weaknesses.split("\n").filter { it.isNotBlank() }.forEach { weak ->
-                                Text("• $weak", style = MaterialTheme.typography.bodySmall, color = TextPrimary, lineHeight = 16.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "• $weak",
+                                    style = DesignSystem.TypographyTokens.bodySmall,
+                                    color = DesignSystem.Colors.TextPrimary,
+                                    lineHeight = 16.sp
+                                )
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                             }
                         }
                     }
@@ -267,27 +327,51 @@ fun ResumeAuditScreen(
                 item {
                     GlassCard(
                         modifier = Modifier.fillMaxWidth(),
-                        borderColor = AccentPurple.copy(alpha = 0.4f)
+                        borderColor = DesignSystem.Colors.Purple.copy(alpha = 0.4f)
                     ) {
                         Text(
-                            text = "💡 Actionable ATS Recommendations",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "Actionable ATS Recommendations",
+                            style = DesignSystem.TypographyTokens.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = DesignSystem.Colors.TextPrimary
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                         latestAudit!!.recommendations.split("\n").filter { it.isNotBlank() }.forEach { rec ->
-                            Text("• $rec", style = MaterialTheme.typography.bodyMedium, color = TextSecondary, lineHeight = 18.sp)
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "• $rec",
+                                style = DesignSystem.TypographyTokens.bodyMedium,
+                                color = DesignSystem.Colors.TextSecondary,
+                                lineHeight = 18.sp
+                            )
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                         }
                     }
                 }
+            } else {
+                item {
+                    EmptyStateCard(
+                        icon = Icons.Default.Description,
+                        title = "No Resume Audited Yet",
+                        description = "Upload your resume PDF or paste plain text below to calculate your ATS match score, detect missing keywords, and verify technical competencies for ${profile?.targetRole ?: "your target role"}.",
+                        actionLabel = "Upload PDF",
+                        onActionClick = { pdfPickerLauncher.launch("application/pdf") }
+                    )
+                }
+            }
+
+            // Integrated Native Resume File Picker & Dropzone
+            item {
+                ResumeFilePickerDropZone(
+                    viewModel = viewModel,
+                    onViewAuditReport = { /* already in Tab 0 */ },
+                    onSwitchToRawText = { selectedTab = 0 }
+                )
             }
 
             // Resume Text Input / Upload Field
             item {
                 SectionHeader(
-                    title = "Upload or Edit Resume Text",
+                    title = "Or Paste Resume Plain Text",
                     subtitle = "Audit resume against ${profile?.targetRole ?: "target role"} benchmarks"
                 )
             }
@@ -301,19 +385,19 @@ fun ResumeAuditScreen(
                         minLines = 6,
                         maxLines = 12,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedContainerColor = BgSurface,
-                            unfocusedContainerColor = BgSurface
+                            focusedTextColor = DesignSystem.Colors.TextPrimary,
+                            unfocusedTextColor = DesignSystem.Colors.TextPrimary,
+                            focusedBorderColor = DesignSystem.Colors.Primary,
+                            unfocusedBorderColor = DesignSystem.Colors.BorderSubtle,
+                            focusedContainerColor = DesignSystem.Colors.Surface,
+                            unfocusedContainerColor = DesignSystem.Colors.Surface
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("resume_input_field")
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                     Button(
                         onClick = {
@@ -322,19 +406,27 @@ fun ResumeAuditScreen(
                             }
                         },
                         enabled = resumeTextInput.isNotBlank() && !isAnalyzing,
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                        shape = DesignSystem.Shapes.shapeSm,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .defaultMinSize(minHeight = DesignSystem.Components.buttonHeight)
                             .testTag("run_resume_audit_button")
                     ) {
                         if (isAnalyzing) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary)
-                            Spacer(modifier = Modifier.width(8.dp))
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(DesignSystem.Components.iconSm),
+                                color = DesignSystem.Colors.TextPrimary
+                            )
+                            Spacer(modifier = Modifier.width(DesignSystem.Spacing.sm))
                             Text("Analyzing Resume...")
                         } else {
-                            Icon(Icons.Default.Analytics, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                Icons.Default.Analytics,
+                                contentDescription = null,
+                                modifier = Modifier.size(DesignSystem.Components.iconMd)
+                            )
+                            Spacer(modifier = Modifier.width(DesignSystem.Spacing.sm))
                             Text("Run Instant ATS Audit")
                         }
                     }
@@ -353,18 +445,18 @@ fun ResumeAuditScreen(
                 ) {
                     Text(
                         text = "Target Roles & Benchmarks",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = DesignSystem.TypographyTokens.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = DesignSystem.Colors.TextPrimary
                     )
                     OutlinedButton(
                         onClick = { showCustomJdDialog = true },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlueGlow)
+                        shape = DesignSystem.Shapes.shapeSm,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = DesignSystem.Colors.PrimaryLight)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Paste Custom JD", fontSize = 12.sp)
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(DesignSystem.Components.iconSm))
+                        Spacer(modifier = Modifier.width(DesignSystem.Spacing.xs))
+                        Text("Paste Custom JD", fontSize = DesignSystem.TypographyTokens.fontSm)
                     }
                 }
             }
@@ -372,22 +464,22 @@ fun ResumeAuditScreen(
             // Presets Horizontal Row
             item {
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(jobPostings) { posting ->
                         val isSelected = selectedPosting?.id == posting.id
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) PrimaryBlue.copy(alpha = 0.25f) else BgCard)
+                                .clip(DesignSystem.Shapes.shapeMd)
+                                .background(if (isSelected) DesignSystem.Colors.Primary.copy(alpha = 0.25f) else DesignSystem.Colors.Card)
                                 .border(
-                                    width = if (isSelected) 1.5.dp else 1.dp,
-                                    color = if (isSelected) PrimaryBlueGlow else BorderSubtle,
-                                    shape = RoundedCornerShape(12.dp)
+                                    width = if (isSelected) DesignSystem.Components.borderMedium else DesignSystem.Components.borderThin,
+                                    color = if (isSelected) DesignSystem.Colors.PrimaryLight else DesignSystem.Colors.BorderSubtle,
+                                    shape = DesignSystem.Shapes.shapeMd
                                 )
                                 .clickable { viewModel.selectJobPosting(posting) }
-                                .padding(12.dp)
+                                .padding(DesignSystem.Spacing.md)
                         ) {
                             Column(modifier = Modifier.width(170.dp)) {
                                 Row(
@@ -398,37 +490,40 @@ fun ResumeAuditScreen(
                                     Text(
                                         text = posting.company,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) PrimaryBlueGlow else TextPrimary,
-                                        fontSize = 14.sp
+                                        color = if (isSelected) DesignSystem.Colors.PrimaryLight else DesignSystem.Colors.TextPrimary,
+                                        fontSize = DesignSystem.TypographyTokens.fontBase
                                     )
                                     if (posting.isPreset) {
                                         Surface(
-                                            color = AccentPurple.copy(alpha = 0.15f),
-                                            shape = RoundedCornerShape(4.dp)
+                                            color = DesignSystem.Colors.Purple.copy(alpha = 0.15f),
+                                            shape = DesignSystem.Shapes.shapeXs
                                         ) {
                                             Text(
                                                 text = "TOP TIER",
-                                                color = AccentPurple,
-                                                fontSize = 9.sp,
+                                                color = DesignSystem.Colors.Purple,
+                                                fontSize = DesignSystem.TypographyTokens.fontXxs,
                                                 fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                modifier = Modifier.padding(
+                                                    horizontal = DesignSystem.Spacing.xs,
+                                                    vertical = DesignSystem.Spacing.xxs
+                                                )
                                             )
                                         }
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                                 Text(
                                     text = posting.title,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
+                                    style = DesignSystem.TypographyTokens.bodySmall,
+                                    color = DesignSystem.Colors.TextSecondary,
                                     maxLines = 2
                                 )
-                                Spacer(modifier = Modifier.height(6.dp))
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                                 Text(
                                     text = "${posting.minYearsExperience}y+ exp • ${posting.location}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted,
-                                    fontSize = 10.sp
+                                    style = DesignSystem.TypographyTokens.labelSmall,
+                                    color = DesignSystem.Colors.TextMuted,
+                                    fontSize = DesignSystem.TypographyTokens.fontXs
                                 )
                             }
                         }
@@ -441,110 +536,116 @@ fun ResumeAuditScreen(
                 item {
                     GlassCard(
                         modifier = Modifier.fillMaxWidth(),
-                        borderColor = if (activeJobMatch!!.matchScore >= 80) SuccessGreen.copy(alpha = 0.5f)
-                        else if (activeJobMatch!!.matchScore >= 60) WarningAmber.copy(alpha = 0.5f)
-                        else DangerRed.copy(alpha = 0.5f)
+                        borderColor = if (activeJobMatch!!.matchScore >= 80) DesignSystem.Colors.Success.copy(alpha = 0.5f)
+                        else if (activeJobMatch!!.matchScore >= 60) DesignSystem.Colors.Warning.copy(alpha = 0.5f)
+                        else DesignSystem.Colors.Error.copy(alpha = 0.5f)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.lg)
                         ) {
                             CircularScoreGauge(
                                 score = activeJobMatch!!.matchScore,
-                                size = 96.dp,
-                                strokeWidth = 8.dp,
+                                size = DesignSystem.Components.gaugeSizeLg,
+                                strokeWidth = DesignSystem.Components.gaugeStrokeMd,
                                 label = "JOB FIT"
                             )
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${activeJobMatch!!.company} — ${activeJobMatch!!.jobTitle}",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    text = "${activeJobMatch!!.company} | ${activeJobMatch!!.jobTitle}",
+                                    style = DesignSystem.TypographyTokens.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = DesignSystem.Colors.TextPrimary
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                                 Text(
                                     text = activeJobMatch!!.fitSummary,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
+                                    style = DesignSystem.TypographyTokens.bodySmall,
+                                    color = DesignSystem.Colors.TextSecondary,
                                     lineHeight = 16.sp
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider(color = BorderSubtle)
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.lg))
+                        HorizontalDivider(color = DesignSystem.Colors.BorderSubtle)
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                         // Matched vs Missing Keywords Breakdown
                         Text(
                             text = "Keyword & Skill Alignment",
-                            style = MaterialTheme.typography.titleSmall,
+                            style = DesignSystem.TypographyTokens.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = DesignSystem.Colors.TextPrimary
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
 
                         // Matched Keywords
                         Text(
-                            text = "✅ Matched Keywords (${activeJobMatch!!.matchedKeywords.size})",
-                            style = MaterialTheme.typography.labelSmall,
+                            text = "Matched Keywords (${activeJobMatch!!.matchedKeywords.size})",
+                            style = DesignSystem.TypographyTokens.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = SuccessGreen
+                            color = DesignSystem.Colors.Success
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                         FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.xs),
+                            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.xs),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             activeJobMatch!!.matchedKeywords.forEach { kw ->
                                 Surface(
-                                    color = SuccessGreen.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(6.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, SuccessGreen.copy(alpha = 0.4f))
+                                    color = DesignSystem.Colors.Success.copy(alpha = 0.15f),
+                                    shape = DesignSystem.Shapes.shapeXs,
+                                    border = androidx.compose.foundation.BorderStroke(DesignSystem.Components.borderThin, DesignSystem.Colors.Success.copy(alpha = 0.4f))
                                 ) {
                                     Text(
                                         text = kw,
-                                        color = SuccessGreen,
-                                        fontSize = 11.sp,
+                                        color = DesignSystem.Colors.Success,
+                                        fontSize = DesignSystem.TypographyTokens.fontSm,
                                         fontWeight = FontWeight.Medium,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                        modifier = Modifier.padding(
+                                            horizontal = DesignSystem.Components.badgePaddingHorizontal,
+                                            vertical = DesignSystem.Spacing.xxs
+                                        )
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                         // Missing Required Keywords
                         if (activeJobMatch!!.missingRequiredKeywords.isNotEmpty()) {
                             Text(
-                                text = "⚠️ Missing Required Keywords (${activeJobMatch!!.missingRequiredKeywords.size}) — Critical ATS Risk",
-                                style = MaterialTheme.typography.labelSmall,
+                                text = "Missing Required Keywords (${activeJobMatch!!.missingRequiredKeywords.size}): Critical ATS Risk",
+                                style = DesignSystem.TypographyTokens.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = DangerRed
+                                color = DesignSystem.Colors.Error
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                             FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.xs),
+                                verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.xs),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 activeJobMatch!!.missingRequiredKeywords.forEach { kw ->
                                     Surface(
-                                        color = DangerRed.copy(alpha = 0.15f),
-                                        shape = RoundedCornerShape(6.dp),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, DangerRed.copy(alpha = 0.4f))
+                                        color = DesignSystem.Colors.Error.copy(alpha = 0.15f),
+                                        shape = DesignSystem.Shapes.shapeXs,
+                                        border = androidx.compose.foundation.BorderStroke(DesignSystem.Components.borderThin, DesignSystem.Colors.Error.copy(alpha = 0.4f))
                                     ) {
                                         Text(
                                             text = kw,
-                                            color = DangerRed,
-                                            fontSize = 11.sp,
+                                            color = DesignSystem.Colors.Error,
+                                            fontSize = DesignSystem.TypographyTokens.fontSm,
                                             fontWeight = FontWeight.Medium,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            modifier = Modifier.padding(
+                                                horizontal = DesignSystem.Components.badgePaddingHorizontal,
+                                                vertical = DesignSystem.Spacing.xxs
+                                            )
                                         )
                                     }
                                 }
@@ -557,26 +658,29 @@ fun ResumeAuditScreen(
                 item {
                     GlassCard(
                         modifier = Modifier.fillMaxWidth(),
-                        borderColor = PrimaryBlueGlow.copy(alpha = 0.3f)
+                        borderColor = DesignSystem.Colors.PrimaryLight.copy(alpha = 0.3f)
                     ) {
                         Text(
-                            text = "🎯 ATS Tailoring Strategy for ${activeJobMatch!!.company}",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "ATS Tailoring Strategy for ${activeJobMatch!!.company}",
+                            style = DesignSystem.TypographyTokens.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = DesignSystem.Colors.TextPrimary
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                         activeJobMatch!!.atsRecommendations.forEach { rec ->
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("•", color = PrimaryBlueGlow, fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
+                            ) {
+                                Text("•", color = DesignSystem.Colors.PrimaryLight, fontWeight = FontWeight.Bold)
                                 Text(
                                     text = rec,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
+                                    style = DesignSystem.TypographyTokens.bodySmall,
+                                    color = DesignSystem.Colors.TextSecondary,
                                     lineHeight = 16.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                         }
                     }
                 }
@@ -584,47 +688,55 @@ fun ResumeAuditScreen(
         }
 
         // ================= TAB 2: GOOGLE X-Y-Z BULLET REWRITER =================
-        else {
+        else if (selectedTab == 2) {
             item {
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    borderColor = PrimaryBlueGlow.copy(alpha = 0.4f)
+                    borderColor = DesignSystem.Colors.PrimaryLight.copy(alpha = 0.4f)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = PrimaryBlueGlow, modifier = Modifier.size(22.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
+                    ) {
+                        Icon(
+                            Icons.Default.AutoFixHigh,
+                            contentDescription = null,
+                            tint = DesignSystem.Colors.PrimaryLight,
+                            modifier = Modifier.size(DesignSystem.Components.iconLg)
+                        )
                         Text(
                             text = "Google X-Y-Z Formula Bullet Rewriter",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = DesignSystem.TypographyTokens.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = DesignSystem.Colors.TextPrimary
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                     Text(
                         text = "Formula: 'Accomplished [X] as measured by [Y], by doing [Z]'. Turn passive task descriptions into metric-driven achievements.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
+                        style = DesignSystem.TypographyTokens.bodySmall,
+                        color = DesignSystem.Colors.TextSecondary,
                         lineHeight = 16.sp
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                     Text(
                         text = "Try sample weak bullets:",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted
+                        style = DesignSystem.TypographyTokens.labelSmall,
+                        color = DesignSystem.Colors.TextMuted
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
 
                     LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         items(ResumeBulletRewriter.SAMPLE_WEAK_BULLETS) { sample ->
                             Surface(
-                                color = BgSurface,
-                                shape = RoundedCornerShape(8.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                                color = DesignSystem.Colors.Surface,
+                                shape = DesignSystem.Shapes.shapeSm,
+                                border = androidx.compose.foundation.BorderStroke(DesignSystem.Components.borderThin, DesignSystem.Colors.BorderSubtle),
                                 modifier = Modifier.clickable {
                                     bulletToAnalyzeInput = sample
                                     viewModel.analyzeResumeBullet(sample)
@@ -632,15 +744,18 @@ fun ResumeAuditScreen(
                             ) {
                                 Text(
                                     text = sample.take(35) + "...",
-                                    fontSize = 11.sp,
-                                    color = TextPrimary,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                                    fontSize = DesignSystem.TypographyTokens.fontSm,
+                                    color = DesignSystem.Colors.TextPrimary,
+                                    modifier = Modifier.padding(
+                                        horizontal = DesignSystem.Spacing.sm,
+                                        vertical = DesignSystem.Spacing.xs
+                                    )
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                     OutlinedTextField(
                         value = bulletToAnalyzeInput,
@@ -649,26 +764,28 @@ fun ResumeAuditScreen(
                         minLines = 3,
                         maxLines = 5,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedContainerColor = BgSurface,
-                            unfocusedContainerColor = BgSurface
+                            focusedTextColor = DesignSystem.Colors.TextPrimary,
+                            unfocusedTextColor = DesignSystem.Colors.TextPrimary,
+                            focusedBorderColor = DesignSystem.Colors.Primary,
+                            unfocusedBorderColor = DesignSystem.Colors.BorderSubtle,
+                            focusedContainerColor = DesignSystem.Colors.Surface,
+                            unfocusedContainerColor = DesignSystem.Colors.Surface
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                     Button(
                         onClick = { viewModel.analyzeResumeBullet(bulletToAnalyzeInput) },
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                        shape = DesignSystem.Shapes.shapeSm,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = DesignSystem.Components.buttonHeight)
                     ) {
-                        Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(DesignSystem.Components.iconMd))
+                        Spacer(modifier = Modifier.width(DesignSystem.Spacing.xs))
                         Text("Analyze & Generate X-Y-Z Rewrites")
                     }
                 }
@@ -680,36 +797,41 @@ fun ResumeAuditScreen(
                 item {
                     GlassCard(
                         modifier = Modifier.fillMaxWidth(),
-                        borderColor = if (bulletAnalysis!!.weaknessFlags.isNotEmpty()) WarningAmber.copy(alpha = 0.5f) else SuccessGreen.copy(alpha = 0.5f)
+                        borderColor = if (bulletAnalysis!!.weaknessFlags.isNotEmpty()) DesignSystem.Colors.Warning.copy(alpha = 0.5f) else DesignSystem.Colors.Success.copy(alpha = 0.5f)
                     ) {
                         Text(
-                            text = "🔍 Audit Diagnostics for this Bullet",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "Audit Diagnostics for this Bullet",
+                            style = DesignSystem.TypographyTokens.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = DesignSystem.Colors.TextPrimary
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                         if (bulletAnalysis!!.weaknessFlags.isEmpty()) {
                             Text(
-                                text = "✅ No major weakness flags detected. Strong technical phrasing.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = SuccessGreen
+                                text = "No major weakness flags detected. Strong technical phrasing.",
+                                style = DesignSystem.TypographyTokens.bodySmall,
+                                color = DesignSystem.Colors.Success
                             )
                         } else {
                             bulletAnalysis!!.weaknessFlags.forEach { flag ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                                 ) {
-                                    Icon(Icons.Default.Warning, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(16.dp))
+                                    Icon(
+                                        Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = DesignSystem.Colors.Warning,
+                                        modifier = Modifier.size(DesignSystem.Components.iconSm)
+                                    )
                                     Text(
                                         text = flag,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary,
+                                        style = DesignSystem.TypographyTokens.bodySmall,
+                                        color = DesignSystem.Colors.TextSecondary,
                                         lineHeight = 16.sp
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                             }
                         }
                     }
@@ -719,16 +841,16 @@ fun ResumeAuditScreen(
                 item {
                     Text(
                         text = "3 High-Impact X-Y-Z Formula Variants",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = DesignSystem.TypographyTokens.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = DesignSystem.Colors.TextPrimary
                     )
                 }
 
                 items(bulletAnalysis!!.options) { option ->
                     GlassCard(
                         modifier = Modifier.fillMaxWidth(),
-                        borderColor = PrimaryBlueGlow.copy(alpha = 0.4f)
+                        borderColor = DesignSystem.Colors.PrimaryLight.copy(alpha = 0.4f)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -736,73 +858,79 @@ fun ResumeAuditScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Surface(
-                                color = PrimaryBlue.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(6.dp)
+                                color = DesignSystem.Colors.Primary.copy(alpha = 0.2f),
+                                shape = DesignSystem.Shapes.shapeXs
                             ) {
                                 Text(
                                     text = option.style.replace("_", " "),
-                                    color = PrimaryBlueGlow,
-                                    fontSize = 11.sp,
+                                    color = DesignSystem.Colors.PrimaryLight,
+                                    fontSize = DesignSystem.TypographyTokens.fontSm,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    modifier = Modifier.padding(
+                                        horizontal = DesignSystem.Spacing.sm,
+                                        vertical = DesignSystem.Spacing.xxs
+                                    )
                                 )
                             }
 
                             Surface(
-                                color = SuccessGreen.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(6.dp)
+                                color = DesignSystem.Colors.Success.copy(alpha = 0.15f),
+                                shape = DesignSystem.Shapes.shapeXs
                             ) {
                                 Text(
                                     text = "Impact: ${option.impactScore}%",
-                                    color = SuccessGreen,
-                                    fontSize = 11.sp,
+                                    color = DesignSystem.Colors.Success,
+                                    fontSize = DesignSystem.TypographyTokens.fontSm,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    modifier = Modifier.padding(
+                                        horizontal = DesignSystem.Spacing.xs,
+                                        vertical = DesignSystem.Spacing.xxs
+                                    )
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
 
                         // Full Text
                         Text(
                             text = "• ${option.rewrittenText}",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = DesignSystem.TypographyTokens.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary,
+                            color = DesignSystem.Colors.TextPrimary,
                             lineHeight = 20.sp
                         )
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
 
                         // X-Y-Z Breakdown
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(BgSurface)
-                                .padding(10.dp)
+                                .clip(DesignSystem.Shapes.shapeSm)
+                                .background(DesignSystem.Colors.Surface)
+                                .padding(DesignSystem.Spacing.sm)
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.xs)) {
                                 Text(
                                     text = "[X] Accomplished: ${option.accomplishedX}",
-                                    fontSize = 11.sp,
-                                    color = TextSecondary
+                                    fontSize = DesignSystem.TypographyTokens.fontSm,
+                                    color = DesignSystem.Colors.TextSecondary
                                 )
                                 Text(
                                     text = "[Y] Measured by: ${option.measuredByY}",
-                                    fontSize = 11.sp,
-                                    color = SuccessGreen
+                                    fontSize = DesignSystem.TypographyTokens.fontSm,
+                                    color = DesignSystem.Colors.Success
                                 )
                                 Text(
                                     text = "[Z] Action taken: ${option.actionZ}",
-                                    fontSize = 11.sp,
-                                    color = PrimaryBlueGlow
+                                    fontSize = DesignSystem.TypographyTokens.fontSm,
+                                    color = DesignSystem.Colors.PrimaryLight
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                         Button(
                             onClick = {
@@ -811,12 +939,14 @@ fun ResumeAuditScreen(
                                     newBulletText = option.rewrittenText
                                 )
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                            shape = DesignSystem.Shapes.shapeSm,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .defaultMinSize(minHeight = DesignSystem.Components.buttonHeight)
                         ) {
-                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(DesignSystem.Components.iconSm))
+                            Spacer(modifier = Modifier.width(DesignSystem.Spacing.xs))
                             Text("1-Tap Apply to Active Resume Draft")
                         }
                     }
@@ -824,74 +954,42 @@ fun ResumeAuditScreen(
             }
         }
 
-        // ================= TAB 3: RESUME IMPORTER & AUTO-PARSER =================
-        if (selectedTab == 3) {
+        // ================= TAB 3: PDF UPLOAD & INTELLIGENT PARSER =================
+        else if (selectedTab == 3) {
+            // Main Native PDF & Document Upload Drop-Zone Component
+            item {
+                ResumeFilePickerDropZone(
+                    viewModel = viewModel,
+                    onViewAuditReport = { selectedTab = 0 },
+                    onSwitchToRawText = { /* target raw text field below */ }
+                )
+            }
+
+            // Fallback Raw Text Importer
+            item {
+                SectionHeader(
+                    title = "Or Paste Raw Resume Text",
+                    subtitle = "Direct text parsing and skill recognition"
+                )
+            }
+
             item {
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    borderColor = AccentPurple.copy(alpha = 0.5f)
+                    borderColor = DesignSystem.Colors.Purple.copy(alpha = 0.5f)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Intelligent Resume Importer & Parser",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = AccentCyan
-                            )
-                            Text(
-                                text = "Extracts skills, experience years, education & role into your profile",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
-                        }
-                        Icon(Icons.Default.FileUpload, contentDescription = null, tint = AccentPurple, modifier = Modifier.size(28.dp))
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Text("Load Sample Senior Engineer Profiles:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { importResumeText = ResumeParser.SAMPLE_IMPORT_RESUMES[0] },
-                            colors = ButtonDefaults.buttonColors(containerColor = BgSurface),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Backend / Cloud", fontSize = 11.sp, color = TextPrimary)
-                        }
-
-                        Button(
-                            onClick = { importResumeText = ResumeParser.SAMPLE_IMPORT_RESUMES[1] },
-                            colors = ButtonDefaults.buttonColors(containerColor = BgSurface),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Mobile Architect", fontSize = 11.sp, color = TextPrimary)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
                     OutlinedTextField(
                         value = importResumeText,
                         onValueChange = { importResumeText = it },
                         label = { Text("Paste Raw Resume or PDF Text Here") },
-                        minLines = 8,
-                        maxLines = 14,
+                        minLines = 6,
+                        maxLines = 10,
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("import_resume_text_field")
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                     Button(
                         onClick = {
@@ -900,14 +998,15 @@ fun ResumeAuditScreen(
                                 selectedTab = 0
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentPurple),
-                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Purple),
+                        shape = DesignSystem.Shapes.shapeSm,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .defaultMinSize(minHeight = DesignSystem.Components.buttonHeight)
                             .testTag("parse_import_resume_button")
                     ) {
-                        Icon(Icons.Default.AutoFixHigh, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(Icons.Default.AutoFixHigh, contentDescription = null, modifier = Modifier.size(DesignSystem.Components.iconMd))
+                        Spacer(modifier = Modifier.width(DesignSystem.Spacing.sm))
                         Text("Parse & Sync to User Profile", fontWeight = FontWeight.Bold)
                     }
                 }
@@ -919,11 +1018,11 @@ fun ResumeAuditScreen(
     if (showCustomJdDialog) {
         AlertDialog(
             onDismissRequest = { showCustomJdDialog = false },
-            title = { Text("Paste Target Job Description", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text("Paste Target Job Description", color = DesignSystem.Colors.TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                 ) {
                     OutlinedTextField(
                         value = customCompany,
@@ -963,17 +1062,17 @@ fun ResumeAuditScreen(
                             showCustomJdDialog = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                    colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary)
                 ) {
                     Text("Compute Match")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomJdDialog = false }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text("Cancel", color = DesignSystem.Colors.TextSecondary)
                 }
             },
-            containerColor = BgCard
+            containerColor = DesignSystem.Colors.Card
         )
     }
 }
@@ -986,24 +1085,24 @@ private fun ScoreSubCard(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(BgSurface)
-            .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp))
-            .padding(10.dp),
+            .clip(DesignSystem.Shapes.shapeSm)
+            .background(DesignSystem.Colors.Surface)
+            .border(DesignSystem.Components.borderThin, DesignSystem.Colors.BorderSubtle, DesignSystem.Shapes.shapeSm)
+            .padding(DesignSystem.Spacing.sm),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "$score%",
-                style = MaterialTheme.typography.titleMedium,
+                style = DesignSystem.TypographyTokens.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (score >= 80) SuccessGreen else WarningAmber
+                color = if (score >= 80) DesignSystem.Colors.Success else DesignSystem.Colors.Warning
             )
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-                fontSize = 9.sp
+                style = DesignSystem.TypographyTokens.labelSmall,
+                color = DesignSystem.Colors.TextSecondary,
+                fontSize = DesignSystem.TypographyTokens.fontXxs
             )
         }
     }

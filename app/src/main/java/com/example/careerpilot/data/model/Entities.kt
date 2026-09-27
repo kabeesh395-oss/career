@@ -380,4 +380,32 @@ data class SkillSprint(
     val isClaimed: Boolean = false
 )
 
+// === FEATURE 8: CERTIFICATIONS, HACKATHONS & EXTERNAL OPPORTUNITIES ===
+@Entity(tableName = "career_opportunities")
+data class CareerOpportunity(
+    @PrimaryKey val id: String,
+    val title: String,
+    val category: String, // "CERTIFICATION", "HACKATHON", "FELLOWSHIP", "OPEN_SOURCE", "HIRING_CHALLENGE"
+    val providerOrHost: String,
+    val description: String,
+    val officialUrl: String,
+    val registrationUrl: String = "",
+    val syllabusOrDocsUrl: String = "",
+    val difficulty: String = "Intermediate", // "Beginner", "Intermediate", "Advanced", "All Levels"
+    val mode: String = "Online / Remote", // "Online / Remote", "In-Person", "Hybrid"
+    val deadlineOrSchedule: String = "Rolling",
+    val costOrPrize: String = "Free",
+    val skillsTargeted: List<String> = emptyList(),
+    val targetRoles: List<String> = emptyList(),
+    val prerequisites: String = "",
+    val careerRoiSummary: String = "",
+    val status: String = "EXPLORING", // "EXPLORING", "BOOKMARKED", "REGISTERED", "PREPARING", "COMPLETED"
+    val userNotes: String = "",
+    val reminderSet: Boolean = false,
+    val isFeatured: Boolean = false,
+    val matchScore: Int = 85,
+    val keyDomains: List<String> = emptyList(),
+    val prepTimeWeeks: Int = 4
+)
+
 

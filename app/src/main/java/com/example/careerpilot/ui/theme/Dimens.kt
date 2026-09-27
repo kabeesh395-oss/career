@@ -4,7 +4,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * CareerHub Design Tokens — Spacing, Corner Radii, Sizing
+ * CareerPilot Design Tokens - Spacing, Corner Radii, Sizing
  *
  * All UI dimensions must reference these tokens.
  * Do not use arbitrary dp values in screen composables.
@@ -38,11 +38,12 @@ object Dimens {
     /** Spacing between items within a section. */
     val ItemSpacing: Dp = 12.dp
 
-    // ── Corner Radii ──────────────────────────────────────────────
+    // ── Corner Radii (Moderate, non-pill radii) ───────────────────
+    val RadiusXs: Dp = 4.dp
     val RadiusSm: Dp = 8.dp
-    val RadiusMd: Dp = 12.dp
-    val RadiusLg: Dp = 16.dp
-    val RadiusFull: Dp = 100.dp  // pill/circle
+    val RadiusMd: Dp = 10.dp
+    val RadiusLg: Dp = 14.dp
+    val RadiusFull: Dp = 10.dp  // Moderate button radius (replaces full pill)
 
     // ── Component Sizing ──────────────────────────────────────────
     val ButtonHeight: Dp = 48.dp

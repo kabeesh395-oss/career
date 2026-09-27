@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.PortfolioProject
+import com.example.careerpilot.ui.components.EmptyStateCard
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.components.StatusBadge
@@ -33,6 +34,7 @@ fun ProjectsScreen(
     modifier: Modifier = Modifier
 ) {
     val projects by viewModel.projects.collectAsState()
+    val profile by viewModel.userProfile.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
@@ -80,13 +82,13 @@ fun ProjectsScreen(
         // Projects List
         if (projects.isEmpty()) {
             item {
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "No portfolio projects added yet. Click 'Add Project' to record your deliverables.",
-                        color = TextMuted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                EmptyStateCard(
+                    icon = Icons.Default.Code,
+                    title = "No Portfolio Projects Documented",
+                    description = "Showcase production systems, repositories, and architectural solutions proving your hands-on competencies for ${profile?.targetRole ?: "target roles"}.",
+                    actionLabel = "Add Project",
+                    onActionClick = { showAddDialog = true }
+                )
             }
         } else {
             items(projects) { project ->

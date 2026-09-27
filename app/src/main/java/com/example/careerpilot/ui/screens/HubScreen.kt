@@ -22,6 +22,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import com.example.careerpilot.ui.animation.bouncyClickable
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.theme.Dimens
@@ -54,6 +58,7 @@ fun HubScreen(
     )
 
     val portfolioSection = listOf(
+        HubItem("Opportunities", Icons.Default.Stars, "opportunities", WarningAmberLight, WarningAmber.copy(alpha = 0.12f)),
         HubItem("Projects", Icons.Default.Code, "projects", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
         HubItem("Learning", Icons.Default.MenuBook, "learning", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
         HubItem("Applications", Icons.Default.WorkOutline, "applications", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
@@ -142,21 +147,21 @@ private fun HubGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(Dimens.RadiusMd)
+    val shape = RoundedCornerShape(12.dp)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .clip(shape)
-            .background(BgCard)
-            .border(Dimens.CardBorderWidth, BorderSubtle, shape)
-            .clickable { onClick() }
+            .background(BgSurface)
+            .border(1.dp, BorderSubtle, shape)
+            .clickable(onClick = onClick)
             .padding(vertical = Dimens.SpaceLg, horizontal = Dimens.SpaceMd)
             .testTag("hub_item_${item.route}")
     ) {
         Box(
             modifier = Modifier
-                .size(Dimens.AvatarMd)
-                .clip(RoundedCornerShape(Dimens.RadiusSm))
+                .size(44.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(item.iconBg),
             contentAlignment = Alignment.Center
         ) {
@@ -171,7 +176,7 @@ private fun HubGridItem(
         Text(
             text = item.title,
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
             color = TextPrimary,
             textAlign = TextAlign.Center,
             maxLines = 1

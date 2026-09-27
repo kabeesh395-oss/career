@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Career Hub"
+rootProject.name = "CareerPilot"
 include(":app")

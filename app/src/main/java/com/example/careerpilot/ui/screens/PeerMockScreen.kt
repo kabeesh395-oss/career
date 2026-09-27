@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.PeerMatch
+import com.example.careerpilot.ui.components.EmptyStateCard
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.components.StatusBadge
@@ -94,11 +95,23 @@ fun PeerMockScreen(
         }
 
         // Peer List
-        items(peerMatches) { peer ->
-            PeerCard(
-                peer = peer,
-                onBook = { viewModel.bookPeerSession(peer) }
-            )
+        if (peerMatches.isEmpty()) {
+            item {
+                EmptyStateCard(
+                    icon = Icons.Default.People,
+                    title = "No Peer Mocks Available",
+                    description = "Pair with fellow engineers for mutual technical interviews, trade-off defenses, and rubric feedback.",
+                    actionLabel = "Refresh Matches",
+                    onActionClick = { viewModel.initializeDefaultDataIfEmpty() }
+                )
+            }
+        } else {
+            items(peerMatches) { peer ->
+                PeerCard(
+                    peer = peer,
+                    onBook = { viewModel.bookPeerSession(peer) }
+                )
+            }
         }
     }
 }
@@ -122,16 +135,12 @@ private fun PeerCard(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(14.dp))
-                        Text(text = "${peer.rating}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = WarningAmber)
-                    }
-
+                    StatusBadge(text = "VERIFIED PEER", statusType = "primary")
                 }
                 Text(
                     text = peer.peerHeadline,
                     style = MaterialTheme.typography.bodySmall,
-                    color = AccentCyan
+                    color = PrimaryBlueLighter
                 )
             }
 
@@ -175,11 +184,19 @@ private fun PeerCard(
                 onClick = onBook,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.testTag("book_peer_session_button_${peer.id}")
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                modifier = Modifier
+                    .defaultMinSize(minHeight = 44.dp)
+                    .testTag("book_peer_session_button_${peer.id}")
             ) {
-                Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Schedule 45m Mock Session", fontSize = 12.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Schedule 45m Mock Session", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }

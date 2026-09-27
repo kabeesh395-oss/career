@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AltRoute
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.RoadmapItem
+import com.example.careerpilot.ui.components.EmptyStateCard
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.components.StatusBadge
@@ -106,11 +108,7 @@ fun RoadmapScreen(
                         modifier = Modifier
                             .fillMaxHeight()
                             .fillMaxWidth(progress.coerceIn(0f, 1f))
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(PrimaryBlue, AccentPurple, AccentCyan)
-                                )
-                            )
+                            .background(PrimaryBlue)
                     )
                 }
 
@@ -132,11 +130,11 @@ fun RoadmapScreen(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Regenerating...")
+                        Text("Generating Roadmap...")
                     } else {
                         Icon(Icons.Default.Autorenew, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Regenerate Roadmap from Skill Gaps")
+                        Text("Generate Roadmap from Skill Gaps")
                     }
                 }
             }
@@ -145,13 +143,16 @@ fun RoadmapScreen(
         // Phases and Deliverables
         if (items.isEmpty()) {
             item {
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "No active roadmap milestones. Click 'Regenerate Roadmap' to generate.",
-                        color = TextMuted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                EmptyStateCard(
+                    icon = Icons.Default.AltRoute,
+                    title = "No Roadmap Milestones Yet",
+                    description = "A career roadmap breaks down your learning trajectory into 3 clear execution phases targeting ${profile?.targetRole ?: "your target role"}.",
+                    actionLabel = "Generate Roadmap",
+                    onActionClick = {
+                        val role = profile?.targetRole ?: "Full Stack Engineer"
+                        viewModel.generateRoadmap(role)
+                    }
+                )
             }
         } else {
             phases.forEach { (phaseTitle, phaseTasks) ->
@@ -235,7 +236,7 @@ private fun RoadmapTaskCard(
                     StatusBadge(text = item.category, statusType = "neutral")
                     if (item.isCompleted) {
                         Text(
-                            text = "✓ Completed",
+                            text = "Completed",
                             style = MaterialTheme.typography.labelSmall,
                             color = SuccessGreen
                         )

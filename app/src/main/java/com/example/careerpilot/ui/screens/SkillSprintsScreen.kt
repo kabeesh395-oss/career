@@ -195,20 +195,34 @@ private fun SprintCard(
 
 
             if (sprint.isClaimed) {
-                Text(
-                    text = "Badge Claimed & Verified ✓",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SuccessGreen
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = SuccessGreen,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "Badge Claimed & Verified",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SuccessGreen
+                    )
+                }
             } else {
                 Button(
                     onClick = onClaim,
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                     shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.testTag("claim_sprint_button_${sprint.id}")
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 36.dp)
+                        .testTag("claim_sprint_button_${sprint.id}")
                 ) {
-                    Text("Submit GitHub Proof", fontSize = 11.sp)
+                    Text("Submit GitHub Proof", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

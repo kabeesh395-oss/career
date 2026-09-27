@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { getDatabase } from '../db/database.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import { uploadResume } from '../middleware/upload.js';
-import { extractTextFromResume, parseResumeContent } from '../services/resume.service.js';
+import { extractTextFromResume, parseResumeContent, analyzeJobDescription } from '../services/resume.service.js';
 import { AIService } from '../services/ai.service.js';
 import { AnalyticsService } from '../services/analytics.service.js';
 
@@ -152,6 +152,66 @@ router.post('/upload', uploadResume.single('resume'), async (req: AuthenticatedR
         recommendations: analysisResult.recommendations,
         model_used: analysisResult.modelUsed
       }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/resume/analyze-jd (Job Description Analyzer vs Resume)
+router.post('/analyze-jd', async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const userId = req.user!.id;
+    const { jobDescription, resumeId } = req.body;
+
+    if (!jobDescription || typeof jobDescription !== 'string' || !jobDescription.trim()) {
+      return res.status(400).json({
+        error: { code: 'INVALID_INPUT', message: 'Please provide a valid Job Description text to analyze.' }
+      });
+    }
+
+    const db = getDatabase();
+
+    // Find resume text
+    let resumeText = '';
+    let usedResumeId = resumeId || null;
+    if (resumeId) {
+      const resume = db.prepare('SELECT extracted_text FROM resumes WHERE id = ? AND user_id = ?').get(resumeId, userId) as any;
+      if (resume) resumeText = resume.extracted_text || '';
+    } else {
+      const latestResume = db.prepare('SELECT id, extracted_text FROM resumes WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').get(userId) as any;
+      if (latestResume) {
+        resumeText = latestResume.extracted_text || '';
+        usedResumeId = latestResume.id;
+      }
+    }
+
+    // Get candidate's registered skills
+    const userSkills = db.prepare(`
+      SELECT s.name 
+      FROM user_skills us 
+      JOIN skills s ON us.skill_id = s.id 
+      WHERE us.user_id = ?
+    `).all(userId) as Array<{ name: string }>;
+
+    const analysis = analyzeJobDescription(
+      jobDescription,
+      resumeText,
+      userSkills.map(s => s.name)
+    );
+
+    AnalyticsService.trackEvent(userId, 'job_description_analyzed', {
+      resumeId: usedResumeId,
+      matchPercent: analysis.overallMatchPercent,
+      matchedCount: analysis.matchedSkills.length,
+      missingCount: analysis.missingSkills.length
+    });
+
+    return res.json({
+      success: true,
+      analysis,
+      candidateResumeUsed: Boolean(resumeText),
+      resumeId: usedResumeId
     });
   } catch (err) {
     next(err);

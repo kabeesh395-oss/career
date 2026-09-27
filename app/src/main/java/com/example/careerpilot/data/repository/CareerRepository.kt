@@ -34,6 +34,7 @@ class CareerRepository(private val dao: CareerDao) {
     val codingChallengesFlow: Flow<List<CodingChallenge>> = dao.getCodingChallengesFlow()
     val peerMatchesFlow: Flow<List<PeerMatch>> = dao.getPeerMatchesFlow()
     val skillSprintsFlow: Flow<List<SkillSprint>> = dao.getSkillSprintsFlow()
+    val opportunitiesFlow: Flow<List<CareerOpportunity>> = dao.getOpportunitiesFlow()
 
     suspend fun initializeDefaultDataIfEmpty() = withContext(Dispatchers.IO) {
         val existingProfile = dao.getUserProfile()
@@ -156,11 +157,12 @@ class CareerRepository(private val dao: CareerDao) {
             // Seed preset target job postings
             dao.insertJobPostings(JobMatcherEngine.PRESET_JOB_POSTINGS)
 
-            // Seed initial Job Applications, Coding Sandbox, Peers, and Sprints
+            // Seed initial Job Applications, Coding Sandbox, Peers, Sprints, and Opportunities
             dao.insertJobApplications(BenchmarkCatalog.INITIAL_JOB_APPLICATIONS)
             dao.insertCodingChallenges(BenchmarkCatalog.INITIAL_CODING_CHALLENGES)
             dao.insertPeerMatches(BenchmarkCatalog.INITIAL_PEER_MATCHES)
             dao.insertSkillSprints(BenchmarkCatalog.INITIAL_SKILL_SPRINTS)
+            dao.insertOpportunities(BenchmarkCatalog.INITIAL_OPPORTUNITIES)
 
             // Run initial skill gap calibration and roadmap generation
             recalibrateSkillGaps(initialProfile.targetRole)
@@ -184,7 +186,7 @@ class CareerRepository(private val dao: CareerDao) {
             dao.insertAnalyticsEvent(
                 AnalyticsEvent(
                     eventName = "App Initialized",
-                    detail = "Initialized default profile, benchmarks, audit engine, and job matcher."
+                    detail = "Initialized default profile, benchmarks, audit engine, job matcher, and opportunities."
                 )
             )
         } else {
@@ -199,6 +201,10 @@ class CareerRepository(private val dao: CareerDao) {
                 dao.insertCodingChallenges(BenchmarkCatalog.INITIAL_CODING_CHALLENGES)
                 dao.insertPeerMatches(BenchmarkCatalog.INITIAL_PEER_MATCHES)
                 dao.insertSkillSprints(BenchmarkCatalog.INITIAL_SKILL_SPRINTS)
+            }
+            val existingOpps = dao.getAllOpportunities()
+            if (existingOpps.isEmpty()) {
+                dao.insertOpportunities(BenchmarkCatalog.INITIAL_OPPORTUNITIES)
             }
             // Recalibrate audit on startup
             recalibrateAudit()
@@ -629,7 +635,7 @@ class CareerRepository(private val dao: CareerDao) {
             else -> "Good preliminary attempt. Expand your response with concrete system components like distributed caches, query plans, or idempotency keys."
         }
 
-        val improvement = "💡 Pro Tip: Frame your answers using the STAR method (Situation, Task, Action, Result) and explicitly mention performance trade-offs."
+        val improvement = "Recommendation: Frame your answers using the STAR method (Situation, Task, Action, Result) and explicitly mention performance trade-offs."
 
         val answer = InterviewAnswer(
             interviewId = sessionId,
@@ -873,7 +879,7 @@ class CareerRepository(private val dao: CareerDao) {
             dao.insertAnalyticsEvent(
                 AnalyticsEvent(
                     eventName = "Comprehension Check Attempted",
-                    detail = "Quiz attempt incorrect for '${resource.title}' — review required."
+                    detail = "Quiz attempt incorrect for '${resource.title}'. Review required."
                 )
             )
             return@withContext false
@@ -1059,7 +1065,7 @@ class CareerRepository(private val dao: CareerDao) {
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
                 eventName = "GitHub Repo Imported",
-                detail = "Imported '${repo.name}' (${repo.language}, ★${repo.stars}) into portfolio projects."
+                detail = "Imported '${repo.name}' (${repo.language}, ${repo.stars} stars) into portfolio projects."
             )
         )
     }
@@ -1187,6 +1193,10 @@ class CareerRepository(private val dao: CareerDao) {
         return ResumeBulletRewriter.analyzeAndRewriteBullet(bulletText, targetRole)
     }
 
+    suspend fun analyzeBulletWithAi(bulletText: String, targetRole: String = "Full Stack Engineer"): BulletAnalysis {
+        return ResumeBulletRewriter.analyzeAndRewriteWithAi(bulletText, targetRole)
+    }
+
     suspend fun applyBulletReplacement(originalBullet: String, newBulletText: String) = withContext(Dispatchers.IO) {
         val latest = dao.getLatestResumeAudit()
         if (latest != null) {
@@ -1208,7 +1218,7 @@ class CareerRepository(private val dao: CareerDao) {
         userAnswer: String,
         isFollowUp: Boolean
     ): Pair<ConversationMessage, Int> = withContext(Dispatchers.IO) {
-        val (aiMessage, score) = ConversationalInterviewEngine.evaluateAnswerAndGenerateResponse(
+        val (aiMessage, score) = ConversationalInterviewEngine.evaluateAnswerAndGenerateResponseWithAi(
             currentQuestion = question,
             userAnswer = userAnswer,
             isFollowUp = isFollowUp
@@ -1499,6 +1509,42 @@ class CareerRepository(private val dao: CareerDao) {
                 )
             )
         }
+    }
+
+    suspend fun updateOpportunityStatus(opportunityId: String, newStatus: String) = withContext(Dispatchers.IO) {
+        dao.updateOpportunityStatus(opportunityId, newStatus)
+        val opp = dao.getOpportunityById(opportunityId)
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "Opportunity Status Changed",
+                detail = "${opp?.title ?: opportunityId} -> $newStatus"
+            )
+        )
+    }
+
+    suspend fun updateOpportunityNotes(opportunityId: String, notes: String) = withContext(Dispatchers.IO) {
+        dao.updateOpportunityNotes(opportunityId, notes)
+    }
+
+    suspend fun toggleOpportunityReminder(opportunityId: String, reminderSet: Boolean) = withContext(Dispatchers.IO) {
+        dao.updateOpportunityReminder(opportunityId, reminderSet)
+        val opp = dao.getOpportunityById(opportunityId)
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = if (reminderSet) "Opportunity Reminder Set" else "Opportunity Reminder Removed",
+                detail = opp?.title ?: opportunityId
+            )
+        )
+    }
+
+    suspend fun addCustomOpportunity(opportunity: CareerOpportunity) = withContext(Dispatchers.IO) {
+        dao.insertOpportunity(opportunity)
+        dao.insertAnalyticsEvent(
+            AnalyticsEvent(
+                eventName = "Custom Opportunity Added",
+                detail = opportunity.title
+            )
+        )
     }
 }
 

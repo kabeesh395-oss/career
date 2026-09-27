@@ -26,9 +26,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.careerpilot.ui.animation.bouncyClickable
 import com.example.careerpilot.ui.components.*
 import com.example.careerpilot.ui.theme.*
+import com.example.careerpilot.ui.theme.DesignSystem
+import com.example.careerpilot.ui.theme.Dimens
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,8 +46,11 @@ fun DashboardScreen(
     val nextAction by viewModel.nextBestAction.collectAsState()
     val recentEvents by viewModel.recentAnalytics.collectAsState()
     val auditSummary by viewModel.auditSummary.collectAsState()
+    val latestResumeAudit by viewModel.latestResumeAudit.collectAsState()
+    val userSkills by viewModel.userSkills.collectAsState()
+    val projects by viewModel.projects.collectAsState()
 
-    // Live Roadmap Progress Calculations
+    // Real Roadmap Progress Calculations strictly from stored data
     val totalRoadmapTasks = if (roadmapItems.isNotEmpty()) roadmapItems.size else (roadmap?.totalTasks ?: 0)
     val completedRoadmapTasks = if (roadmapItems.isNotEmpty()) roadmapItems.count { it.isCompleted } else (roadmap?.completedTasks ?: 0)
     val roadmapPercent = if (totalRoadmapTasks > 0) {
@@ -55,98 +59,259 @@ fun DashboardScreen(
 
     val animatedRoadmapProgress by animateFloatAsState(
         targetValue = (roadmapPercent.coerceIn(0, 100)) / 100f,
-        animationSpec = tween(durationMillis = 800),
+        animationSpec = tween(durationMillis = 600),
         label = "roadmapProgressAnim"
     )
 
     val nextPendingRoadmapTask = roadmapItems.firstOrNull { !it.isCompleted }
+    val hasReadinessScore = profile?.readinessScore != null
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = Dimens.ContentHorizontalPadding),
-        contentPadding = PaddingValues(top = Dimens.ContentTopPadding, bottom = Dimens.ContentBottomPadding),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
+            .padding(horizontal = DesignSystem.Spacing.screenHorizontal),
+        contentPadding = PaddingValues(
+            top = DesignSystem.Spacing.screenTop,
+            bottom = DesignSystem.Spacing.screenBottom
+        ),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sectionSpacing)
     ) {
         // User Greeting Header
         item {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = Dimens.SpaceSm)
+                    .padding(vertical = DesignSystem.Spacing.xs),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Welcome back, ${profile?.fullName?.split(" ")?.firstOrNull() ?: "Engineer"}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(Dimens.SpaceXxs))
-                Text(
-                    text = "Target: ${profile?.targetRole ?: "Full Stack Engineer"}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = PrimaryBlueLighter
-                )
-            }
-        }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Workspace",
+                        style = DesignSystem.TypographyTokens.bodySmall,
+                        color = DesignSystem.Colors.TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
+                    Text(
+                        text = profile?.fullName?.split(" ")?.firstOrNull() ?: "Engineer",
+                        style = DesignSystem.TypographyTokens.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = DesignSystem.Colors.TextPrimary
+                    )
+                }
 
-        // Readiness Score Summary Card (No giant circular gauge, just a clean overview card)
-        item {
-            CareerCard(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onNavigate("career") }
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    color = DesignSystem.Colors.Primary.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, DesignSystem.Colors.Primary.copy(alpha = 0.35f))
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "CAREER READINESS SUMMARY",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = TextMuted,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(Dimens.SpaceXs))
-                        Text(
-                            text = if (profile?.readinessScore != null) "${profile?.readinessScore}% Match Readiness" else "Not calculated yet",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(Dimens.SpaceXs))
-                        Text(
-                            text = "Based on verified skills, projects, and target role benchmarks.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier.padding(start = Dimens.SpaceMd),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
-                        CircularScoreGauge(
-                            score = profile?.readinessScore ?: 0,
-                            size = 72.dp,
-                            strokeWidth = 5.dp,
-                            label = "MATCH",
-                            primaryColor = if ((profile?.readinessScore ?: 0) >= 80) SuccessGreen else PrimaryBlue
+                        Icon(
+                            imageVector = Icons.Default.WorkOutline,
+                            contentDescription = null,
+                            tint = DesignSystem.Colors.PrimaryLight,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = profile?.targetRole ?: "Full Stack Engineer",
+                            style = DesignSystem.TypographyTokens.labelSmall,
+                            color = DesignSystem.Colors.PrimaryLight,
+                            maxLines = 1
                         )
                     }
                 }
             }
         }
 
-        // Demerits & Red Flag Audit Banner (Styled Cleanly)
+        // Real Career Readiness Summary or Empty State
         item {
+            if (hasReadinessScore) {
+                CareerCardHighlight(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onNavigate("career") }
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "CAREER READINESS INDEX",
+                                style = DesignSystem.TypographyTokens.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = DesignSystem.Colors.TextSecondary,
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
+                            Text(
+                                text = "${profile!!.readinessScore}% Match Readiness",
+                                style = DesignSystem.TypographyTokens.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = DesignSystem.Colors.TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
+                            Text(
+                                text = "Calibrated against verified skills, project audits, and target role benchmarks.",
+                                style = DesignSystem.TypographyTokens.bodySmall,
+                                color = DesignSystem.Colors.TextSecondary
+                            )
+
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
+
+                            // Strictly real verified sub-metrics
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (latestResumeAudit != null) {
+                                    StatusBadge(text = "ATS: ${latestResumeAudit!!.overallScore}%", statusType = "primary")
+                                } else {
+                                    StatusBadge(text = "No Resume Audit", statusType = "neutral")
+                                }
+                                StatusBadge(text = "${userSkills.size} Skills", statusType = if (userSkills.isNotEmpty()) "success" else "neutral")
+                                if (projects.isNotEmpty()) {
+                                    StatusBadge(text = "${projects.size} Projects", statusType = "primary")
+                                }
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier.padding(start = DesignSystem.Spacing.md),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularScoreGauge(
+                                score = profile!!.readinessScore!!,
+                                size = 96.dp,
+                                strokeWidth = 7.dp,
+                                label = "READINESS",
+                                primaryColor = if (profile!!.readinessScore!! >= 80) DesignSystem.Colors.Success else DesignSystem.Colors.Primary
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "View Skill Matrix & Rubric",
+                                style = DesignSystem.TypographyTokens.labelSmall,
+                                color = DesignSystem.Colors.PrimaryLight,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = DesignSystem.Colors.PrimaryLight,
+                                modifier = Modifier.size(12.dp)
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Honest, useful empty state for un-evaluated user
+                CareerCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    borderColor = BorderMedium
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = DesignSystem.Spacing.xs)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(DesignSystem.Shapes.radiusSm))
+                                    .background(DesignSystem.Colors.Primary.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Assessment,
+                                    contentDescription = null,
+                                    tint = DesignSystem.Colors.PrimaryLight,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "Career Readiness Not Evaluated",
+                                    style = DesignSystem.TypographyTokens.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DesignSystem.Colors.TextPrimary
+                                )
+                                Text(
+                                    text = "Target: ${profile?.targetRole ?: "Full Stack Engineer"}",
+                                    style = DesignSystem.TypographyTokens.labelSmall,
+                                    color = DesignSystem.Colors.TextSecondary
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
+
+                        Text(
+                            text = "Complete your career assessment or upload your resume to calibrate your readiness index against role rubrics.",
+                            style = DesignSystem.TypographyTokens.bodySmall,
+                            color = DesignSystem.Colors.TextSecondary,
+                            lineHeight = 18.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(
+                                onClick = { onNavigate("career") },
+                                colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                                shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Run Assessment", fontWeight = FontWeight.SemiBold)
+                            }
+                            OutlinedButton(
+                                onClick = { onNavigate("resume") },
+                                shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = DesignSystem.Colors.TextPrimary),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, DesignSystem.Colors.BorderMedium),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Audit Resume")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Real Red Flag / Demerit Audit Status Banner
+        item {
+            val hasIssues = auditSummary.totalIssuesCount > 0
+            val isEvaluated = auditSummary.hasEvaluatedData || hasReadinessScore
             CareerCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("dashboard_audit_banner"),
-                borderColor = if (auditSummary.criticalCount > 0) DangerRed.copy(alpha = 0.4f) else BorderSubtle,
+                borderColor = if (auditSummary.criticalCount > 0) DesignSystem.Colors.Error.copy(alpha = 0.45f) else DesignSystem.Colors.BorderSubtle,
+                backgroundColor = if (auditSummary.criticalCount > 0) Color(0xFF1E1424) else DesignSystem.Colors.Card,
                 onClick = { onNavigate("audit") }
             ) {
                 Row(
@@ -157,61 +322,65 @@ fun DashboardScreen(
                     Row(
                         modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.md)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(Dimens.AvatarMd)
-                                .clip(CircleShape)
+                                .size(DesignSystem.Components.avatarMd)
+                                .clip(RoundedCornerShape(DesignSystem.Shapes.radiusSm))
                                 .background(
-                                    if (auditSummary.criticalCount > 0) DangerRed.copy(alpha = 0.12f)
-                                    else PrimaryBlue.copy(alpha = 0.12f)
+                                    if (auditSummary.criticalCount > 0) DesignSystem.Colors.Error.copy(alpha = 0.12f)
+                                    else DesignSystem.Colors.Primary.copy(alpha = 0.12f)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = if (auditSummary.criticalCount > 0) Icons.Default.GppMaybe else Icons.Default.VerifiedUser,
                                 contentDescription = null,
-                                tint = if (auditSummary.criticalCount > 0) DangerRedLight else PrimaryBlueLighter,
-                                modifier = Modifier.size(Dimens.IconLg)
+                                tint = if (auditSummary.criticalCount > 0) DesignSystem.Colors.ErrorLight else DesignSystem.Colors.PrimaryLight,
+                                modifier = Modifier.size(DesignSystem.Components.iconLg)
                             )
                         }
 
                         Column {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)
+                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                             ) {
                                 Text(
-                                    text = "Red Flag Audit",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    text = "Audit Center",
+                                    style = DesignSystem.TypographyTokens.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = DesignSystem.Colors.TextPrimary
                                 )
-                                if (auditSummary.totalDemerits < 0) {
+                                if (isEvaluated && auditSummary.totalDemerits < 0) {
                                     Surface(
-                                        color = DangerRed.copy(alpha = 0.12f),
-                                        shape = RoundedCornerShape(Dimens.BadgeRadius)
+                                        color = DesignSystem.Colors.Error.copy(alpha = 0.12f),
+                                        shape = RoundedCornerShape(DesignSystem.Shapes.radiusXs)
                                     ) {
                                         Text(
                                             text = "${auditSummary.totalDemerits} pts",
-                                            color = DangerRedLight,
-                                            style = MaterialTheme.typography.labelSmall,
+                                            color = DesignSystem.Colors.ErrorLight,
+                                            style = DesignSystem.TypographyTokens.labelSmall,
                                             fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = Dimens.BadgePaddingHorizontal, vertical = 2.dp)
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                         )
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(Dimens.SpaceXxs))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
                             Text(
-                                text = if (auditSummary.netAuditScore != null) {
-                                    "Net: ${auditSummary.netAuditScore}% • ${auditSummary.criticalCount} Critical, ${auditSummary.highCount} High"
+                                text = if (!isEvaluated) {
+                                    "No audit run yet: Check for resume and skill gaps"
+                                } else if (auditSummary.criticalCount > 0 || auditSummary.highCount > 0) {
+                                    "${auditSummary.criticalCount} Critical, ${auditSummary.highCount} High priority issues found"
+                                } else if (hasIssues) {
+                                    "${auditSummary.totalIssuesCount} minor observations found"
                                 } else {
-                                    "No issues audited yet"
+                                    "No critical risks detected"
                                 },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
+                                style = DesignSystem.TypographyTokens.bodySmall,
+                                color = DesignSystem.Colors.TextSecondary
                             )
                         }
                     }
@@ -219,14 +388,14 @@ fun DashboardScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Audit Center",
-                        tint = TextSecondary,
-                        modifier = Modifier.size(Dimens.IconMd)
+                        tint = DesignSystem.Colors.TextSecondary,
+                        modifier = Modifier.size(DesignSystem.Components.iconMd)
                     )
                 }
             }
         }
 
-        // Next Best Action Card (Using CareerCardHighlight)
+        // Next Best Action (if active)
         if (nextAction != null) {
             item {
                 CareerCardHighlight(
@@ -241,62 +410,62 @@ fun DashboardScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                         ) {
-                            StatusBadge(text = "RECOMMENDED FOCUS", statusType = "primary")
+                            StatusBadge(text = "RECOMMENDED ACTION", statusType = "primary")
                             StatusBadge(text = nextAction!!.priority, statusType = nextAction!!.priority)
                         }
                         Text(
                             text = "~${nextAction!!.estimatedMinutes} min",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted
+                            style = DesignSystem.TypographyTokens.labelSmall,
+                            color = DesignSystem.Colors.TextMuted
                         )
                     }
-                    Spacer(modifier = Modifier.height(Dimens.SpaceMd))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                     Text(
                         text = nextAction!!.title,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = DesignSystem.TypographyTokens.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = DesignSystem.Colors.TextPrimary
                     )
-                    Spacer(modifier = Modifier.height(Dimens.SpaceXs))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                     Text(
                         text = nextAction!!.whyItMatters,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary,
+                        style = DesignSystem.TypographyTokens.bodyMedium,
+                        color = DesignSystem.Colors.TextSecondary,
                         lineHeight = 20.sp
                     )
 
-                    Spacer(modifier = Modifier.height(Dimens.SpaceSm))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                     Text(
                         text = "Evidence: ${nextAction!!.evidence}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted
+                        style = DesignSystem.TypographyTokens.bodySmall,
+                        color = DesignSystem.Colors.TextMuted
                     )
-                    Spacer(modifier = Modifier.height(Dimens.SpaceLg))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.lg))
                     Button(
                         onClick = { onNavigate(nextAction!!.targetRoute) },
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        shape = RoundedCornerShape(Dimens.RadiusSm),
+                        colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                        shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(Dimens.ButtonHeight)
+                            .height(DesignSystem.Components.buttonHeight)
                             .testTag("nba_cta_button")
                     ) {
                         Text(text = nextAction!!.ctaText, fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.width(Dimens.SpaceSm))
+                        Spacer(modifier = Modifier.width(DesignSystem.Spacing.sm))
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
-                            modifier = Modifier.size(Dimens.IconSm)
+                            modifier = Modifier.size(DesignSystem.Components.iconSm)
                         )
                     }
                 }
             }
         }
 
-        // Visual Roadmap Progress Tracker
+        // Real Roadmap Progress Tracker or Useful Empty State
         item {
             CareerCard(
                 modifier = Modifier
@@ -311,162 +480,176 @@ fun DashboardScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                         ) {
-                            StatusBadge(text = "CAREER ROADMAP", statusType = "primary")
+                            StatusBadge(text = "ROADMAP", statusType = "primary")
                             Text(
                                 text = roadmap?.title ?: "Milestone Progression",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
+                                style = DesignSystem.TypographyTokens.labelSmall,
+                                color = DesignSystem.Colors.TextSecondary,
                                 maxLines = 1
                             )
                         }
-                        Spacer(modifier = Modifier.height(Dimens.SpaceXs))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                         Text(
-                            text = "Roadmap Completion",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "Milestone Progression",
+                            style = DesignSystem.TypographyTokens.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = DesignSystem.Colors.TextPrimary
                         )
                     }
 
                     TextButton(
-                        onClick = { onNavigate("roadmap") }
-                    ) {
-                        Text("View Full →", style = MaterialTheme.typography.labelLarge, color = PrimaryBlueLighter)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(Dimens.SpaceMd))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)
-                    ) {
-                        Text(
-                            text = "$roadmapPercent%",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = if (roadmapPercent == 100) SuccessGreen else AccentCyan
-                        )
-                        Text(
-                            text = "Completed",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                    }
-
-                    Surface(
-                        color = BgSurface,
-                        shape = RoundedCornerShape(Dimens.RadiusSm),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+                        onClick = { onNavigate("roadmap") },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-                            modifier = Modifier.padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(if (roadmapPercent == 100) SuccessGreen else if (roadmapPercent > 0) AccentCyan else WarningAmber)
-                            )
                             Text(
-                                text = "$completedRoadmapTasks of $totalRoadmapTasks Tasks",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                text = "View All",
+                                style = DesignSystem.TypographyTokens.labelMedium,
+                                color = DesignSystem.Colors.PrimaryLight,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = DesignSystem.Colors.PrimaryLight,
+                                modifier = Modifier.size(14.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(Dimens.SpaceSm))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
-                CareerProgressBar(progress = animatedRoadmapProgress)
-
-                // Up Next Milestone Task Quick Action
-                if (nextPendingRoadmapTask != null) {
-                    Spacer(modifier = Modifier.height(Dimens.SpaceMd))
-                    Surface(
-                        color = BgSurface,
-                        shape = RoundedCornerShape(Dimens.RadiusSm),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                        modifier = Modifier.fillMaxWidth()
+                if (totalRoadmapTasks > 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Dimens.SpaceMd),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Text(
+                            text = "$completedRoadmapTasks of $totalRoadmapTasks Completed",
+                            style = DesignSystem.TypographyTokens.bodySmall,
+                            color = DesignSystem.Colors.TextSecondary
+                        )
+                        Text(
+                            text = "$roadmapPercent%",
+                            style = DesignSystem.TypographyTokens.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = DesignSystem.Colors.PrimaryLight
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
+
+                    CareerProgressBar(
+                        progress = animatedRoadmapProgress,
+                        color = DesignSystem.Colors.Primary,
+                        trackColor = DesignSystem.Colors.Muted,
+                        height = 6.dp
+                    )
+
+                    if (nextPendingRoadmapTask != null) {
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
+                        Surface(
+                            color = DesignSystem.Colors.Surface,
+                            shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, DesignSystem.Colors.BorderSubtle),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "UP NEXT • PHASE ${nextPendingRoadmapTask.phaseNumber}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = AccentCyan,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(Dimens.SpaceXxs))
-                                Text(
-                                    text = nextPendingRoadmapTask.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary,
-                                    maxLines = 1
-                                )
-                            }
-                            IconButton(
-                                onClick = { viewModel.toggleRoadmapTask(nextPendingRoadmapTask.id) },
-                                modifier = Modifier.size(36.dp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(DesignSystem.Spacing.md),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = "Mark completed",
-                                    tint = PrimaryBlueLighter,
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "UP NEXT: PHASE ${nextPendingRoadmapTask.phaseNumber}",
+                                        style = DesignSystem.TypographyTokens.labelSmall,
+                                        color = DesignSystem.Colors.PrimaryLight,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
+                                    Text(
+                                        text = nextPendingRoadmapTask.title,
+                                        style = DesignSystem.TypographyTokens.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = DesignSystem.Colors.TextPrimary,
+                                        maxLines = 1
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { viewModel.toggleRoadmapTask(nextPendingRoadmapTask.id) },
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = "Mark completed",
+                                        tint = DesignSystem.Colors.PrimaryLight,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                             }
+                        }
+                    }
+                } else {
+                    // Clean roadmap empty state
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = DesignSystem.Spacing.sm)
+                    ) {
+                        Text(
+                            text = "No roadmap milestones generated yet.",
+                            style = DesignSystem.TypographyTokens.bodyMedium,
+                            color = DesignSystem.Colors.TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
+                        Button(
+                            onClick = { onNavigate("roadmap") },
+                            colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                            shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm)
+                        ) {
+                            Text("Generate Roadmap")
                         }
                     }
                 }
             }
         }
 
-        // Quick Hub Navigation (2-Column Grid matching HubScreen styling)
+        // Quick Navigation Grid (Engineering Workspace)
         item {
             SectionHeader(
-                title = "Engineering Toolkit",
-                subtitle = "Quick access to your core workspace modules"
+                title = "Engineering Workspace",
+                subtitle = "Core modules and preparation tools"
             )
         }
 
         item {
             val quickLinks = listOf(
-                Triple("Roadmap", Icons.Default.Timeline, "roadmap"),
-                Triple("Skills", Icons.Default.Assessment, "career"),
                 Triple("Resume Audit", Icons.Default.Description, "resume"),
                 Triple("Mock Interview", Icons.Default.RecordVoiceOver, "interview"),
-                Triple("Market Intel", Icons.Default.TravelExplore, "market"),
+                Triple("Skill Matrix", Icons.Default.Assessment, "career"),
+                Triple("Roadmap", Icons.Default.Timeline, "roadmap"),
+                Triple("Opportunities", Icons.Default.Stars, "opportunities"),
+                Triple("Projects Hub", Icons.Default.Code, "projects"),
                 Triple("Code Sandbox", Icons.Default.Terminal, "sandbox"),
+                Triple("Market Intel", Icons.Default.TravelExplore, "market"),
                 Triple("Integrations", Icons.Default.Sync, "integrations"),
-                Triple("Profile Settings", Icons.Default.Person, "profile")
+                Triple("Export Center", Icons.Default.FileDownload, "export")
             )
-
-            Column(verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)) {
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)) {
                 val rows = (quickLinks.size + 1) / 2
                 for (row in 0 until rows) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)
                     ) {
                         for (col in 0 until 2) {
                             val index = row * 2 + col
@@ -487,26 +670,48 @@ fun DashboardScreen(
             }
         }
 
-        // Recent Activity Feed
+        // Activity History Feed (Real Stored Events Only)
         item {
             SectionHeader(
                 title = "Activity History",
-                subtitle = "Timeline of updates, audits and milestones"
+                subtitle = "Timeline of actual audits, updates, and milestones"
             )
         }
 
         if (recentEvents.isEmpty()) {
             item {
                 CareerCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "No recent activity recorded yet.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextMuted
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = DesignSystem.Spacing.md),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = null,
+                            tint = DesignSystem.Colors.TextMuted,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
+                        Text(
+                            text = "No activity recorded yet",
+                            style = DesignSystem.TypographyTokens.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = DesignSystem.Colors.TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
+                        Text(
+                            text = "Actions, audits, and completions will be recorded here.",
+                            style = DesignSystem.TypographyTokens.bodySmall,
+                            color = DesignSystem.Colors.TextSecondary,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
                 }
             }
         } else {
-            items(recentEvents.take(5)) { event ->
+            items(recentEvents.take(6)) { event ->
                 val timeFormat = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault())
                 CareerCard(
                     modifier = Modifier.fillMaxWidth()
@@ -519,21 +724,21 @@ fun DashboardScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = event.eventName,
-                                style = MaterialTheme.typography.titleSmall,
+                                style = DesignSystem.TypographyTokens.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                color = DesignSystem.Colors.TextPrimary
                             )
-                            Spacer(modifier = Modifier.height(Dimens.SpaceXxs))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
                             Text(
                                 text = event.detail,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
+                                style = DesignSystem.TypographyTokens.bodySmall,
+                                color = DesignSystem.Colors.TextSecondary
                             )
                         }
                         Text(
                             text = timeFormat.format(Date(event.timestamp)),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted
+                            style = DesignSystem.TypographyTokens.labelSmall,
+                            color = DesignSystem.Colors.TextMuted
                         )
                     }
                 }
@@ -549,37 +754,53 @@ private fun QuickLinkCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(Dimens.RadiusMd)
+    val shape = RoundedCornerShape(10.dp)
     Row(
         modifier = modifier
+            .defaultMinSize(minHeight = 52.dp)
             .clip(shape)
             .background(BgCard)
-            .border(Dimens.CardBorderWidth, BorderSubtle, shape)
-            .clickable { onClick() }
-            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceMd),
+            .border(1.dp, BorderSubtle, shape)
+            .clickable(onClick = onClick)
+            .padding(
+                horizontal = DesignSystem.Spacing.md,
+                vertical = DesignSystem.Spacing.sm
+            ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(Dimens.RadiusSm))
-                .background(PrimaryBlue.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm),
+            modifier = Modifier.weight(1f)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = PrimaryBlueLighter,
-                modifier = Modifier.size(Dimens.IconMd)
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(DesignSystem.Colors.Primary.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = DesignSystem.Colors.PrimaryLight,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Text(
+                text = title,
+                style = DesignSystem.TypographyTokens.labelMedium,
+                color = DesignSystem.Colors.TextPrimary,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
             )
         }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium,
-            color = TextPrimary,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = DesignSystem.Colors.TextMuted,
+            modifier = Modifier.size(14.dp)
         )
     }
 }

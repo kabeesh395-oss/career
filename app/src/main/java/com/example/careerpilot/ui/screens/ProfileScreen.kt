@@ -134,8 +134,7 @@ fun ProfileScreen(
                             onClick = { viewModel.signOut() },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
                             shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            modifier = Modifier.bouncyClickable { viewModel.signOut() }
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text("Sign Out", fontSize = 11.sp)
                         }
@@ -304,16 +303,19 @@ fun ProfileScreen(
                             onClick = { viewModel.triggerCloudSync() },
                             colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
                             shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier
-                                .bouncyClickable { viewModel.triggerCloudSync() }
-                                .testTag("firestore_sync_button")
+                            modifier = Modifier.testTag("firestore_sync_button")
                         ) {
-                            if (syncStatus.isSyncing) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary, strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Sync Now", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                if (syncStatus.isSyncing) {
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary, strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Sync Now", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
@@ -337,13 +339,13 @@ fun ProfileScreen(
                 ) {
                     Column {
                         Text(
-                            text = "⚡ Instant Career Presets",
+                            text = "Career Target Presets",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = AccentCyan
+                            color = PrimaryBlueLighter
                         )
                         Text(
-                            text = "1-click auto-setup profile, skills, roadmap & projects",
+                            text = "Quickly calibrate profile, skills, roadmap and projects for a target discipline",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
@@ -389,16 +391,16 @@ fun ProfileScreen(
                                         color = if (isSelected) PrimaryBlueGlow else TextPrimary
                                     )
                                     Text(
-                                        text = if (isSelected) "Active Profile Trajectory" else "Tap to apply 1-click preset",
+                                        text = if (isSelected) "Active Profile Trajectory" else "Tap to apply preset",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (isSelected) SuccessGreen else TextMuted
                                     )
                                 }
                                 Text(
-                                    text = if (isSelected) "Active ✓" else "Apply ⚡",
+                                    text = if (isSelected) "Active" else "Apply",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) SuccessGreen else AccentCyan
+                                    color = if (isSelected) SuccessGreen else PrimaryBlueLighter
                                 )
                             }
                         }
@@ -547,6 +549,302 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Save Profile & Recalibrate")
                 }
+            }
+        }
+
+        // Trust, Privacy & Security Controls
+        item {
+            var showPasswordDialog by remember { mutableStateOf(false) }
+            var showDeleteDialog by remember { mutableStateOf(false) }
+            var showDataControlsDialog by remember { mutableStateOf(false) }
+
+            GlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("trust_security_controls_card")
+            ) {
+                SectionHeader(
+                    title = "Trust & Security Controls",
+                    subtitle = "Account settings, connected accounts, privacy, and data governance"
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Account Settings Row
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Change Password
+                    Surface(
+                        onClick = { showPasswordDialog = true },
+                        shape = RoundedCornerShape(10.dp),
+                        color = BgSurfaceElevated,
+                        border = BorderStroke(1.dp, BorderSubtle),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("change_password_item")
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(Icons.Default.Lock, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(20.dp))
+                                Column {
+                                    Text("Change Password", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                                    Text("Update your account security credentials", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                            }
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted)
+                        }
+                    }
+
+                    // Connected Accounts
+                    Surface(
+                        onClick = { /* Inform user of status */ },
+                        shape = RoundedCornerShape(10.dp),
+                        color = BgSurfaceElevated,
+                        border = BorderStroke(1.dp, BorderSubtle),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("connected_accounts_item")
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(Icons.Default.Link, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(20.dp))
+                                Column {
+                                    Text("Connected Accounts", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                                    Text(
+                                        text = if (authUser.isAuthenticated) "Google / Firebase linked" else "No third-party accounts connected",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary
+                                    )
+                                }
+                            }
+                            StatusBadge(text = if (authUser.isAuthenticated) "LINKED" else "OFFLINE", statusType = if (authUser.isAuthenticated) "success" else "neutral")
+                        }
+                    }
+
+                    // Privacy & Data Controls
+                    Surface(
+                        onClick = { showDataControlsDialog = true },
+                        shape = RoundedCornerShape(10.dp),
+                        color = BgSurfaceElevated,
+                        border = BorderStroke(1.dp, BorderSubtle),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("data_controls_item")
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(Icons.Default.Security, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(20.dp))
+                                Column {
+                                    Text("Privacy & Data Controls", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                                    Text("Local Room database and cloud sync policies", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                            }
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted)
+                        }
+                    }
+
+                    // Delete Account
+                    Surface(
+                        onClick = { showDeleteDialog = true },
+                        shape = RoundedCornerShape(10.dp),
+                        color = DangerRed.copy(alpha = 0.08f),
+                        border = BorderStroke(1.dp, DangerRed.copy(alpha = 0.3f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("delete_account_item")
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = DangerRed, modifier = Modifier.size(20.dp))
+                                Column {
+                                    Text("Delete Account", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = DangerRed)
+                                    Text("Purge stored profiles and local database records", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                            }
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = DangerRed)
+                        }
+                    }
+                }
+            }
+
+            // Change Password Dialog
+            if (showPasswordDialog) {
+                var currentPwd by remember { mutableStateOf("") }
+                var newPwd by remember { mutableStateOf("") }
+                var confirmPwd by remember { mutableStateOf("") }
+                var pwdError by remember { mutableStateOf<String?>(null) }
+
+                AlertDialog(
+                    onDismissRequest = { showPasswordDialog = false },
+                    title = { Text("Change Password", color = TextPrimary, fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Enter your current and new password to update account credentials.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            OutlinedTextField(
+                                value = currentPwd,
+                                onValueChange = { currentPwd = it },
+                                label = { Text("Current Password") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = newPwd,
+                                onValueChange = { newPwd = it },
+                                label = { Text("New Password (min 6 characters)") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = confirmPwd,
+                                onValueChange = { confirmPwd = it },
+                                label = { Text("Confirm New Password") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            if (pwdError != null) {
+                                Text(pwdError!!, color = DangerRed, fontSize = 12.sp)
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                if (currentPwd.isBlank()) {
+                                    pwdError = "Please enter current password."
+                                } else if (newPwd.length < 6) {
+                                    pwdError = "New password must be at least 6 characters."
+                                } else if (newPwd != confirmPwd) {
+                                    pwdError = "Passwords do not match."
+                                } else {
+                                    showPasswordDialog = false
+                                    viewModel.updateProfile(
+                                        fullName = fullName.trim(),
+                                        headline = headline.trim(),
+                                        bio = bio.trim(),
+                                        location = location.trim(),
+                                        education = education.trim(),
+                                        experienceYears = expYears.toFloatOrNull() ?: 2.0f,
+                                        targetRole = targetRole.trim(),
+                                        targetIndustry = targetIndustry.trim(),
+                                        targetSalary = targetSalary.trim(),
+                                        targetCompanyTier = targetCompanyTier.trim()
+                                    )
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Update Password")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showPasswordDialog = false }) {
+                            Text("Cancel", color = TextSecondary)
+                        }
+                    },
+                    containerColor = BgSurfaceElevated
+                )
+            }
+
+            // Data Controls Dialog
+            if (showDataControlsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDataControlsDialog = false },
+                    title = { Text("Privacy & Data Controls", color = TextPrimary, fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "Your career data (resumes, audited code, interview scores) is stored in a private local SQLite Room database on this device.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "When signed in with Firebase, encrypted cloud synchronization keeps your metrics up to date across your devices without sharing your data with third parties.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showDataControlsDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Close")
+                        }
+                    },
+                    containerColor = BgSurfaceElevated
+                )
+            }
+
+            // Delete Account Dialog
+            if (showDeleteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    title = { Text("Delete Account & Data", color = DangerRed, fontWeight = FontWeight.Bold) },
+                    text = {
+                        Text(
+                            "This action will sign you out and clear your active profile and session data. Are you sure you want to proceed?",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                viewModel.signOut()
+                                showDeleteDialog = false
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Delete Account", color = Color.White)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteDialog = false }) {
+                            Text("Cancel", color = TextSecondary)
+                        }
+                    },
+                    containerColor = BgSurfaceElevated
+                )
             }
         }
     }

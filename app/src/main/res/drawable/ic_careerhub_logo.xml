@@ -3,70 +3,60 @@
     android:height="100dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
-    <!-- Background Circle -->
-    <path
-        android:fillColor="#0B2545"
-        android:strokeColor="#134074"
-        android:strokeWidth="2"
-        android:pathData="M50,4 A46,46 0 1,0 50,96 A46,46 0 1,0 50,4 Z" />
 
-    <!-- Constellation Lines -->
+    <!-- Outer Orbital Ring -->
     <path
-        android:strokeColor="#1D4ED8"
+        android:fillColor="#101E3C"
+        android:strokeColor="#1E3A8A"
         android:strokeWidth="1.5"
-        android:strokeAlpha="0.7"
-        android:pathData="M50,18 L50,38 M50,62 L50,82 M18,50 L38,50 M62,50 L82,50" />
+        android:pathData="M 50,22 A 28,28 0 1,0 50,78 A 28,28 0 1,0 50,22 Z" />
+
+    <!-- Subtle Guide Lines -->
     <path
-        android:strokeColor="#2563EB"
+        android:strokeColor="#3B82F6"
+        android:strokeWidth="1.2"
+        android:strokeAlpha="0.5"
+        android:pathData="M 50,24 L 50,38 M 50,62 L 50,76 M 24,50 L 38,50 M 62,50 L 76,50" />
+
+    <!-- Diagonal Network Rays -->
+    <path
+        android:strokeColor="#00D2FF"
+        android:strokeWidth="1.0"
+        android:strokeAlpha="0.4"
+        android:pathData="M 32,32 L 40,40 M 60,60 L 68,68 M 68,32 L 60,40 M 40,60 L 32,68" />
+
+    <!-- Orbital Corner Nodes -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M 50,22.5 A 2.2,2.2 0 1,0 50,26.9 A 2.2,2.2 0 1,0 50,22.5 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M 50,73.1 A 2.2,2.2 0 1,0 50,77.5 A 2.2,2.2 0 1,0 50,73.1 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M 22.5,50 A 2.2,2.2 0 1,0 26.9,50 A 2.2,2.2 0 1,0 22.5,50 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M 73.1,50 A 2.2,2.2 0 1,0 77.5,50 A 2.2,2.2 0 1,0 73.1,50 Z" />
+
+    <!-- Core Nexus Shield / Circle -->
+    <path
+        android:fillColor="#0B132B"
+        android:strokeColor="#00D2FF"
+        android:strokeWidth="2.0"
+        android:pathData="M 50,39 A 11,11 0 1,0 50,61 A 11,11 0 1,0 50,39 Z" />
+
+    <!-- Career Trajectory Growth Arrow -->
+    <path
+        android:fillColor="#00D2FF"
+        android:strokeColor="#FFFFFF"
         android:strokeWidth="1.5"
-        android:strokeAlpha="0.7"
-        android:pathData="M27,27 L40,40 M60,60 L73,73 M73,27 L60,40 M40,60 L27,73" />
+        android:strokeLineJoin="round"
+        android:pathData="M 50,30 L 65,59 L 50,53 L 35,59 Z" />
 
-    <!-- Core Node Circle -->
-    <path
-        android:fillColor="#0F172A"
-        android:strokeColor="#38BDF8"
-        android:strokeWidth="2.5"
-        android:pathData="M50,38 A12,12 0 1,0 50,62 A12,12 0 1,0 50,38 Z" />
-
-    <!-- Letter C in Center -->
+    <!-- Center Pulse Core -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54.5,45.5 C53.5,44.2 52,43.5 50,43.5 C46.5,43.5 44,46.2 44,50 C44,53.8 46.5,56.5 50,56.5 C52,56.5 53.5,55.8 54.5,54.5 L52.5,53 C52,53.8 51.2,54.3 50,54.3 C47.8,54.3 46.3,52.5 46.3,50 C46.3,47.5 47.8,45.7 50,45.7 C51.2,45.7 52,46.2 52.5,47 L54.5,45.5 Z" />
+        android:pathData="M 50,45 A 2.5,2.5 0 1,0 50,50 A 2.5,2.5 0 1,0 50,45 Z" />
 
-    <!-- Outer Nodes -->
-    <path
-        android:fillColor="#60A5FA"
-        android:pathData="M50,14.5 A3.5,3.5 0 1,0 50,21.5 A3.5,3.5 0 1,0 50,14.5 Z" />
-    <path
-        android:fillColor="#60A5FA"
-        android:pathData="M50,78.5 A3.5,3.5 0 1,0 50,85.5 A3.5,3.5 0 1,0 50,78.5 Z" />
-    <path
-        android:fillColor="#60A5FA"
-        android:pathData="M18,46.5 A3.5,3.5 0 1,0 18,53.5 A3.5,3.5 0 1,0 18,46.5 Z" />
-    <path
-        android:fillColor="#60A5FA"
-        android:pathData="M82,46.5 A3.5,3.5 0 1,0 82,53.5 A3.5,3.5 0 1,0 82,46.5 Z" />
-    <path
-        android:fillColor="#93C5FD"
-        android:pathData="M27,24 A3,3 0 1,0 27,30 A3,3 0 1,0 27,24 Z" />
-    <path
-        android:fillColor="#93C5FD"
-        android:pathData="M73,70 A3,3 0 1,0 73,76 A3,3 0 1,0 73,70 Z" />
-    <path
-        android:fillColor="#93C5FD"
-        android:pathData="M27,70 A3,3 0 1,0 27,76 A3,3 0 1,0 27,70 Z" />
-
-    <!-- Growth Arrow -->
-    <path
-        android:strokeColor="#00B4D8"
-        android:strokeWidth="4"
-        android:strokeLineCap="round"
-        android:pathData="M34,66 L68,32" />
-    <path
-        android:strokeColor="#00B4D8"
-        android:strokeWidth="4"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M52,32 L68,32 L68,48" />
 </vector>

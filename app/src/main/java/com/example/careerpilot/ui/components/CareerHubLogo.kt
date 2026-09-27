@@ -48,19 +48,19 @@ fun CareerHubLogo(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary,
-                        letterSpacing = (-0.02).sp
+                        letterSpacing = (-0.3).sp
                     )
                     Text(
-                        text = "Hub",
+                        text = "Pilot",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = AccentCyanLight,
-                        letterSpacing = (-0.02).sp
+                        letterSpacing = (-0.3).sp
                     )
                 }
                 if (showSubtitle) {
                     Text(
-                        text = "PROFESSIONAL NETWORK",
+                        text = "AI CAREER COPILOT",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = TextMuted,

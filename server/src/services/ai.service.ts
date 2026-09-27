@@ -17,16 +17,23 @@ export interface CareerReadinessResult {
   modelUsed: string;
 }
 
+export interface RoadmapItemData {
+  title: string;
+  skill: string;
+  whyItMatters: string;
+  learningObjective: string;
+  practiceSuggestion: string;
+  interviewRelevance: string;
+  description: string;
+  category: string;
+  estimatedHours: number;
+  orderIndex: number;
+}
+
 export interface RoadmapPhase {
   phaseNumber: number;
   phaseTitle: string;
-  items: Array<{
-    title: string;
-    description: string;
-    category: string;
-    estimatedHours: number;
-    orderIndex: number;
-  }>;
+  items: RoadmapItemData[];
 }
 
 export interface GeneratedRoadmap {
@@ -173,9 +180,14 @@ export class AIService {
     const medGaps = skillGaps.filter(g => g.priority === 'medium');
     const lowGaps = skillGaps.filter(g => g.priority === 'low');
 
-    const phase1Items = [
+    const phase1Items: RoadmapItemData[] = [
       {
         title: 'Master Core Language Paradigms & Type Safety',
+        skill: targetRole.includes('Android') ? 'Kotlin' : targetRole.includes('AI') ? 'Python' : 'TypeScript',
+        whyItMatters: 'Fundamental language mastery directly dictates code quality, testability, and runtime robustness under production concurrency.',
+        learningObjective: 'Understand asynchronous execution model, type variance/generics, memory management, and idiomatic concurrency primitives.',
+        practiceSuggestion: 'Implement a zero-dependency async task pool with error propagation and cancellation support.',
+        interviewRelevance: 'Common live-coding filter: testing ability to reason about memory, types, and asynchronous lifecycles.',
         description: 'Deepen understanding of asynchronous runtime internals, generics, and architectural patterns.',
         category: 'Skill Mastery',
         estimatedHours: 12,
@@ -183,6 +195,11 @@ export class AIService {
       },
       ...highGaps.map((g, idx) => ({
         title: `Deep Dive: ${g.skillName} (Current: L${g.currentLevel} → Target: L${g.requiredLevel})`,
+        skill: g.skillName,
+        whyItMatters: `High priority deficit for ${targetRole}. Production roles require autonomous capability at Level ${g.requiredLevel}.`,
+        learningObjective: `Advance proficiency from foundational usage to architectural design and performance optimization in ${g.skillName}.`,
+        practiceSuggestion: `Build an isolated service component or test harness exercising advanced ${g.skillName} features.`,
+        interviewRelevance: `Direct technical interview scrutiny on ${g.skillName} internals, trade-offs, and failure recovery.`,
         description: `Implement hands-on production modules and unit tests mastering ${g.skillName}.`,
         category: 'Skill Mastery',
         estimatedHours: 16,
@@ -197,9 +214,14 @@ export class AIService {
     });
 
     // Phase 2: Architecture, Microservices & Systems Design
-    const phase2Items = [
+    const phase2Items: RoadmapItemData[] = [
       ...medGaps.map((g, idx) => ({
         title: `Architecture Module: ${g.skillName}`,
+        skill: g.skillName,
+        whyItMatters: `Key mid-level requirement for ${targetRole} to support multi-service integration and system resilience.`,
+        learningObjective: `Design and benchmark fault-tolerant workflows integrating ${g.skillName}.`,
+        practiceSuggestion: `Integrate ${g.skillName} into an end-to-end service with logging, telemetry, and rate limiting.`,
+        interviewRelevance: 'Evaluated during system design and architecture rounds regarding scaling and data consistency.',
         description: `Integrate ${g.skillName} into a real-world scalable distributed system.`,
         category: 'System Design',
         estimatedHours: 14,
@@ -207,6 +229,11 @@ export class AIService {
       })),
       {
         title: 'Design Resilient API Layer with Zero-Trust Security',
+        skill: 'Security & Architecture',
+        whyItMatters: 'Enterprise systems mandate strict boundary verification, token validation, and least-privilege access.',
+        learningObjective: 'Implement defensive security layers including rate limiting, input sanitization, and structured audit logs.',
+        practiceSuggestion: 'Build a secure authentication proxy handling token refresh, revocation, and role-based permissions.',
+        interviewRelevance: 'Senior engineering interview staple: addressing OWASP Top 10, CSRF, and authorization leaks.',
         description: 'Implement JWT authentication, rate limiting, and structured validation pipelines.',
         category: 'System Design',
         estimatedHours: 10,
@@ -221,9 +248,14 @@ export class AIService {
     });
 
     // Phase 3: Real Portfolio Capstone & Production Delivery
-    const phase3Items = [
+    const phase3Items: RoadmapItemData[] = [
       ...lowGaps.map((g, idx) => ({
         title: `Optimization & Polish: ${g.skillName}`,
+        skill: g.skillName,
+        whyItMatters: `Refines your edge in ${targetRole} interviews by demonstrating performance profiling depth.`,
+        learningObjective: `Measure latency, resource consumption, and throughput metrics for ${g.skillName}.`,
+        practiceSuggestion: `Profile and optimize an existing workflow using flamegraphs and load testing tools.`,
+        interviewRelevance: 'Distinguishes senior candidates who can articulate bottleneck mitigation with empirical data.',
         description: `Fine-tune performance metrics and benchmark ${g.skillName} workflows.`,
         category: 'Performance',
         estimatedHours: 8,
@@ -231,6 +263,11 @@ export class AIService {
       })),
       {
         title: `Build & Deploy Production Capstone for ${targetRole}`,
+        skill: 'System Design & Scalability',
+        whyItMatters: 'Demonstrates end-to-end execution capability with observable code, tests, and CI/CD automation.',
+        learningObjective: 'Ship a production-grade application featuring clean architecture, containerization, and 80%+ test coverage.',
+        practiceSuggestion: 'Deploy repository to cloud platform with automated pipeline, health checks, and documentation.',
+        interviewRelevance: 'Serves as primary portfolio proof during hiring manager and technical lead reviews.',
         description: 'End-to-end repository with automated CI/CD, Docker deployment, and complete test suite.',
         category: 'Portfolio Project',
         estimatedHours: 25,
@@ -238,6 +275,11 @@ export class AIService {
       },
       {
         title: 'Technical Interview Simulation & Live Rubric Scoring',
+        skill: 'Interview Readiness',
+        whyItMatters: 'Translates technical competency into concise, high-scoring verbal and whiteboard responses.',
+        learningObjective: 'Practice structured STAR methodology and system design trade-off communication under time pressure.',
+        practiceSuggestion: 'Complete 3 full-length mock interview rounds with real-time AI rubric evaluation.',
+        interviewRelevance: 'Direct rehearsal for technical screening and executive interview stages.',
         description: 'Pass 3 consecutive mock technical and system design interview rounds with >80% score.',
         category: 'Interview Prep',
         estimatedHours: 6,

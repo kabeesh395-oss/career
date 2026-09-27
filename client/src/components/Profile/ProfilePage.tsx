@@ -3,7 +3,7 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 
 export default function ProfilePage() {
-  const { profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile, logout } = useAuth();
   const [form, setForm] = useState({
     headline: '',
     bio: '',
@@ -17,6 +17,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     if (profile) {
@@ -269,6 +273,110 @@ export default function ProfilePage() {
             {loading ? 'Saving Profile…' : 'Save Changes'}
           </button>
         </form>
+      </div>
+
+      {/* Danger Zone: Account & Data Deletion (GDPR / Privacy Compliance) */}
+      <div className="glass-card" style={{ padding: 24, border: '1px solid rgba(239, 68, 68, 0.35)', background: 'rgba(239, 68, 68, 0.03)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f87171', marginBottom: 4 }}>
+              Account & Data Permanent Erasure
+            </h3>
+            <p style={{ color: '#94a3b8', fontSize: 13, maxWidth: 600 }}>
+              Permanently delete your account, personal profile, uploaded resumes, ATS reports, roadmap curriculum, and telemetry logs. This action is non-reversible.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#f87171',
+              padding: '8px 16px',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+            id="open-delete-account-modal"
+          >
+            Delete Account…
+          </button>
+        </div>
+
+        {/* Confirmation Modal */}
+        {showDeleteModal && (
+          <div style={{
+            marginTop: 18,
+            padding: 18,
+            background: 'rgba(15, 23, 42, 0.95)',
+            border: '1px solid rgba(239, 68, 68, 0.5)',
+            borderRadius: 10
+          }}>
+            <h4 style={{ fontSize: 14, fontWeight: 700, color: '#f87171', marginBottom: 6 }}>
+              Confirm Complete Account Deletion
+            </h4>
+            <p style={{ fontSize: 12, color: '#cbd5e1', marginBottom: 12 }}>
+              To confirm, please type <strong>DELETE</strong> in the box below:
+            </p>
+            {deleteError && (
+              <div style={{ color: '#f87171', fontSize: 12, marginBottom: 8 }}>
+                {deleteError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <input
+                className="input-field"
+                type="text"
+                placeholder="Type DELETE"
+                value={deleteConfirmText}
+                onChange={e => setDeleteConfirmText(e.target.value)}
+                style={{ maxWidth: 200 }}
+                id="delete-account-confirm-input"
+              />
+              <button
+                type="button"
+                disabled={deleteConfirmText !== 'DELETE' || deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  setDeleteError('');
+                  try {
+                    await api('/user/delete', { method: 'DELETE' });
+                    logout();
+                  } catch (err: any) {
+                    setDeleteError(err.message || 'Failed to delete account.');
+                    setDeleting(false);
+                  }
+                }}
+                style={{
+                  background: deleteConfirmText === 'DELETE' ? '#dc2626' : 'rgba(239, 68, 68, 0.2)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: deleteConfirmText === 'DELETE' ? 'pointer' : 'not-allowed'
+                }}
+                id="confirm-delete-account-btn"
+              >
+                {deleting ? 'Erasing Data…' : 'Permanently Delete Everything'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText('');
+                }}
+                className="btn-secondary"
+                style={{ fontSize: 12, padding: '8px 14px' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

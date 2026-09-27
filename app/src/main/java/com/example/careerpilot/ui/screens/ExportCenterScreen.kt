@@ -60,7 +60,7 @@ fun ExportCenterScreen(
     // Clean plain ATS text generator
     val atsPlainText = remember(profile, skills) {
         buildString {
-            appendLine("${profile.fullName.uppercase()} — ${profile.targetRole}")
+            appendLine("${profile.fullName.uppercase()} | ${profile.targetRole}")
             appendLine("${profile.email} | ${profile.location} | linkedin.com/in/alexchen | github.com/alexchen")
             appendLine()
             appendLine("PROFESSIONAL SUMMARY")
@@ -71,23 +71,24 @@ fun ExportCenterScreen(
             appendLine("Architectures: Microservices, Distributed Systems, REST, gRPC, CI/CD, Event-Driven Kafka")
             appendLine()
             appendLine("EXPERIENCE")
-            appendLine("Senior Software Engineer | CloudScale Systems (2022 – Present)")
+            appendLine("Senior Software Engineer | CloudScale Systems (2022 - Present)")
             appendLine("• Architected high-throughput microservices handling 40M+ daily transactions with 99.99% availability.")
             appendLine("• Reduced p99 database query latency by 45% by restructuring PostgreSQL indexes and Redis cache clustering.")
             appendLine("• Built reactive Android mobile client interfaces in Jetpack Compose with offline-first Room persistence.")
             appendLine("• Automated multi-region CI/CD deployment pipelines with Docker and Kubernetes, reducing release time by 60%.")
             appendLine()
             appendLine("EDUCATION")
-            appendLine("${profile.education} — University of California (GPA: 3.8/4.0)")
+            appendLine("${profile.education} | University of California (GPA: 3.8/4.0)")
         }
     }
 
     // Roadmap Export text
     val roadmapExportText = remember(profile, roadmap, roadmapItems) {
         buildString {
-            appendLine("# CAREER PILOT — PERSONALIZED ROADMAP")
+            appendLine("# CAREER PILOT - PERSONALIZED ROADMAP")
             appendLine("Target Role: ${profile.targetRole}")
-            appendLine("Overall Progress: ${((roadmap?.progressPercent ?: 0.65f) * 100).toInt()}%")
+            val progressVal = roadmap?.progressPercent?.toInt() ?: 0
+            appendLine("Overall Progress: $progressVal%")
             appendLine()
             appendLine("## MILESTONES & PHASES")
             roadmapItems.forEach { item ->
@@ -199,7 +200,7 @@ fun ExportCenterScreen(
                                 onClick = {
                                     val cheatText = "${sheet.title}\n\nKey Concept:\n${sheet.keyConcept}\n\nArchitecture Pattern:\n${sheet.architecturePattern}\n\nTrade-offs:\n${sheet.keyTradeoffs.joinToString("\n")}\n\nTalking Points:\n${sheet.interviewTalkingPoints.joinToString("\n")}"
                                     clipboardManager.setText(AnnotatedString(cheatText))
-                                    copiedMessage = "✓ Copied '${sheet.title}' cheat sheet to clipboard!"
+                                    copiedMessage = "Copied '${sheet.title}' cheat sheet to clipboard."
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                                 shape = RoundedCornerShape(6.dp),
@@ -270,7 +271,7 @@ fun ExportCenterScreen(
                             Button(
                                 onClick = {
                                     clipboardManager.setText(AnnotatedString(atsPlainText))
-                                    copiedMessage = "✓ Copied clean ATS resume to clipboard!"
+                                    copiedMessage = "Copied clean ATS resume to clipboard."
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
                                 shape = RoundedCornerShape(8.dp),
@@ -318,7 +319,7 @@ fun ExportCenterScreen(
                             Button(
                                 onClick = {
                                     clipboardManager.setText(AnnotatedString(roadmapExportText))
-                                    copiedMessage = "✓ Copied career roadmap markdown to clipboard!"
+                                    copiedMessage = "Copied career roadmap markdown to clipboard."
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                                 shape = RoundedCornerShape(8.dp),

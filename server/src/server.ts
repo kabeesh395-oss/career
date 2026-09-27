@@ -20,6 +20,7 @@ import learningRoutes from './routes/learning.routes.js';
 import integrationsRoutes from './routes/integrations.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import userRoutes from './routes/user.routes.js';
+import edgeAiRoutes from './routes/edgeAi.routes.js';
 
 dotenv.config();
 
@@ -104,7 +105,8 @@ const routePairs: Array<[string, express.Router]> = [
   ['/learning', learningRoutes],
   ['/integrations', integrationsRoutes],
   ['/analytics', analyticsRoutes],
-  ['/user', userRoutes]
+  ['/user', userRoutes],
+  ['/edge-ai', edgeAiRoutes]
 ];
 
 for (const [pathPrefix, router] of routePairs) {

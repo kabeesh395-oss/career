@@ -54,7 +54,7 @@ object SearchGroundingService {
                 )
             )
 
-            val response = GeminiClient.service.generateContentWithSearch(apiKey, request)
+            val response = GeminiClient.service.generateContent(apiKey, request)
             val candidate = response.candidates?.firstOrNull()
 
             val text = candidate?.content?.parts?.joinToString("\n") { it.text ?: "" } ?: "No response generated."

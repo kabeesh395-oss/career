@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.careerpilot.data.model.LearningResource
+import com.example.careerpilot.ui.components.EmptyStateCard
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.components.StatusBadge
@@ -187,29 +188,25 @@ fun LearningScreen(
         }
 
         // Learning Resource List
-        if (filteredResources.isEmpty()) {
+        if (resources.isEmpty()) {
             item {
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MenuBook,
-                            contentDescription = null,
-                            tint = TextMuted,
-                            modifier = Modifier.size(40.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "No learning modules in this filter",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary
-                        )
-                    }
-                }
+                EmptyStateCard(
+                    icon = Icons.Default.MenuBook,
+                    title = "No Learning Modules Available",
+                    description = "Technical study modules, architectural deep dives, and concept quizzes directly verify your proficiencies in distributed systems, Android, and databases.",
+                    actionLabel = "Refresh Modules",
+                    onActionClick = { viewModel.initializeDefaultDataIfEmpty() }
+                )
+            }
+        } else if (filteredResources.isEmpty()) {
+            item {
+                EmptyStateCard(
+                    icon = Icons.Default.FilterList,
+                    title = "No Modules in '$selectedFilter'",
+                    description = "There are no learning modules currently matching this filter status.",
+                    actionLabel = "Show All Modules",
+                    onActionClick = { selectedFilter = "ALL" }
+                )
             }
         } else {
             items(filteredResources, key = { it.id }) { resource ->
@@ -830,11 +827,18 @@ fun LearningStudyDialog(
                                     enabled = selectedOption != null,
                                     colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
                                     shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .defaultMinSize(minHeight = 44.dp)
                                 ) {
-                                    Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Verify & Complete Module")
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Verify & Complete Module", fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }

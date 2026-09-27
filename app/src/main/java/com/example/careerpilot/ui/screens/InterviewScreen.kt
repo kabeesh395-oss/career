@@ -114,8 +114,7 @@ fun InterviewScreen(
                             onClick = { viewModel.exitActiveInterview() },
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
-                            modifier = Modifier.bouncyClickable { viewModel.exitActiveInterview() }
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed)
                         ) {
                             Text("End Session", fontSize = 12.sp)
                         }
@@ -350,16 +349,22 @@ fun InterviewScreen(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
                             .testTag("submit_answer_button")
                     ) {
-                        if (isAnalyzing) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Interviewer Analyzing & Formulating Challenge...")
-                        } else {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Submit Response & Defend Decisions", fontWeight = FontWeight.Bold)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            if (isAnalyzing) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary, strokeWidth = 2.dp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Interviewer Analyzing & Formulating Challenge...")
+                            } else {
+                                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Submit Response & Defend Decisions", fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -478,11 +483,17 @@ fun InterviewScreen(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
                             .testTag("start_interview_button")
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Begin Conversational Probing Simulation", fontWeight = FontWeight.Bold)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Begin Conversational Probing Simulation", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
@@ -537,13 +548,25 @@ fun InterviewScreen(
 
             if (history.isEmpty()) {
                 item {
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "No completed mock interviews yet. Click 'Begin Conversational Probing Simulation' above.",
-                            color = TextMuted,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    EmptyStateCard(
+                        icon = Icons.Default.RecordVoiceOver,
+                        title = "No Past Interviews Recorded",
+                        description = "Complete system design and technical probing sessions to record your communication velocity and architectural trade-off evaluations.",
+                        actionLabel = "Start Probing Simulation",
+                        onActionClick = {
+                            val newSession = InterviewSession(
+                                id = "session_${System.currentTimeMillis()}",
+                                roleTarget = "${profile?.targetRole ?: "Full Stack Engineer"} ($selectedInterviewType)",
+                                difficulty = selectedDifficulty,
+                                overallScore = 0,
+                                feedbackSummary = "Live conversational probing session.",
+                                completedQuestions = 1,
+                                totalQuestions = 4,
+                                createdAt = System.currentTimeMillis()
+                            )
+                            viewModel.startConversationalInterview(newSession)
+                        }
+                    )
                 }
             } else {
                 items(history) { session ->

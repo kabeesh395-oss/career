@@ -2,6 +2,10 @@ package com.example.careerpilot.data.repository
 
 import com.example.careerpilot.data.model.JobApplication
 import com.example.careerpilot.data.model.UserProfile
+import com.example.careerpilot.data.remote.gemini.GeminiClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 data class GeneratedOutreachLetter(
     val company: String,
@@ -14,6 +18,56 @@ data class GeneratedOutreachLetter(
 
 object AiCareerAssistant {
 
+    suspend fun generateOutreachAndCoverLetterWithAi(
+        app: JobApplication,
+        profile: UserProfile,
+        skills: List<String>
+    ): GeneratedOutreachLetter = withContext(Dispatchers.IO) {
+        val baseLetter = generateOutreachAndCoverLetter(app, profile, skills)
+
+        if (!GeminiClient.hasValidApiKey()) {
+            return@withContext baseLetter
+        }
+
+        try {
+            val systemPrompt = """
+                You are an executive Tech Career Strategist.
+                Write a high-converting, tailored LinkedIn InMail outreach message and a structured, impactful cover letter for the candidate applying to a company.
+                Return ONLY valid JSON matching this schema:
+                {
+                   "subjectLine": "Senior Engineer Application: Candidate Name | Role Title",
+                   "linkedInInMail": "Short, compelling message (under 150 words)",
+                   "tailoredCoverLetter": "3-4 paragraph structured cover letter with bulleted achievements"
+                }
+            """.trimIndent()
+
+            val prompt = """
+                Candidate Name: ${profile.fullName}
+                Experience: ${profile.experienceYears} years
+                Target Role: ${app.roleTitle}
+                Target Company: ${app.company}
+                Key Skills: ${skills.joinToString(", ")}
+                Headline: ${profile.headline}
+            """.trimIndent()
+
+            val rawResponse = GeminiClient.generateText(prompt, systemPrompt) ?: return@withContext baseLetter
+            val cleanJson = rawResponse.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+            val json = JSONObject(cleanJson)
+
+            val subject = json.optString("subjectLine", baseLetter.subjectLine)
+            val inMail = json.optString("linkedInInMail", baseLetter.linkedInInMail)
+            val coverLetter = json.optString("tailoredCoverLetter", baseLetter.tailoredCoverLetter)
+
+            baseLetter.copy(
+                subjectLine = subject,
+                linkedInInMail = inMail,
+                tailoredCoverLetter = coverLetter
+            )
+        } catch (e: Exception) {
+            baseLetter
+        }
+    }
+
     fun generateOutreachAndCoverLetter(
         app: JobApplication,
         profile: UserProfile,
@@ -22,7 +76,7 @@ object AiCareerAssistant {
         val topSkills = skills.take(4).ifEmpty { listOf("Kotlin", "System Design", "Distributed Systems", "Cloud Infrastructure") }
         val skillsJoined = topSkills.joinToString(", ")
 
-        val subject = "Senior Engineer Application — ${profile.fullName} | ${app.roleTitle}"
+        val subject = "Senior Engineer Application: ${profile.fullName} | ${app.roleTitle}"
 
         val inMail = """Hi ${app.company} Recruiting Team,
 
@@ -75,7 +129,7 @@ ${profile.email}"""
 
         if (lower.contains("tradeoff") || lower.contains("trade-off") || lower.contains("latency") || lower.contains("throughput")) {
             score += 10
-            feedbackBuilder.append("✓ Strong articulation of architectural trade-offs. ")
+            feedbackBuilder.append("Strong articulation of architectural trade-offs. ")
         } else {
             score -= 5
             feedbackBuilder.append("Notice: You could strengthen this by explicitly contrasting latency vs. consistency trade-offs. ")
@@ -83,12 +137,12 @@ ${profile.email}"""
 
         if (lower.contains("redis") || lower.contains("kafka") || lower.contains("lock") || lower.contains("mutex") || lower.contains("cache") || lower.contains("sharding")) {
             score += 10
-            feedbackBuilder.append("✓ Concrete technical mechanisms identified. ")
+            feedbackBuilder.append("Concrete technical mechanisms identified. ")
         }
 
         if (lower.contains("metrics") || lower.contains("sla") || lower.contains("slo") || lower.contains("%") || lower.contains("monitoring")) {
             score += 5
-            feedbackBuilder.append("✓ Included telemetry & operational observability. ")
+            feedbackBuilder.append("Included telemetry and operational observability. ")
         }
 
         val clampedScore = score.coerceIn(60, 98)
@@ -107,3 +161,4 @@ ${profile.email}"""
         return Triple(clampedScore, feedbackBuilder.toString().trim(), followUpProbe)
     }
 }
+

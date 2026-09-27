@@ -14,6 +14,7 @@ import LearningPage from './components/Learning/LearningPage';
 import IntegrationsPage from './components/Integrations/IntegrationsPage';
 import AnalyticsPage from './components/Analytics/AnalyticsPage';
 import ProfilePage from './components/Profile/ProfilePage';
+import EdgeAiPage from './components/EdgeAI/EdgeAiPage';
 import MobileUiTemplates from './components/Templates/MobileUiTemplates';
 import './index.css';
 
@@ -95,6 +96,8 @@ function AppContent() {
         return <IntegrationsPage />;
       case 'analytics':
         return <AnalyticsPage />;
+      case 'edge-ai':
+        return <EdgeAiPage />;
       case 'templates':
         return <MobileUiTemplates />;
       case 'profile':

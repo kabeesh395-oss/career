@@ -78,8 +78,8 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response, next) 
 
       const insertItemStmt = db.prepare(`
         INSERT INTO roadmap_items (
-          id, roadmap_id, user_id, phase_number, phase_title, title, description, category, estimated_hours, order_index, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          id, roadmap_id, user_id, phase_number, phase_title, title, skill, why_it_matters, learning_objective, practice_suggestion, interview_relevance, description, category, estimated_hours, order_index, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `);
 
       for (const phase of generated.phases) {
@@ -93,6 +93,11 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response, next) 
             phase.phaseNumber,
             phase.phaseTitle,
             item.title,
+            item.skill || 'Technical Competency',
+            item.whyItMatters || item.description,
+            item.learningObjective || item.title,
+            item.practiceSuggestion || item.description,
+            item.interviewRelevance || 'Core technical assessment',
             item.description,
             item.category,
             item.estimatedHours,

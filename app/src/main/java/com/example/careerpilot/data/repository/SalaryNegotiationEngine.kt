@@ -107,7 +107,7 @@ I am ready to commit long-term and build substantial value for the team.
 
 Warmly,
 [Your Name]""",
-            verbalScript = "I'm exceptionally bullish on where the company is heading. I'd love to have more skin in the game—could we explore increasing the 4-year equity grant to $[Target Equity]?"
+            verbalScript = "I'm exceptionally bullish on where the company is heading. I'd love to have more skin in the game. Could we explore increasing the 4-year equity grant to $[Target Equity]?"
         ),
 
         NegotiationScenario(

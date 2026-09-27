@@ -289,4 +289,35 @@ interface CareerDao {
 
     @Update
     suspend fun updateSkillSprint(sprint: SkillSprint)
+
+    // Career Opportunities (Certifications, Hackathons, Fellowships, Open Source, Hiring)
+    @Query("SELECT * FROM career_opportunities ORDER BY isFeatured DESC, matchScore DESC, title ASC")
+    fun getOpportunitiesFlow(): Flow<List<CareerOpportunity>>
+
+    @Query("SELECT * FROM career_opportunities WHERE category = :category ORDER BY isFeatured DESC, matchScore DESC")
+    fun getOpportunitiesByCategoryFlow(category: String): Flow<List<CareerOpportunity>>
+
+    @Query("SELECT * FROM career_opportunities WHERE id = :id LIMIT 1")
+    suspend fun getOpportunityById(id: String): CareerOpportunity?
+
+    @Query("SELECT * FROM career_opportunities")
+    suspend fun getAllOpportunities(): List<CareerOpportunity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOpportunities(opportunities: List<CareerOpportunity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOpportunity(opportunity: CareerOpportunity)
+
+    @Update
+    suspend fun updateOpportunity(opportunity: CareerOpportunity)
+
+    @Query("UPDATE career_opportunities SET status = :status WHERE id = :id")
+    suspend fun updateOpportunityStatus(id: String, status: String)
+
+    @Query("UPDATE career_opportunities SET userNotes = :notes WHERE id = :id")
+    suspend fun updateOpportunityNotes(id: String, notes: String)
+
+    @Query("UPDATE career_opportunities SET reminderSet = :reminderSet WHERE id = :id")
+    suspend fun updateOpportunityReminder(id: String, reminderSet: Boolean)
 }

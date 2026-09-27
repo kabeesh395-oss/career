@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -91,7 +92,7 @@ fun CareerListItem(
 // ── Chips ─────────────────────────────────────────────────────────
 
 /**
- * Standard filter chip for tab-like selection rows.
+ * Standard filter chip for tab-like selection rows with clean feedback.
  */
 @Composable
 fun CareerChip(
@@ -109,17 +110,17 @@ fun CareerChip(
             )
             .border(
                 Dimens.CardBorderWidth,
-                if (selected) PrimaryBlue.copy(alpha = 0.4f) else BorderSubtle,
+                if (selected) PrimaryBlue else BorderSubtle,
                 shape
             )
             .clickable { onClick() }
-            .padding(horizontal = Dimens.SpaceMd, vertical = Dimens.SpaceSm),
+            .padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceSm),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             color = if (selected) TextPrimary else TextSecondary
         )
     }
@@ -128,7 +129,7 @@ fun CareerChip(
 // ── Progress ──────────────────────────────────────────────────────
 
 /**
- * Horizontal progress bar with consistent styling.
+ * Horizontal progress bar with clean single accent.
  */
 @Composable
 fun CareerProgressBar(
@@ -136,7 +137,7 @@ fun CareerProgressBar(
     modifier: Modifier = Modifier,
     color: Color = PrimaryBlue,
     trackColor: Color = BgSurface,
-    height: androidx.compose.ui.unit.Dp = 8.dp
+    height: androidx.compose.ui.unit.Dp = 6.dp
 ) {
     Box(
         modifier = modifier
@@ -148,7 +149,7 @@ fun CareerProgressBar(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(progress.coerceIn(0f, 1f).coerceAtLeast(0.02f))
+                .fillMaxWidth(progress.coerceIn(0f, 1f).coerceAtLeast(0.01f))
                 .clip(RoundedCornerShape(height / 2))
                 .background(color)
         )
@@ -231,15 +232,22 @@ fun ErrorState(
             OutlinedButton(
                 onClick = onRetry,
                 shape = RoundedCornerShape(Dimens.RadiusSm),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlueLighter)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlueLighter),
+                contentPadding = PaddingValues(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceSm),
+                modifier = Modifier.defaultMinSize(minHeight = Dimens.ButtonHeight)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = null,
-                    modifier = Modifier.size(Dimens.IconSm)
-                )
-                Spacer(modifier = Modifier.width(Dimens.SpaceSm))
-                Text("Retry", fontWeight = FontWeight.SemiBold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(Dimens.IconSm)
+                    )
+                    Spacer(modifier = Modifier.width(Dimens.SpaceSm))
+                    Text("Retry", fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }
