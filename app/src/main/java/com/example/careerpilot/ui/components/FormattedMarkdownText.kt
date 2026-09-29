@@ -127,12 +127,14 @@ fun FormattedMarkdownText(
 /**
  * Parses **bold** markers inside inline text
  */
+@Composable
 fun parseBoldMarkdown(input: String): AnnotatedString {
+    val boldColor = TextPrimary
     return buildAnnotatedString {
         val parts = input.split("**")
         for (i in parts.indices) {
             if (i % 2 == 1) {
-                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = TextPrimary)) {
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = boldColor)) {
                     append(parts[i])
                 }
             } else {

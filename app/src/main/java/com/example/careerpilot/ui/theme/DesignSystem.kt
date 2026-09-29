@@ -3,6 +3,7 @@ package com.example.careerpilot.ui.theme
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
@@ -26,17 +27,17 @@ object DesignSystem {
     // ── COLORS TOKEN PALETTE ──────────────────────────────────────────
     object Colors {
         // Core Canvas & Surfaces
-        val Background: Color = BgBase
-        val Surface: Color = BgSurface
-        val SurfaceElevated: Color = BgSurfaceElevated
-        val Card: Color = BgCard
-        val CardHover: Color = BgCardHover
-        val Muted: Color = BgMuted
+        val Background: Color @Composable get() = BgBase
+        val Surface: Color @Composable get() = BgSurface
+        val SurfaceElevated: Color @Composable get() = BgSurfaceElevated
+        val Card: Color @Composable get() = BgCard
+        val CardHover: Color @Composable get() = BgCardHover
+        val Muted: Color @Composable get() = BgMuted
 
         // Primary Brand
         val Primary: Color = PrimaryBlue
         val PrimaryLight: Color = PrimaryBlueLighter
-        val PrimaryContainer: Color = BgCard
+        val PrimaryContainer: Color @Composable get() = BgCard
 
         // Accent Palette
         val Cyan: Color = AccentCyan
@@ -53,14 +54,14 @@ object DesignSystem {
         val ErrorLight: Color = DangerRedLight
 
         // Semantic Text
-        val TextPrimary: Color = com.example.careerpilot.ui.theme.TextPrimary
-        val TextSecondary: Color = com.example.careerpilot.ui.theme.TextSecondary
-        val TextMuted: Color = com.example.careerpilot.ui.theme.TextMuted
+        val TextPrimary: Color @Composable get() = com.example.careerpilot.ui.theme.TextPrimary
+        val TextSecondary: Color @Composable get() = com.example.careerpilot.ui.theme.TextSecondary
+        val TextMuted: Color @Composable get() = com.example.careerpilot.ui.theme.TextMuted
 
         // Borders & Dividers
-        val BorderSubtle: Color = com.example.careerpilot.ui.theme.BorderSubtle
-        val BorderMedium: Color = com.example.careerpilot.ui.theme.BorderMedium
-        val BorderHighlight: Color = com.example.careerpilot.ui.theme.BorderHighlight
+        val BorderSubtle: Color @Composable get() = com.example.careerpilot.ui.theme.BorderSubtle
+        val BorderMedium: Color @Composable get() = com.example.careerpilot.ui.theme.BorderMedium
+        val BorderHighlight: Color @Composable get() = com.example.careerpilot.ui.theme.BorderHighlight
     }
 
     // ── SPACING & METRICS TOKEN SCALE ────────────────────────────────

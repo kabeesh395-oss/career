@@ -183,47 +183,7 @@ object BenchmarkCatalog {
         )
     )
 
-    val INITIAL_PEER_MATCHES = listOf(
-        com.example.careerpilot.data.model.PeerMatch(
-            id = "peer_1",
-            peerName = "Sarah Lin",
-            peerHeadline = "Staff Engineer @ Distributed Systems",
-            targetRole = "Principal Distributed Systems Architect",
-            companyTarget = "Cloud Scale Systems",
-            timezone = "PST (UTC-8)",
-            experienceLevel = "7+ Years",
-            rating = 4.96f,
-            sessionsCompleted = 34,
-            skillsSpecialty = listOf("System Design", "Distributed Systems", "Database Internals"),
-            availabilityStatus = "Available for booking"
-        ),
-        com.example.careerpilot.data.model.PeerMatch(
-            id = "peer_2",
-            peerName = "David Kim",
-            peerHeadline = "Senior Mobile Engineer @ Architecture",
-            targetRole = "Lead Mobile Architect",
-            companyTarget = "Mobile Platforms",
-            timezone = "EST (UTC-5)",
-            experienceLevel = "5 Years",
-            rating = 4.92f,
-            sessionsCompleted = 21,
-            skillsSpecialty = listOf("Jetpack Compose", "Android Concurrency", "Offline-First Sync"),
-            availabilityStatus = "Available for booking"
-        ),
-        com.example.careerpilot.data.model.PeerMatch(
-            id = "peer_3",
-            peerName = "Marcus Vance",
-            peerHeadline = "AI Infrastructure Specialist",
-            targetRole = "Staff AI Systems Engineer",
-            companyTarget = "AI Research & Platform",
-            timezone = "PST (UTC-8)",
-            experienceLevel = "6 Years",
-            rating = 4.98f,
-            sessionsCompleted = 48,
-            skillsSpecialty = listOf("LLM Infrastructure", "RAG Optimization", "High-Throughput Serving"),
-            availabilityStatus = "Available for booking"
-        )
-    )
+    val INITIAL_PEER_MATCHES = emptyList<com.example.careerpilot.data.model.PeerMatch>()
 
     val INITIAL_SKILL_SPRINTS = listOf(
         com.example.careerpilot.data.model.SkillSprint(

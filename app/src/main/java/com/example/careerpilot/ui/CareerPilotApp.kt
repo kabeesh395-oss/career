@@ -125,6 +125,7 @@ fun CareerPilotApp(
             Scaffold(
                 containerColor = Color.Transparent,
                 topBar = {
+                    val topDividerColor = BorderSubtle
                     TopAppBar(
                         title = {
                             if (isDashboard) {
@@ -157,7 +158,7 @@ fun CareerPilotApp(
                         ),
                         modifier = Modifier.drawBehind {
                             drawLine(
-                                color = BorderSubtle,
+                                color = topDividerColor,
                                 start = Offset(0f, size.height),
                                 end = Offset(size.width, size.height),
                                 strokeWidth = 1.dp.toPx()
@@ -195,12 +196,13 @@ fun CareerPilotApp(
                     )
                 },
                 bottomBar = {
+                    val navDividerColor = BorderSubtle
                     NavigationBar(
                         containerColor = BgSurface,
                         tonalElevation = 0.dp,
                         modifier = Modifier.drawBehind {
                             drawLine(
-                                color = BorderSubtle,
+                                color = navDividerColor,
                                 start = Offset(0f, 0f),
                                 end = Offset(size.width, 0f),
                                 strokeWidth = 1.dp.toPx()

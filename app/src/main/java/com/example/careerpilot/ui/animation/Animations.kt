@@ -178,8 +178,8 @@ fun Modifier.pulseAnimation(
  */
 fun Modifier.motionGlassSurface(
     shape: Shape = RoundedCornerShape(12.dp),
-    baseColor: Color = BgCard,
-    borderColor: Color = BorderSubtle,
+    baseColor: Color = DarkBgCard,
+    borderColor: Color = DarkBorderSubtle,
     sheenColor: Color = Color.Transparent,
     accentGlow: Color? = null,
     enableSheen: Boolean = false,

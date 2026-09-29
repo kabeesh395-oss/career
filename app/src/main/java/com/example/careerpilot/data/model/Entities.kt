@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "user_profile")
 data class UserProfile(
-    @PrimaryKey val id: String = "default_user",
+    @PrimaryKey val id: String = "legacy_user",
     val fullName: String = "",
     val email: String = "",
     val headline: String = "",
@@ -24,6 +24,7 @@ data class UserProfile(
 @Entity(tableName = "user_skills")
 data class UserSkill(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val userId: String = "legacy_user",
     val skillName: String,
     val category: String,
     val proficiencyLevel: Int, // 1 to 5
@@ -34,6 +35,7 @@ data class UserSkill(
 @Entity(tableName = "skill_gaps")
 data class SkillGap(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val userId: String = "legacy_user",
     val targetRole: String,
     val skillName: String,
     val category: String,
@@ -46,7 +48,8 @@ data class SkillGap(
 
 @Entity(tableName = "roadmaps")
 data class Roadmap(
-    @PrimaryKey val id: String = "active_roadmap",
+    @PrimaryKey val id: String = java.util.UUID.randomUUID().toString(),
+    val userId: String = "legacy_user",
     val title: String,
     val targetRole: String,
     val summary: String,
@@ -59,7 +62,8 @@ data class Roadmap(
 @Entity(tableName = "roadmap_items")
 data class RoadmapItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val roadmapId: String = "active_roadmap",
+    val userId: String = "legacy_user",
+    val roadmapId: String = "",
     val phaseNumber: Int,
     val phaseTitle: String,
     val title: String,
@@ -74,6 +78,7 @@ data class RoadmapItem(
 @Entity(tableName = "portfolio_projects")
 data class PortfolioProject(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val userId: String = "legacy_user",
     val title: String,
     val description: String,
     val repositoryUrl: String,
@@ -86,6 +91,7 @@ data class PortfolioProject(
 @Entity(tableName = "resume_audits")
 data class ResumeAudit(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val userId: String = "legacy_user",
     val filename: String,
     val targetRole: String,
     val overallScore: Int,
@@ -103,6 +109,7 @@ data class ResumeAudit(
 @Entity(tableName = "interview_sessions")
 data class InterviewSession(
     @PrimaryKey val id: String,
+    val userId: String = "legacy_user",
     val roleTarget: String,
     val difficulty: String,
     val status: String = "in_progress", // "in_progress", "completed"
@@ -116,6 +123,7 @@ data class InterviewSession(
 @Entity(tableName = "interview_answers")
 data class InterviewAnswer(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val userId: String = "legacy_user",
     val interviewId: String,
     val questionNumber: Int,
     val questionText: String,
@@ -156,9 +164,10 @@ data class LearningResource(
     val isCompleted: Boolean = false
 )
 
-@Entity(tableName = "integrations")
+@Entity(tableName = "integrations", primaryKeys = ["provider", "userId"])
 data class IntegrationAccount(
-    @PrimaryKey val provider: String, // "github", "linkedin"
+    val provider: String, // "github", "linkedin"
+    val userId: String = "legacy_user",
     val username: String = "",
     val connectionStatus: String = "NOT_CONNECTED", // "NOT_CONNECTED", "CHECKING", "CONNECTED", "INVALID", "NOT_FOUND", "RATE_LIMITED", "ERROR"
     val isConnected: Boolean = false,
@@ -180,6 +189,7 @@ data class IntegrationAccount(
 @Entity(tableName = "analytics_events")
 data class AnalyticsEvent(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val userId: String = "legacy_user",
     val eventName: String,
     val detail: String,
     val timestamp: Long = System.currentTimeMillis()
@@ -200,6 +210,7 @@ data class NextBestAction(
 @Entity(tableName = "audit_issues")
 data class AuditIssue(
     @PrimaryKey val id: String,
+    val userId: String = "legacy_user",
     val ruleId: String,
     val category: String, // "Resume Quality", "Skill Depth", "Production Evidence", "GitHub Evidence", "Mock Interview", "System Design", "ATS Compatibility"
     val title: String,
@@ -265,6 +276,7 @@ data class TargetJobPosting(
 @Entity(tableName = "job_matches")
 data class JobMatchResult(
     @PrimaryKey val id: String,
+    val userId: String = "legacy_user",
     val jobPostingId: String,
     val company: String,
     val jobTitle: String,
@@ -322,6 +334,7 @@ data class ConversationMessage(
 @Entity(tableName = "job_applications")
 data class JobApplication(
     @PrimaryKey val id: String,
+    val userId: String = "legacy_user",
     val company: String,
     val roleTitle: String,
     val stage: String, // "WISHLIST", "APPLIED", "SCREENING", "TECHNICAL", "OFFER", "REJECTED"

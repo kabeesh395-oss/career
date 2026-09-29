@@ -32,10 +32,10 @@ export default function AnalyticsPage() {
       {/* Page Header */}
       <div>
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4, color: '#f8fafc' }}>
-          Activity & Readiness Analytics
+          Platform Telemetry & Audit Stream
         </h1>
         <p style={{ color: '#94a3b8', fontSize: 14 }}>
-          Empirical telemetry calculated strictly from your genuine resume uploads, skill validations, roadmap milestones, and interview simulations.
+          Historical audit events and empirical verification telemetry captured directly from genuine user actions.
         </p>
       </div>
 
@@ -45,40 +45,36 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* Global Readiness Metric Banner */}
+      {/* Telemetry Status & Verification Banner */}
       <div className="glass-card" style={{ padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-              Empirical Career Readiness Score
+              Telemetry Status & Audit Verification
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ fontSize: 38, fontWeight: 800, color: hasAnyData ? '#3b82f6' : '#64748b' }}>
-                {hasAnyData ? `${analytics.readinessScore}%` : '0%'}
+              <span style={{ fontSize: 32, fontWeight: 800, color: hasAnyData ? '#34d399' : '#94a3b8' }}>
+                {hasAnyData ? 'Verified Session' : 'Awaiting Activity'}
               </span>
-              <span className={`badge ${hasAnyData ? 'badge-primary' : 'badge-neutral'}`}>
-                {hasAnyData ? 'Live Calculated' : 'No Data Yet'}
+              <span className={`badge ${hasAnyData ? 'badge-success' : 'badge-neutral'}`}>
+                {hasAnyData ? `${analytics?.recentActivity?.length || 0} Events Logged` : '0 Recorded'}
               </span>
             </div>
-            <p style={{ color: '#64748b', fontSize: 12, marginTop: 6, maxWidth: 600 }}>
+            <p style={{ color: '#94a3b8', fontSize: 12.5, marginTop: 6, maxWidth: 650 }}>
               {hasAnyData
-                ? `Calibrated for ${analytics.targetRole || 'Target Role'} based on multi-dimensional telemetry: verified skill matrix, completed roadmap items, ATS impact, and mock interview rubric evaluations.`
-                : 'Complete real actions (upload a resume, assess skills, complete roadmap items, or try a mock interview) to calculate your readiness rating.'}
+                ? `System telemetry active. Historical records are collected strictly from genuine candidate actions (resume uploads, skills, roadmap milestones, and interview simulations).`
+                : 'No historical telemetry recorded yet. Perform actions across the platform (upload a resume, assess skills, complete milestones, or try a mock interview) to log telemetry.'}
             </p>
           </div>
 
-          <div style={{ width: 160 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>
-              <span>Verification</span>
-              <span>{hasAnyData ? `${analytics.readinessScore}/100` : '0/100'}</span>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div style={{ textAlign: 'center', background: 'rgba(15, 23, 42, 0.6)', padding: '10px 16px', borderRadius: 8, border: '1px solid rgba(51, 65, 85, 0.5)' }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#38bdf8' }}>{analytics?.recentActivity?.length || 0}</div>
+              <div style={{ fontSize: 11, color: '#94a3b8' }}>Audit Events</div>
             </div>
-            <div style={{ width: '100%', height: 8, background: 'rgba(51, 65, 85, 0.4)', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{
-                width: hasAnyData ? `${analytics.readinessScore}%` : '0%',
-                height: '100%',
-                background: 'linear-gradient(90deg, #3b82f6, #10b981)',
-                borderRadius: 4
-              }} />
+            <div style={{ textAlign: 'center', background: 'rgba(15, 23, 42, 0.6)', padding: '10px 16px', borderRadius: 8, border: '1px solid rgba(51, 65, 85, 0.5)' }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>{hasAnyData ? 'Active' : 'Idle'}</div>
+              <div style={{ fontSize: 11, color: '#94a3b8' }}>Telemetry Mode</div>
             </div>
           </div>
         </div>

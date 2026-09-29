@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { initDatabase, getDatabase } from './db/database.js';
 import { errorHandler } from './middleware/error.js';
 import { apiLimiter, expensiveAiLimiter } from './middleware/rateLimit.js';
+import { validateAuthConfig } from './middleware/auth.js';
 
 import authRoutes from './routes/auth.routes.js';
 import profileRoutes from './routes/profile.routes.js';
@@ -23,6 +24,7 @@ import userRoutes from './routes/user.routes.js';
 import edgeAiRoutes from './routes/edgeAi.routes.js';
 
 dotenv.config();
+validateAuthConfig();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -10,7 +10,7 @@ interface AppHeaderProps {
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
 
@@ -204,14 +204,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
               color: '#ffffff',
             }}
           >
-            {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+            {user?.fullName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9', lineHeight: 1.2 }}>
-              {user?.fullName || 'Alex Chen'}
+              {user?.fullName || user?.email || 'Candidate'}
             </span>
             <span style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.1 }}>
-              Staff Engineer
+              {profile?.target_role || profile?.headline || 'Engineering Candidate'}
             </span>
           </div>
         </motion.div>

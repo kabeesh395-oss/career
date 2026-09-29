@@ -21,7 +21,7 @@ data class GroundedSource(
 object SearchGroundingService {
 
     /**
-     * Executes Google Search Grounded query via gemini-3.5-flash with googleSearch tool
+     * Executes Google Search Grounded query via gemini-2.5-flash with googleSearch tool
      */
     suspend fun queryMarketIntelligence(
         prompt: String,
@@ -55,7 +55,24 @@ object SearchGroundingService {
             )
 
             val response = GeminiClient.service.generateContent(apiKey, request)
-            val candidate = response.candidates?.firstOrNull()
+            if (!response.isSuccessful) {
+                val errorMsg = when (response.code()) {
+                    400 -> "Bad request (HTTP 400): check query format."
+                    401, 403 -> "Authentication failed (HTTP ${response.code()}): Invalid or expired Gemini API key."
+                    404 -> "Gemini model endpoint not found (HTTP 404)."
+                    429 -> "Gemini API rate limit exceeded (HTTP 429). Please retry shortly."
+                    in 500..599 -> "Gemini API service temporarily unavailable (HTTP ${response.code()})."
+                    else -> "Gemini API request failed with HTTP ${response.code()}."
+                }
+                val fallback = getOfflineSearchGroundingFallback(prompt)
+                return@withContext fallback.copy(
+                    summary = "${fallback.summary}\n\n[Live Search Status: $errorMsg - Serving cached benchmark data.]",
+                    isLiveSearch = false
+                )
+            }
+
+            val body = response.body()
+            val candidate = body?.candidates?.firstOrNull()
 
             val text = candidate?.content?.parts?.joinToString("\n") { it.text ?: "" } ?: "No response generated."
             val metadata = candidate?.groundingMetadata
@@ -80,7 +97,10 @@ object SearchGroundingService {
             )
         } catch (e: Exception) {
             val fallback = getOfflineSearchGroundingFallback(prompt)
-            fallback.copy(summary = "${fallback.summary}\n\n[Live Search Note: ${e.localizedMessage ?: "Using cached market telemetry"}]")
+            fallback.copy(
+                summary = "${fallback.summary}\n\n[Live Search Status: Network error (${e.localizedMessage ?: "unreachable"}) - Serving cached benchmark data.]",
+                isLiveSearch = false
+            )
         }
     }
 

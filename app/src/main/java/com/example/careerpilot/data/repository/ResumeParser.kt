@@ -231,13 +231,13 @@ M.S. in Software Engineering, Stanford University"""
         ),
         SamplePdfResume(
             id = "sample_pdf_3",
-            fileName = "Alex_Chen_Principal_ML_Systems.pdf",
-            title = "Alex Chen: Principal ML Systems Engineer",
+            fileName = "Jordan_Taylor_Principal_ML_Systems.pdf",
+            title = "Jordan Taylor: Principal ML Systems Engineer",
             roleCategory = "AI / ML & Infrastructure",
             fileSizeFormatted = "248 KB",
             pageCount = 2,
-            rawContent = """ALEX CHEN: Principal Machine Learning & Infrastructure Engineer
-alex.chen@aimodelcraft.ai | github.com/alexchen-ml | New York, NY
+            rawContent = """JORDAN TAYLOR: Principal Machine Learning & Infrastructure Engineer
+jordan.taylor@aimodelcraft.ai | github.com/jordantaylor-ml | New York, NY
 
 SUMMARY
 AI/ML systems engineer with 6+ years building real-time embedding inference engines, vector database pipelines, and large-scale model serving architectures.

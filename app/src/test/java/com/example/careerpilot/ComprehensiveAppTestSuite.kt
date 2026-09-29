@@ -461,13 +461,9 @@ class ComprehensiveAppTestSuite {
             assertTrue("Solution Reference must be provided", ch.solutionReference.isNotBlank())
         }
 
-        // 2. Check Peer Matches
+        // 2. Check Peer Matches (Initial catalog must be empty to prevent fake peer profiles from being seeded)
         val peers = BenchmarkCatalog.INITIAL_PEER_MATCHES
-        assertTrue("Peer matches must exist", peers.isNotEmpty())
-        peers.forEach { peer ->
-            assertTrue("Peer rating must be between 4.0 and 5.0", peer.rating in 4.0f..5.0f)
-            assertTrue("Peer must have specialities", peer.skillsSpecialty.isNotEmpty())
-        }
+        assertTrue("Initial fake peer profiles must not be seeded", peers.isEmpty())
 
         // 3. Check Skill Sprints
         val sprints = BenchmarkCatalog.INITIAL_SKILL_SPRINTS

@@ -56,11 +56,14 @@ class FirebaseAuthManager(private val context: Context) {
             val current = auth.currentUser
             updateUserState(current)
         } catch (e: Exception) {
+            Log.w("FirebaseAuthManager", "Firebase check auth error: ${e.message}")
             _userState.value = AuthUserState(
+                uid = null,
+                email = null,
+                displayName = null,
+                photoUrl = null,
                 isAuthenticated = false,
-                displayName = "Local Developer",
-                email = "local.dev@careerpilot.io",
-                statusMessage = "Local offline storage active"
+                statusMessage = "Authentication unavailable: ${e.localizedMessage ?: "Service error"}"
             )
         }
     }
@@ -70,80 +73,75 @@ class FirebaseAuthManager(private val context: Context) {
             _userState.value = AuthUserState(
                 uid = user.uid,
                 email = user.email,
-                displayName = user.displayName ?: user.email?.substringBefore("@") ?: "CareerPilot Engineer",
+                displayName = user.displayName ?: user.email?.substringBefore("@") ?: "Career Hub User",
                 photoUrl = user.photoUrl?.toString(),
                 isAuthenticated = true,
-                statusMessage = "Connected to Firebase & Cloud Firestore"
+                statusMessage = "Authenticated"
             )
         } else {
             _userState.value = AuthUserState(
+                uid = null,
+                email = null,
+                displayName = null,
+                photoUrl = null,
                 isAuthenticated = false,
-                displayName = "Local Developer",
-                email = "local.dev@careerpilot.io",
-                statusMessage = "Sign in with Google to enable Firestore cloud sync"
+                statusMessage = "Signed out."
             )
         }
     }
 
     /**
-     * Email / Password Sign-In with instant fallback & local sync
+     * Email / Password Sign-In (Strict real authentication)
      */
     suspend fun signInWithEmailAndPassword(email: String, pass: String): Result<AuthUserState> {
         val trimmedEmail = email.trim()
-        val displayName = trimmedEmail.substringBefore("@").replaceFirstChar { it.uppercase() }
+        if (trimmedEmail.isEmpty() || pass.isEmpty()) {
+            return Result.failure(IllegalArgumentException("Email and password cannot be empty."))
+        }
         _userState.value = _userState.value.copy(isSyncing = true, statusMessage = "Authenticating account...")
 
         return try {
             val authResult = auth.signInWithEmailAndPassword(trimmedEmail, pass).await()
             val user = authResult.user
-            updateUserState(user)
-            Result.success(_userState.value)
+            if (user != null) {
+                updateUserState(user)
+                Result.success(_userState.value)
+            } else {
+                updateUserState(null)
+                Result.failure(Exception("Authentication failed: No user record returned."))
+            }
         } catch (e: Exception) {
-            Log.w("FirebaseAuthManager", "Direct Auth note: ${e.message}")
-            // Create authenticated session
-            val authUser = AuthUserState(
-                uid = "user_${trimmedEmail.hashCode().toString().takeLast(8)}",
-                email = trimmedEmail,
-                displayName = displayName,
-                isAuthenticated = true,
-                statusMessage = "Authenticated as $displayName (Local & Cloud Sync Active)"
-            )
-            _userState.value = authUser
-            Result.success(authUser)
+            Log.e("FirebaseAuthManager", "Sign-in rejected: ${e.message}")
+            updateUserState(null)
+            Result.failure(e)
         }
     }
 
     /**
-     * Email / Password Registration
+     * Email / Password Registration (Strict real registration)
      */
     suspend fun signUpWithEmailAndPassword(name: String, email: String, pass: String): Result<AuthUserState> {
         val trimmedEmail = email.trim()
-        val cleanName = name.trim().ifEmpty { trimmedEmail.substringBefore("@").replaceFirstChar { it.uppercase() } }
+        val cleanName = name.trim().ifEmpty { trimmedEmail.substringBefore("@") }
+        if (trimmedEmail.isEmpty() || pass.isEmpty()) {
+            return Result.failure(IllegalArgumentException("Email and password cannot be empty."))
+        }
         _userState.value = _userState.value.copy(isSyncing = true, statusMessage = "Creating Career Hub account...")
 
         return try {
             val authResult = auth.createUserWithEmailAndPassword(trimmedEmail, pass).await()
             val user = authResult.user
-            val updatedUser = AuthUserState(
-                uid = user?.uid ?: "user_${trimmedEmail.hashCode().toString().takeLast(8)}",
-                email = trimmedEmail,
-                displayName = cleanName,
-                isAuthenticated = true,
-                statusMessage = "Account created & authenticated successfully"
-            )
-            _userState.value = updatedUser
-            Result.success(updatedUser)
+            if (user != null) {
+                updateUserState(user)
+                Result.success(_userState.value)
+            } else {
+                updateUserState(null)
+                Result.failure(Exception("Registration failed: User could not be created."))
+            }
         } catch (e: Exception) {
-            Log.w("FirebaseAuthManager", "Registration note: ${e.message}")
-            val newUser = AuthUserState(
-                uid = "user_${trimmedEmail.hashCode().toString().takeLast(8)}",
-                email = trimmedEmail,
-                displayName = cleanName,
-                isAuthenticated = true,
-                statusMessage = "Account created successfully as $cleanName"
-            )
-            _userState.value = newUser
-            Result.success(newUser)
+            Log.e("FirebaseAuthManager", "Registration rejected: ${e.message}")
+            updateUserState(null)
+            Result.failure(e)
         }
     }
 
@@ -200,15 +198,10 @@ class FirebaseAuthManager(private val context: Context) {
         } catch (e: Exception) {
             Log.w("FirebaseAuthManager", "Sign out note: ${e.message}")
         }
-        _userState.value = AuthUserState(
-            isAuthenticated = false,
-            displayName = "",
-            email = "",
-            statusMessage = "Signed out."
-        )
+        updateUserState(null)
     }
 
-    fun getCurrentUserId(): String {
-        return _userState.value.uid ?: "local_user_dev"
+    fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid ?: _userState.value.uid
     }
 }

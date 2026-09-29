@@ -40,7 +40,7 @@ export class GeminiCloudProvider implements AIProvider {
       providerName: this.name,
       type: this.type,
       isAvailable: this.isAvailable(),
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       snapdragonValidationStatus: 'not_applicable',
       hardwareAcceleration: 'Google Cloud TPU/GPU Cluster',
       targetRuntime: 'REST / Server-side SDK',

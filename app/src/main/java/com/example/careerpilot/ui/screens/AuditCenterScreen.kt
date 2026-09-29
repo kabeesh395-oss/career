@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.careerpilot.data.model.AuditIssue
 import com.example.careerpilot.data.model.AuditScoreSummary
+import com.example.careerpilot.ui.components.CompanyLogoBadge
 import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 import java.text.SimpleDateFormat
@@ -88,74 +89,80 @@ fun AuditCenterScreen(
         }
     }
 
-    Scaffold(
-        containerColor = Color.Transparent
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .testTag("audit_center_screen"),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header: Title & Action
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Demerits & Red Flag Audit",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Deterministic evidence & hiring gap verification for ${userProfile?.targetRole ?: "Full Stack Engineer"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
-                    }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("audit_center_screen"),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Header: Title & Action
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Demerits & Red Flag Audit",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Deterministic evidence & hiring gap verification for ${userProfile?.targetRole ?: "Full Stack Engineer"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
 
-                    FilledTonalButton(
-                        onClick = { viewModel.recalibrateAudit() },
-                        enabled = !isAnalyzing,
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = BgSurfaceElevated,
-                            contentColor = PrimaryBlueGlow
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.testTag("recalibrate_audit_button")
-                    ) {
-                        if (isAnalyzing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = PrimaryBlueGlow
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Recalibrate",
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Recalibrate", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
+                FilledTonalButton(
+                    onClick = { viewModel.recalibrateAudit() },
+                    enabled = !isAnalyzing,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = BgSurfaceElevated,
+                        contentColor = PrimaryBlueGlow
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.testTag("recalibrate_audit_button")
+                ) {
+                    if (isAnalyzing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = PrimaryBlueGlow
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Recalibrate",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Recalibrate", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
+        }
 
-            // Primary Audit Score Card
+        // Primary Audit Score Card
+        item {
+            AuditDashboardSummaryCard(
+                summary = auditSummary,
+                onExplainClick = { showExplainabilitySheet = true }
+            )
+        }
+
+        // Dedicated Guidance & Recommended Actions for New Users
+        if (!auditSummary.hasEvaluatedData) {
             item {
-                AuditDashboardSummaryCard(
-                    summary = auditSummary,
-                    onExplainClick = { showExplainabilitySheet = true }
+                NewUserAuditGuidanceCard(
+                    targetRole = userProfile?.targetRole ?: "Full Stack Engineer",
+                    onNavigate = onNavigate
                 )
             }
+        }
 
             // Severity Summary Counter Pills
             item {
@@ -307,7 +314,6 @@ fun AuditCenterScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
-    }
 
     // Full Issue Detail Modal Dialog
     selectedIssueForDetail?.let { issue ->
@@ -446,8 +452,15 @@ fun AuditDashboardSummaryCard(
                 Surface(
                     onClick = onExplainClick,
                     shape = RoundedCornerShape(12.dp),
-                    color = if (summary.totalDemerits < 0) AccentRed.copy(alpha = 0.12f) else AccentGreen.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, if (summary.totalDemerits < 0) AccentRed.copy(alpha = 0.35f) else AccentGreen.copy(alpha = 0.35f)),
+                    color = if (!summary.hasEvaluatedData) AccentCyan.copy(alpha = 0.12f)
+                            else if (summary.totalDemerits < 0) AccentRed.copy(alpha = 0.12f)
+                            else AccentGreen.copy(alpha = 0.12f),
+                    border = BorderStroke(
+                        1.dp,
+                        if (!summary.hasEvaluatedData) AccentCyan.copy(alpha = 0.35f)
+                        else if (summary.totalDemerits < 0) AccentRed.copy(alpha = 0.35f)
+                        else AccentGreen.copy(alpha = 0.35f)
+                    ),
                     modifier = Modifier.testTag("explain_score_delta_button")
                 ) {
                     Row(
@@ -457,39 +470,48 @@ fun AuditDashboardSummaryCard(
                     ) {
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = if (summary.totalDemerits < 0) "${summary.totalDemerits} Demerits" else "Zero Demerits",
+                                text = if (!summary.hasEvaluatedData) "0 Demerits"
+                                       else if (summary.totalDemerits < 0) "${summary.totalDemerits} Demerits"
+                                       else "Zero Demerits",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (summary.totalDemerits < 0) AccentRed else AccentGreen
+                                color = if (!summary.hasEvaluatedData) AccentCyan
+                                        else if (summary.totalDemerits < 0) AccentRed
+                                        else AccentGreen
                             )
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 Text(
-                                    text = "Base ${summary.readinessScore}",
+                                    text = if (!summary.hasEvaluatedData) "Not Applicable (New Profile)"
+                                           else "Base ${summary.readinessScore}",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextSecondary,
                                     fontSize = 10.sp
                                 )
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = null,
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(10.dp)
-                                )
-                                Text(
-                                    text = "Net ${summary.netAuditScore}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextSecondary,
-                                    fontSize = 10.sp
-                                )
+                                if (summary.hasEvaluatedData) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = null,
+                                        tint = TextSecondary,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                    Text(
+                                        text = "Net ${summary.netAuditScore}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                }
                             }
                         }
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Explain",
-                            tint = if (summary.totalDemerits < 0) AccentRed else AccentGreen,
+                            tint = if (!summary.hasEvaluatedData) AccentCyan
+                                   else if (summary.totalDemerits < 0) AccentRed
+                                   else AccentGreen,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -690,12 +712,18 @@ fun AuditIssueCard(
                 }
 
                 Surface(
-                    color = if (isResolved) AccentGreen.copy(alpha = 0.15f) else AccentRed.copy(alpha = 0.15f),
+                    color = if (isResolved) AccentGreen.copy(alpha = 0.15f)
+                            else if (issue.scoreImpact == 0) AccentCyan.copy(alpha = 0.15f)
+                            else AccentRed.copy(alpha = 0.15f),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
-                        text = if (isResolved) "+0 (Resolved)" else "${issue.scoreImpact} pts",
-                        color = if (isResolved) AccentGreen else AccentRed,
+                        text = if (isResolved) "+0 (Resolved)"
+                               else if (issue.scoreImpact == 0) "0 pts (Pending Setup)"
+                               else "${issue.scoreImpact} pts",
+                        color = if (isResolved) AccentGreen
+                                else if (issue.scoreImpact == 0) AccentCyan
+                                else AccentRed,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1281,6 +1309,272 @@ fun EmptyAuditStateCard(
                 ) {
                     Text("Clear Filters", fontSize = 12.sp)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun NewUserAuditGuidanceCard(
+    targetRole: String,
+    onNavigate: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("new_user_guidance_card"),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = BgSurfaceElevated),
+        border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.4f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Header with badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(PrimaryBlue.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = PrimaryBlueGlow,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "New Candidate Profile",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "-20pts Demerit Penalties Not Applicable",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = AccentCyan,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Surface(
+                    color = AccentGreen.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = "0 Demerits Active",
+                        color = AccentGreen,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Text(
+                text = "As a new candidate, you have zero active demerits. Penalty deductions (-20pts) will NOT be applied until your baseline profile data is recorded. Here is what we recommend before getting evaluated to establish a calibrated readiness baseline for $targetRole:",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                lineHeight = 18.sp
+            )
+
+            // 4 Step Recommended Onboarding
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                RecommendedStepItem(
+                    stepNumber = "1",
+                    title = "Target Role & Core Competencies",
+                    description = "Add at least 3 skills in your skill matrix to configure benchmark criteria.",
+                    actionLabel = "Configure Skills",
+                    onClick = { onNavigate("career") }
+                )
+                RecommendedStepItem(
+                    stepNumber = "2",
+                    title = "Upload Technical Resume",
+                    description = "Benchmark your resume against tier-1 ATS keyword density and impact scoring.",
+                    actionLabel = "Upload Resume",
+                    onClick = { onNavigate("resume") }
+                )
+                RecommendedStepItem(
+                    stepNumber = "3",
+                    title = "Portfolio & Live Demonstrator",
+                    description = "Add a project with a live URL or connect GitHub to prove production deployment.",
+                    actionLabel = "Link Projects",
+                    onClick = { onNavigate("projects") }
+                )
+                RecommendedStepItem(
+                    stepNumber = "4",
+                    title = "AI Technical Interview Baseline",
+                    description = "Complete an interactive technical mock interview to validate problem-solving skills.",
+                    actionLabel = "Start Mock",
+                    onClick = { onNavigate("interview") }
+                )
+            }
+
+            HorizontalDivider(color = BorderSubtle, thickness = 1.dp)
+
+            // Recommended Courses Offered by Top Companies with Logos
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Recommended Courses Before Audit",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    TextButton(
+                        onClick = { onNavigate("learning") },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text("View Catalog", fontSize = 12.sp, color = PrimaryBlueGlow)
+                    }
+                }
+
+                val recommendedCourses = listOf(
+                    Triple("Google Cloud & Distributed Systems", "Google", "Architecture & Resilient Cloud"),
+                    Triple("AWS Solutions Architect & Cloud Engineering", "Amazon Web Services (AWS)", "Microservices & Serverless"),
+                    Triple("Production RAG & Vector Embeddings", "DeepLearning.AI", "LLM Pipelines & Evaluation"),
+                    Triple("Meta Production Backend & APIs", "Meta", "High-Throughput Concurrency")
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    recommendedCourses.forEach { (courseTitle, company, domain) ->
+                        Surface(
+                            onClick = { onNavigate("learning") },
+                            color = BgSurface,
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, BorderSubtle),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    CompanyLogoBadge(company = company, size = 26.dp)
+                                    Column {
+                                        Text(
+                                            text = courseTitle,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = "Offered by $company • $domain",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = TextSecondary,
+                                            fontSize = 10.sp
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = "Open",
+                                    tint = PrimaryBlueGlow,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecommendedStepItem(
+    stepNumber: String,
+    title: String,
+    description: String,
+    actionLabel: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        color = BgSurface,
+        shape = RoundedCornerShape(10.dp),
+        border = BorderStroke(1.dp, BorderSubtle),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(PrimaryBlue.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stepNumber,
+                        color = PrimaryBlueGlow,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Column {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedButton(
+                onClick = onClick,
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.5f))
+            ) {
+                Text(actionLabel, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = PrimaryBlueGlow)
             }
         }
     }

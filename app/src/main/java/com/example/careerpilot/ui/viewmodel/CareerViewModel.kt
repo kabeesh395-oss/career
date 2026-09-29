@@ -158,7 +158,15 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         val db = AppDatabase.getDatabase(application)
-        repository = CareerRepository(db.careerDao())
+        val currentUserIdFlow = authManager.userState.map { state ->
+            if (state.isAuthenticated && !state.uid.isNullOrBlank()) state.uid else null
+        }
+
+        repository = CareerRepository(
+            dao = db.careerDao(),
+            userIdFlow = currentUserIdFlow,
+            userIdProvider = { authManager.getCurrentUserId() }
+        )
 
         userProfile = repository.userProfileFlow.stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000), null
@@ -222,47 +230,73 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
         )
 
         viewModelScope.launch {
-            repository.initializeDefaultDataIfEmpty()
-            val summary = repository.recalibrateAudit()
-            _auditSummary.value = summary
-            
-            // Set initial selected job posting
-            val postings = repository.jobPostingsFlow.first()
-            if (postings.isNotEmpty()) {
-                _selectedJobPosting.value = postings.first()
-                val match = repository.recalculateJobMatch(postings.first().id)
-                _activeJobMatch.value = match
+            authUserState.collectLatest { authState ->
+                val uid = if (authState.isAuthenticated && !authState.uid.isNullOrBlank()) authState.uid else null
+                repository.initializeDefaultDataIfEmpty(uid)
+                if (uid != null) {
+                    val summary = repository.recalibrateAudit(uid)
+                    _auditSummary.value = summary
+                    val postings = repository.jobPostingsFlow.first()
+                    if (postings.isNotEmpty()) {
+                        _selectedJobPosting.value = postings.first()
+                        val match = repository.recalculateJobMatch(postings.first().id)
+                        _activeJobMatch.value = match
+                    }
+                    refreshNextBestAction()
+                } else {
+                    _auditSummary.value = AuditScoreSummary()
+                    _activeJobMatch.value = null
+                    _nextBestAction.value = null
+                }
             }
-
-            refreshNextBestAction()
         }
 
         viewModelScope.launch {
             auditIssues.collect { issues ->
                 val profile = userProfile.value
-                val baseReadiness = profile?.readinessScore ?: 76
-                val openIssues = issues.filter { it.status != "RESOLVED" }
-                val totalDemerits = openIssues.sumOf { it.scoreImpact }
-                val netScore = kotlin.math.max(0, kotlin.math.min(100, baseReadiness + totalDemerits))
-                val critical = openIssues.count { it.severity == "CRITICAL" }
-                val high = openIssues.count { it.severity == "HIGH" }
-                val medium = openIssues.count { it.severity == "MEDIUM" }
-                val low = openIssues.count { it.severity == "LOW" }
-                val resolved = issues.count { it.status == "RESOLVED" }
+                val hasEvaluatedData = profile?.readinessScore != null && profile.readinessScore > 0
+                if (!hasEvaluatedData) {
+                    val current = _auditSummary.value
+                    _auditSummary.value = current.copy(
+                        readinessScore = null,
+                        netAuditScore = null,
+                        totalDemerits = 0,
+                        criticalCount = 0,
+                        highCount = 0,
+                        mediumCount = 0,
+                        lowCount = 0,
+                        resolvedCount = 0,
+                        totalIssuesCount = 0,
+                        hasEvaluatedData = false,
+                        profileConfidence = "NOT_EVALUATED",
+                        lastEvaluatedAt = System.currentTimeMillis()
+                    )
+                } else {
+                    val baseReadiness = profile.readinessScore
+                    val openIssues = issues.filter { it.status != "RESOLVED" }
+                    val totalDemerits = openIssues.sumOf { it.scoreImpact }
+                    val netScore = kotlin.math.max(0, kotlin.math.min(100, baseReadiness + totalDemerits))
+                    val critical = openIssues.count { it.severity == "CRITICAL" }
+                    val high = openIssues.count { it.severity == "HIGH" }
+                    val medium = openIssues.count { it.severity == "MEDIUM" }
+                    val low = openIssues.count { it.severity == "LOW" }
+                    val resolved = issues.count { it.status == "RESOLVED" }
 
-                val current = _auditSummary.value
-                _auditSummary.value = current.copy(
-                    readinessScore = baseReadiness,
-                    netAuditScore = netScore,
-                    totalDemerits = totalDemerits,
-                    criticalCount = critical,
-                    highCount = high,
-                    mediumCount = medium,
-                    lowCount = low,
-                    resolvedCount = resolved,
-                    totalIssuesCount = issues.size,
-                    lastEvaluatedAt = System.currentTimeMillis()
-                )
+                    val current = _auditSummary.value
+                    _auditSummary.value = current.copy(
+                        readinessScore = baseReadiness,
+                        netAuditScore = netScore,
+                        totalDemerits = totalDemerits,
+                        criticalCount = critical,
+                        highCount = high,
+                        mediumCount = medium,
+                        lowCount = low,
+                        resolvedCount = resolved,
+                        totalIssuesCount = issues.size,
+                        hasEvaluatedData = true,
+                        lastEvaluatedAt = System.currentTimeMillis()
+                    )
+                }
             }
         }
 

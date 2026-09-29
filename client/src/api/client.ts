@@ -1,5 +1,4 @@
 import { Capacitor } from '@capacitor/core';
-import { handleMockApi } from './mockService';
 
 export function getApiBase(): string {
   const custom = localStorage.getItem('cp_api_url');
@@ -40,32 +39,31 @@ export async function api<T = any>(
     headers['Content-Type'] = 'application/json';
   }
 
-  try {
-    const res = await fetch(`${getApiBase()}${endpoint}`, {
-      ...options,
-      headers,
-    });
+  const res = await fetch(`${getApiBase()}${endpoint}`, {
+    ...options,
+    headers,
+  });
 
-    if (res.status === 401) {
-      clearToken();
-      window.location.hash = '#/login';
-      throw new Error('Session expired. Please log in again.');
-    }
-
-    if (res.ok) {
-      const data = await res.json();
-      return data as T;
-    }
-
-    // If server responded with 404 or 500+, fall back to client mock engine
-    return (await handleMockApi(endpoint, options)) as T;
-  } catch (err: any) {
-    if (err.message === 'Session expired. Please log in again.') {
-      throw err;
-    }
-    // Automatically fall back to client-side mock service when server is unreachable or offline
-    console.info(`[CareerHub] Falling back to client-side engine for ${endpoint}`);
-    return (await handleMockApi(endpoint, options)) as T;
+  if (res.status === 401) {
+    clearToken();
+    window.location.hash = '#/login';
+    throw new Error('Session expired. Please log in again.');
   }
+
+  if (!res.ok) {
+    let errorMessage = `API request failed with status ${res.status}`;
+    try {
+      const errData = await res.json();
+      if (errData?.error?.message) {
+        errorMessage = errData.error.message;
+      }
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMessage);
+  }
+
+  const data = await res.json();
+  return data as T;
 }
 

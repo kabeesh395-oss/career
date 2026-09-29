@@ -339,6 +339,9 @@ fun CircularScoreGauge(
         label = "scoreProgress"
     )
 
+    val discColor = BgSurface.copy(alpha = 0.5f)
+    val trackColor = BorderSubtle
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier.size(size)
@@ -347,12 +350,12 @@ fun CircularScoreGauge(
             val strokePx = strokeWidth.toPx()
             // Ambient inner background disc
             drawCircle(
-                color = BgSurface.copy(alpha = 0.5f),
+                color = discColor,
                 radius = (size.toPx() / 2f) - (strokePx / 2f)
             )
             // Inactive subtle track ring
             drawCircle(
-                color = BorderSubtle,
+                color = trackColor,
                 style = Stroke(width = strokePx)
             )
             // Active progress arc with clean primary accent

@@ -6,47 +6,138 @@ import com.example.careerpilot.data.remote.github.GitHubApiClient
 import com.example.careerpilot.data.remote.github.GitHubRepoItem
 import com.example.careerpilot.data.remote.github.GitHubValidationResult
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class CareerRepository(private val dao: CareerDao) {
+class CareerRepository(
+    private val dao: CareerDao,
+    private val userIdFlow: Flow<String?> = flowOf(null),
+    private val userIdProvider: () -> String? = { null }
+) {
 
-    val userProfileFlow: Flow<UserProfile?> = dao.getUserProfileFlow()
-    val userSkillsFlow: Flow<List<UserSkill>> = dao.getUserSkillsFlow()
-    val skillGapsFlow: Flow<List<SkillGap>> = dao.getSkillGapsFlow()
-    val activeRoadmapFlow: Flow<Roadmap?> = dao.getActiveRoadmapFlow()
-    val roadmapItemsFlow: Flow<List<RoadmapItem>> = dao.getRoadmapItemsFlow()
-    val projectsFlow: Flow<List<PortfolioProject>> = dao.getProjectsFlow()
-    val latestResumeAuditFlow: Flow<ResumeAudit?> = dao.getLatestResumeAuditFlow()
-    val resumeAuditsFlow: Flow<List<ResumeAudit>> = dao.getResumeAuditsFlow()
-    val interviewsFlow: Flow<List<InterviewSession>> = dao.getInterviewsFlow()
+    fun currentUid(): String = userIdProvider() ?: "legacy_user"
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userProfileFlow: Flow<UserProfile?> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(null) else dao.getUserProfileFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userSkillsFlow: Flow<List<UserSkill>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getUserSkillsFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val skillGapsFlow: Flow<List<SkillGap>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getSkillGapsFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val activeRoadmapFlow: Flow<Roadmap?> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(null) else dao.getActiveRoadmapFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val roadmapItemsFlow: Flow<List<RoadmapItem>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getRoadmapItemsFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val projectsFlow: Flow<List<PortfolioProject>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getProjectsFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val latestResumeAuditFlow: Flow<ResumeAudit?> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(null) else dao.getLatestResumeAuditFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val resumeAuditsFlow: Flow<List<ResumeAudit>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getResumeAuditsFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val interviewsFlow: Flow<List<InterviewSession>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getInterviewsFlow(uid)
+    }
+
     val learningResourcesFlow: Flow<List<LearningResource>> = dao.getLearningResourcesFlow()
-    val integrationsFlow: Flow<List<IntegrationAccount>> = dao.getIntegrationsFlow()
-    val recentAnalyticsFlow: Flow<List<AnalyticsEvent>> = dao.getRecentAnalyticsFlow()
-    val auditIssuesFlow: Flow<List<AuditIssue>> = dao.getAuditIssuesFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val integrationsFlow: Flow<List<IntegrationAccount>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getIntegrationsFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val recentAnalyticsFlow: Flow<List<AnalyticsEvent>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getRecentAnalyticsFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val auditIssuesFlow: Flow<List<AuditIssue>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getAuditIssuesFlow(uid)
+    }
+
     val jobPostingsFlow: Flow<List<TargetJobPosting>> = dao.getJobPostingsFlow()
-    val jobMatchesFlow: Flow<List<JobMatchResult>> = dao.getJobMatchesFlow()
-    val jobApplicationsFlow: Flow<List<JobApplication>> = dao.getJobApplicationsFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val jobMatchesFlow: Flow<List<JobMatchResult>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getJobMatchesFlow(uid)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val jobApplicationsFlow: Flow<List<JobApplication>> = userIdFlow.flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(emptyList()) else dao.getJobApplicationsFlow(uid)
+    }
+
     val codingChallengesFlow: Flow<List<CodingChallenge>> = dao.getCodingChallengesFlow()
     val peerMatchesFlow: Flow<List<PeerMatch>> = dao.getPeerMatchesFlow()
     val skillSprintsFlow: Flow<List<SkillSprint>> = dao.getSkillSprintsFlow()
     val opportunitiesFlow: Flow<List<CareerOpportunity>> = dao.getOpportunitiesFlow()
 
-    suspend fun initializeDefaultDataIfEmpty() = withContext(Dispatchers.IO) {
-        val existingProfile = dao.getUserProfile()
-        if (existingProfile == null) {
-            val initialProfile = UserProfile(readinessScore = null)
+    suspend fun initializeDefaultDataIfEmpty(userId: String? = null) = withContext(Dispatchers.IO) {
+        val uid = userId ?: currentUid()
+        val existingProfile = dao.getUserProfile(uid)
+        if (existingProfile == null && uid.isNotBlank() && uid != "legacy_user") {
+            val initialProfile = UserProfile(id = uid, readinessScore = null)
             dao.insertOrUpdateProfile(initialProfile)
 
-            // Initial Learning Resources (Proper functional lifecycle: Not Started -> In Progress -> Verified Completed)
+            // Calculate initial matches for preset jobs
+            JobMatcherEngine.PRESET_JOB_POSTINGS.forEach { job ->
+                val match = JobMatcherEngine.evaluateJobMatch(
+                    jobPosting = job,
+                    userProfile = initialProfile,
+                    skills = dao.getUserSkills(uid),
+                    projects = dao.getProjects(uid),
+                    latestResume = null
+                ).copy(userId = uid)
+                dao.insertJobMatchResult(match)
+            }
+
+            dao.insertAnalyticsEvent(
+                AnalyticsEvent(
+                    userId = uid,
+                    eventName = "User Initialized",
+                    detail = "Initialized clean user profile and job benchmarks for account $uid."
+                )
+            )
+        }
+
+        // Global Presets Initialization (catalog items shared across users)
+        val existingResources = dao.getLearningResources()
+        if (existingResources.isEmpty()) {
             val learningList = listOf(
                 LearningResource(
                     title = "Mastering Distributed Systems & Consistency Patterns",
-                    provider = "Designing Data-Intensive Applications",
+                    provider = "O'Reilly & Martin Kleppmann",
                     url = "https://dataintensive.net",
                     category = "Architecture",
                     skillTags = "Distributed Systems, Raft, Consensus, Partition Tolerance",
@@ -63,7 +154,7 @@ class CareerRepository(private val dao: CareerDao) {
                 ),
                 LearningResource(
                     title = "Modern Android Architecture & Reactive State Management",
-                    provider = "Android Developer Guides",
+                    provider = "Google & Android Developers",
                     url = "https://developer.android.com/topic/architecture",
                     category = "Mobile",
                     skillTags = "Jetpack Compose, StateFlow, Coroutines, UDF",
@@ -72,153 +163,96 @@ class CareerRepository(private val dao: CareerDao) {
                     resourceType = "Documentation",
                     status = "NOT_STARTED",
                     progressPercent = 0,
-                    contentSummary = "Explores Unidirectional Data Flow (UDF), managing state hoisting in Jetpack Compose, handling configuration changes with ViewModel, and safely collecting StateFlows with repeatOnLifecycle.",
-                    quizQuestion = "Why is collectAsStateWithLifecycle preferred over collectAsState when consuming Flow in Android Jetpack Compose?",
-                    quizOptions = "It automatically halts Flow collection when the Composable lifecycle is below STARTED, saving battery and CPU|It converts synchronous network calls into coroutines automatically|It renders the UI directly to OpenGL without recomposition|It bypasses ViewModel state saving during screen rotations",
+                    contentSummary = "Architecting robust Android applications using Unidirectional Data Flow (UDF), ViewModel lifecycle coroutines, Room persistence, and declarative UI composition patterns.",
+                    quizQuestion = "Why is StateFlow preferred over LiveData in modern Kotlin-first Android Jetpack Compose architectures?",
+                    quizOptions = "StateFlow provides native coroutine Flow operators, strict initial state, and seamless Compose state collection without Android framework lifecycle coupling|LiveData consumes 10x more battery power during background execution|StateFlow bypasses the Android Main Thread and renders directly to GPU hardware|StateFlow is only supported in legacy XML layouts",
                     quizCorrectIndex = 0,
                     isCompleted = false
                 ),
                 LearningResource(
-                    title = "Database Indexing & Query Plan Optimization",
-                    provider = "Use The Index, Luke",
-                    url = "https://use-the-index-luke.com",
+                    title = "PostgreSQL Indexing Internals: B-Tree, GIN & GiST Under Load",
+                    provider = "PostgreSQL Global Development Group",
+                    url = "https://www.postgresql.org/docs/current/indexes.html",
                     category = "Databases",
-                    skillTags = "PostgreSQL, B-Tree Indexing, EXPLAIN ANALYZE",
+                    skillTags = "PostgreSQL, Indexing, Query Optimization, EXPLAIN ANALYZE",
                     estimatedMinutes = 60,
-                    difficulty = "Intermediate",
-                    resourceType = "Article",
-                    status = "NOT_STARTED",
-                    progressPercent = 0,
-                    contentSummary = "Comprehensive study on how B-Tree indexes function internally, how multi-column index order impacts query selectivity, avoiding sequential scans, and reading EXPLAIN ANALYZE execution plans.",
-                    quizQuestion = "In a compound (multi-column) index on columns (A, B), which query CANNOT efficiently use the index leading edge?",
-                    quizOptions = "SELECT * FROM tbl WHERE B = 10 (omitting column A)|SELECT * FROM tbl WHERE A = 5 AND B = 10|SELECT * FROM tbl WHERE A = 5|SELECT * FROM tbl WHERE A = 5 ORDER BY B",
-                    quizCorrectIndex = 0,
-                    isCompleted = false
-                ),
-                LearningResource(
-                    title = "Production RAG & Vector Embeddings with LLMs",
-                    provider = "DeepLearning.AI",
-                    url = "https://deeplearning.ai",
-                    category = "AI & ML",
-                    skillTags = "Vector Embeddings, Cosine Similarity, Chunking, RAG",
-                    estimatedMinutes = 100,
                     difficulty = "Advanced",
-                    resourceType = "Course",
+                    resourceType = "Deep Dive",
                     status = "NOT_STARTED",
                     progressPercent = 0,
-                    contentSummary = "Practical guide to building production Retrieval-Augmented Generation pipelines: optimal text chunking strategies, semantic similarity search with HNSW indexes, hybrid search with BM25, and prompt grounding.",
-                    quizQuestion = "What is the primary benefit of adding a Re-ranking step (e.g. Cross-Encoder) after preliminary vector similarity search in RAG?",
-                    quizOptions = "It precisely scores semantic relevance between the query and top candidates, eliminating irrelevant context hallucinations|It speeds up vector indexing by 100x on cold start|It generates synthetic training tokens for downstream model fine-tuning|It eliminates the need for vector databases altogether",
+                    contentSummary = "Comprehensive exploration of PostgreSQL internal index structures. How query planner leverages bitmap index scans, composite indexes, and index-only scans to eliminate sequential heap scans.",
+                    quizQuestion = "What index type in PostgreSQL is specifically optimized for composite JSONB attributes and full-text search token arrays?",
+                    quizOptions = "GIN (Generalized Inverted Index)|Standard B-Tree Index|Hash Index|BRIN Index",
                     quizCorrectIndex = 0,
                     isCompleted = false
                 ),
                 LearningResource(
-                    title = "High-Performance Concurrency with Kotlin Coroutines",
-                    provider = "Kotlin Official Documentation",
-                    url = "https://kotlinlang.org/docs/coroutines-overview.html",
-                    category = "Mobile",
-                    skillTags = "Kotlin, Coroutines, Dispatchers, Mutex",
+                    title = "Docker & Multi-Stage Builds for Minimal Attack Surface",
+                    provider = "Docker Documentation",
+                    url = "https://docs.docker.com/build/building/multi-stage/",
+                    category = "DevOps",
+                    skillTags = "Docker, Container Security, Alpine, CI/CD",
+                    estimatedMinutes = 45,
+                    difficulty = "Beginner",
+                    resourceType = "Hands-on Guide",
+                    status = "NOT_STARTED",
+                    progressPercent = 0,
+                    contentSummary = "Practical guide to reducing container image footprint by separating build-time dependencies from production runtimes using scratch/distroless base images.",
+                    quizQuestion = "What is the primary operational benefit of using multi-stage Docker builds?",
+                    quizOptions = "Eliminates build tooling, compiler SDKs, and intermediate artifacts from the final production container image|Forces containers to run with elevated root privileges automatically|Doubles the build speed by skipping layer checksum verifications|Compresses container memory usage dynamically at runtime",
+                    quizCorrectIndex = 0,
+                    isCompleted = false
+                ),
+                LearningResource(
+                    title = "OAuth 2.1 & PKCE Authentication Flows in Mobile Applications",
+                    provider = "IETF & Auth0 Security",
+                    url = "https://oauth.net/2/pkce/",
+                    category = "Security",
+                    skillTags = "OAuth2, PKCE, Cryptography, Mobile Security",
                     estimatedMinutes = 75,
                     difficulty = "Intermediate",
-                    resourceType = "Article",
+                    resourceType = "Specification",
                     status = "NOT_STARTED",
                     progressPercent = 0,
-                    contentSummary = "Structured concurrency principles, CoroutineScope hierarchy, exception propagation with SupervisorJob, non-blocking suspension vs blocking threads, and shared state synchronization with Mutex.",
-                    quizQuestion = "What happens to sibling coroutines in a standard CoroutineScope (without SupervisorJob) when one child coroutine fails with an uncaught exception?",
-                    quizOptions = "The exception cancels the parent scope, which immediately cancels all other sibling coroutines|Sibling coroutines continue running silently indefinitely|The failing coroutine is automatically restarted 3 times|The entire Android OS kills the application process immediately",
+                    contentSummary = "Security best practices for mobile client authentication. Why client secrets cannot be securely stored on mobile devices and how Proof Key for Code Exchange (PKCE) prevents authorization code interception.",
+                    quizQuestion = "Why does OAuth 2.1 mandate the PKCE (Proof Key for Code Exchange) flow for public mobile and single-page clients?",
+                    quizOptions = "Public clients cannot securely maintain a client secret, and PKCE dynamically binds authorization codes to the requesting client using a cryptographic code verifier|PKCE removes the need for HTTPS encryption across network sockets|PKCE allows authentication without any user interaction or password entry|PKCE automatically logs the user into all third-party services permanently",
                     quizCorrectIndex = 0,
                     isCompleted = false
                 )
             )
             dao.insertLearningResources(learningList)
+        }
 
-            // Initial Integrations (Clean real state: Not Connected until verified)
-            dao.insertOrUpdateIntegration(
-                IntegrationAccount(
-                    provider = "github",
-                    username = "",
-                    connectionStatus = "NOT_CONNECTED",
-                    isConnected = false,
-                    lastSyncedAt = 0L,
-                    details = "Connect your GitHub profile to sync public repositories and commit telemetry."
-                )
-            )
-            dao.insertOrUpdateIntegration(
-                IntegrationAccount(
-                    provider = "linkedin",
-                    username = "",
-                    connectionStatus = "NOT_CONNECTED",
-                    isConnected = false,
-                    lastSyncedAt = 0L,
-                    details = "Connect your LinkedIn profile for keyword visibility."
-                )
-            )
-
-            // Seed preset target job postings
+        val existingPostings = dao.getJobPostings()
+        if (existingPostings.isEmpty()) {
             dao.insertJobPostings(JobMatcherEngine.PRESET_JOB_POSTINGS)
+        }
 
-            // Seed initial Job Applications, Coding Sandbox, Peers, Sprints, and Opportunities
-            dao.insertJobApplications(BenchmarkCatalog.INITIAL_JOB_APPLICATIONS)
+        val existingChallenges = dao.getCodingChallenge("challenge_1")
+        if (existingChallenges == null) {
             dao.insertCodingChallenges(BenchmarkCatalog.INITIAL_CODING_CHALLENGES)
             dao.insertPeerMatches(BenchmarkCatalog.INITIAL_PEER_MATCHES)
             dao.insertSkillSprints(BenchmarkCatalog.INITIAL_SKILL_SPRINTS)
-            dao.insertOpportunities(BenchmarkCatalog.INITIAL_OPPORTUNITIES)
-
-            // Run initial skill gap calibration and roadmap generation
-            recalibrateSkillGaps(initialProfile.targetRole)
-            generateRoadmapForRole(initialProfile.targetRole)
-
-            // Run initial Audit Evaluation
-            recalibrateAudit()
-
-            // Calculate initial matches for preset jobs
-            JobMatcherEngine.PRESET_JOB_POSTINGS.forEach { job ->
-                val match = JobMatcherEngine.evaluateJobMatch(
-                    jobPosting = job,
-                    userProfile = initialProfile,
-                    skills = dao.getUserSkills(),
-                    projects = dao.getProjects(),
-                    latestResume = null
-                )
-                dao.insertJobMatchResult(match)
-            }
-
-            dao.insertAnalyticsEvent(
-                AnalyticsEvent(
-                    eventName = "App Initialized",
-                    detail = "Initialized default profile, benchmarks, audit engine, job matcher, and opportunities."
-                )
-            )
-        } else {
-            // Ensure presets exist if added later
-            val existingPostings = dao.getJobPostings()
-            if (existingPostings.isEmpty()) {
-                dao.insertJobPostings(JobMatcherEngine.PRESET_JOB_POSTINGS)
-            }
-            val existingApps = dao.getJobApplications()
-            if (existingApps.isEmpty()) {
-                dao.insertJobApplications(BenchmarkCatalog.INITIAL_JOB_APPLICATIONS)
-                dao.insertCodingChallenges(BenchmarkCatalog.INITIAL_CODING_CHALLENGES)
-                dao.insertPeerMatches(BenchmarkCatalog.INITIAL_PEER_MATCHES)
-                dao.insertSkillSprints(BenchmarkCatalog.INITIAL_SKILL_SPRINTS)
-            }
-            val existingOpps = dao.getAllOpportunities()
-            if (existingOpps.isEmpty()) {
-                dao.insertOpportunities(BenchmarkCatalog.INITIAL_OPPORTUNITIES)
-            }
-            // Recalibrate audit on startup
-            recalibrateAudit()
         }
+
+        val existingOpps = dao.getAllOpportunities()
+        if (existingOpps.isEmpty()) {
+            dao.insertOpportunities(BenchmarkCatalog.INITIAL_OPPORTUNITIES)
+        }
+
+        dao.clearDummyPeerMatches()
     }
 
-    suspend fun recalibrateAudit(): AuditScoreSummary = withContext(Dispatchers.IO) {
-        val profile = dao.getUserProfile()
-        val skills = dao.getUserSkills()
-        val projects = dao.getProjects()
-        val latestResume = dao.getLatestResumeAudit()
-        val interviewAnswers = dao.getAllInterviewAnswers()
-        val integrations = dao.getIntegrations()
-        val existingIssues = dao.getAuditIssues()
+    suspend fun recalibrateAudit(userId: String? = null): AuditScoreSummary = withContext(Dispatchers.IO) {
+        val uid = userId ?: currentUid()
+        val profile = dao.getUserProfile(uid)
+        val skills = dao.getUserSkills(uid)
+        val projects = dao.getProjects(uid)
+        val latestResume = dao.getLatestResumeAudit(uid)
+        val interviewAnswers = dao.getAllInterviewAnswers(uid)
+        val integrations = dao.getIntegrations(uid)
+        val existingIssues = dao.getAuditIssues(uid)
 
         val (newIssues, summary) = AuditEngine.evaluateCandidate(
             profile = profile,
@@ -230,11 +264,13 @@ class CareerRepository(private val dao: CareerDao) {
             existingIssues = existingIssues
         )
 
-        dao.clearAuditIssues()
-        dao.insertAuditIssues(newIssues)
+        dao.clearAuditIssues(uid)
+        val userIssues = newIssues.map { it.copy(userId = uid) }
+        dao.insertAuditIssues(userIssues)
 
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Audit Recalibrated",
                 detail = "Net Readiness: ${summary.netAuditScore}% (${summary.totalDemerits} demerits, ${summary.criticalCount} critical, ${summary.highCount} high)"
             )
@@ -244,7 +280,8 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun updateAuditIssueStatus(issueId: String, newStatus: String) = withContext(Dispatchers.IO) {
-        val issue = dao.getAuditIssue(issueId)
+        val uid = currentUid()
+        val issue = dao.getAuditIssue(issueId, uid)
         if (issue != null) {
             val updated = issue.copy(
                 status = newStatus,
@@ -252,10 +289,11 @@ class CareerRepository(private val dao: CareerDao) {
                 updatedAt = System.currentTimeMillis()
             )
             dao.updateAuditIssue(updated)
-            recalibrateAudit()
+            recalibrateAudit(uid)
 
             dao.insertAnalyticsEvent(
                 AnalyticsEvent(
+                    userId = uid,
                     eventName = "Audit Issue Status Updated",
                     detail = "${issue.title} -> $newStatus"
                 )
@@ -264,21 +302,25 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun updateProfile(profile: UserProfile) = withContext(Dispatchers.IO) {
-        dao.insertOrUpdateProfile(profile)
-        recalibrateSkillGaps(profile.targetRole)
-        recalibrateAudit()
+        val uid = currentUid()
+        val userProfile = profile.copy(id = uid)
+        dao.insertOrUpdateProfile(userProfile)
+        recalibrateSkillGaps(userProfile.targetRole, uid)
+        recalibrateAudit(uid)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Profile Updated",
-                detail = "Target role set to ${profile.targetRole}"
+                detail = "Target role set to ${userProfile.targetRole}"
             )
         )
     }
 
-    suspend fun recalibrateSkillGaps(targetRole: String) = withContext(Dispatchers.IO) {
+    suspend fun recalibrateSkillGaps(targetRole: String, userId: String? = null) = withContext(Dispatchers.IO) {
+        val uid = userId ?: currentUid()
         val benchmarks = BenchmarkCatalog.ROLE_BENCHMARKS[targetRole]
             ?: BenchmarkCatalog.ROLE_BENCHMARKS["Full Stack Engineer"]!!
-        val userSkills = dao.getUserSkills().associateBy { it.skillName.lowercase() }
+        val userSkills = dao.getUserSkills(uid).associateBy { it.skillName.lowercase() }
 
         var totalWeight = 0f
         var earnedWeight = 0f
@@ -308,6 +350,7 @@ class CareerRepository(private val dao: CareerDao) {
 
             newGaps.add(
                 SkillGap(
+                    userId = uid,
                     targetRole = targetRole,
                     skillName = bench.skill,
                     category = bench.category,
@@ -320,15 +363,16 @@ class CareerRepository(private val dao: CareerDao) {
             )
         }
 
-        dao.clearSkillGaps()
+        dao.clearSkillGaps(uid)
         dao.insertSkillGaps(newGaps)
 
         val score = if (totalWeight > 0) ((earnedWeight / totalWeight) * 100f).roundToInt() else 65
-        val currentProfile = dao.getUserProfile() ?: UserProfile()
+        val currentProfile = dao.getUserProfile(uid) ?: UserProfile(id = uid)
         dao.insertOrUpdateProfile(currentProfile.copy(readinessScore = score, targetRole = targetRole))
 
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Skill Calibration Completed",
                 detail = "Calibrated readiness score: $score% for $targetRole"
             )
@@ -336,25 +380,29 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun addOrUpdateUserSkill(skill: UserSkill) = withContext(Dispatchers.IO) {
-        dao.insertUserSkill(skill)
-        val profile = dao.getUserProfile()
+        val uid = currentUid()
+        val userSkill = skill.copy(userId = uid)
+        dao.insertUserSkill(userSkill)
+        val profile = dao.getUserProfile(uid)
         if (profile != null) {
-            recalibrateSkillGaps(profile.targetRole)
+            recalibrateSkillGaps(profile.targetRole, uid)
         }
-        recalibrateAudit()
+        recalibrateAudit(uid)
     }
 
     suspend fun deleteUserSkill(skill: UserSkill) = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         dao.deleteUserSkill(skill)
-        val profile = dao.getUserProfile()
+        val profile = dao.getUserProfile(uid)
         if (profile != null) {
-            recalibrateSkillGaps(profile.targetRole)
+            recalibrateSkillGaps(profile.targetRole, uid)
         }
-        recalibrateAudit()
+        recalibrateAudit(uid)
     }
 
-    suspend fun generateRoadmapForRole(targetRole: String) = withContext(Dispatchers.IO) {
-        val gaps = dao.getSkillGaps()
+    suspend fun generateRoadmapForRole(targetRole: String, userId: String? = null) = withContext(Dispatchers.IO) {
+        val uid = userId ?: currentUid()
+        val gaps = dao.getSkillGaps(uid)
         val highPriority = gaps.filter { it.priority == "high" }
         val mediumPriority = gaps.filter { it.priority == "medium" }
 
@@ -364,6 +412,7 @@ class CareerRepository(private val dao: CareerDao) {
         // Phase 1: Core Deficiencies & Foundations
         items.add(
             RoadmapItem(
+                userId = uid,
                 phaseNumber = 1,
                 phaseTitle = "Foundations & High-Priority Skill Elevation",
                 title = "Deep-dive Core Architecture & Hands-on Lab",
@@ -376,6 +425,7 @@ class CareerRepository(private val dao: CareerDao) {
         )
         items.add(
             RoadmapItem(
+                userId = uid,
                 phaseNumber = 1,
                 phaseTitle = "Foundations & High-Priority Skill Elevation",
                 title = "Database Indexing & Schema Tuning Exercise",
@@ -390,6 +440,7 @@ class CareerRepository(private val dao: CareerDao) {
         // Phase 2: Production Systems & Scalability
         items.add(
             RoadmapItem(
+                userId = uid,
                 phaseNumber = 2,
                 phaseTitle = "Production Systems, Scalability & Architecture",
                 title = "Build Distributed Microservice with Caching & PubSub",
@@ -402,6 +453,7 @@ class CareerRepository(private val dao: CareerDao) {
         )
         items.add(
             RoadmapItem(
+                userId = uid,
                 phaseNumber = 2,
                 phaseTitle = "Production Systems, Scalability & Architecture",
                 title = "Containerization & Automated CI/CD Pipeline",
@@ -413,24 +465,26 @@ class CareerRepository(private val dao: CareerDao) {
             )
         )
 
-        // Phase 3: Portfolio, Capstones & Interview Readiness
+        // Phase 3: Capstone Proof & Interview Calibration
         items.add(
             RoadmapItem(
+                userId = uid,
                 phaseNumber = 3,
-                phaseTitle = "Portfolio Capstones & Staff Interview Readiness",
-                title = "Publish Production Portfolio Project with Documentation",
-                description = "Deploy live demonstrator, write comprehensive architectural README with system diagrams, and record walkthrough.",
-                category = "Portfolio Deliverable",
-                estimatedHours = 8.0f,
+                phaseTitle = "Production Capstone & Interview Calibration",
+                title = "Full-Scale Capstone Project with Real Telemetry",
+                description = "Deploy a production-grade application featuring real database persistence, observability metrics, and comprehensive unit tests.",
+                category = "Portfolio Proof",
+                estimatedHours = 12.0f,
                 orderIndex = ++order,
                 isCompleted = false
             )
         )
         items.add(
             RoadmapItem(
+                userId = uid,
                 phaseNumber = 3,
-                phaseTitle = "Portfolio Capstones & Staff Interview Readiness",
-                title = "Complete 3 AI System Design & Algorithmic Mock Interviews",
+                phaseTitle = "Production Capstone & Interview Calibration",
+                title = "System Design & Technical Articulation Mock Interview",
                 description = "Simulate technical phone screens, practice structured verbal responses, and calibrate rubric scores to >85%.",
                 category = "Interview Prep",
                 estimatedHours = 4.0f,
@@ -439,15 +493,14 @@ class CareerRepository(private val dao: CareerDao) {
             )
         )
 
-        dao.clearRoadmapItems()
-        dao.insertRoadmapItems(items)
-
+        val roadmapId = UUID.randomUUID().toString()
         val total = items.size
         val completed = items.count { it.isCompleted }
         val percent = if (total > 0) (completed.toFloat() / total.toFloat()) * 100f else 0f
 
         val roadmap = Roadmap(
-            id = "active_roadmap",
+            id = roadmapId,
+            userId = uid,
             title = "3-Phase Trajectory for $targetRole",
             targetRole = targetRole,
             summary = "Structured progression addressing ${highPriority.size} high-priority gap areas and building production portfolio proof.",
@@ -456,10 +509,16 @@ class CareerRepository(private val dao: CareerDao) {
             progressPercent = percent,
             status = "in_progress"
         )
+        dao.clearRoadmaps(uid)
         dao.insertOrUpdateRoadmap(roadmap)
+
+        val userItems = items.map { it.copy(userId = uid, roadmapId = roadmapId) }
+        dao.clearRoadmapItems(uid)
+        dao.insertRoadmapItems(userItems)
 
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Roadmap Generated",
                 detail = "Created 3-phase progression with $total milestones."
             )
@@ -467,7 +526,8 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun toggleRoadmapItem(itemId: Long) = withContext(Dispatchers.IO) {
-        val items = dao.getRoadmapItems()
+        val uid = currentUid()
+        val items = dao.getRoadmapItems(uid)
         val target = items.find { it.id == itemId } ?: return@withContext
         val updated = target.copy(
             isCompleted = !target.isCompleted,
@@ -475,33 +535,35 @@ class CareerRepository(private val dao: CareerDao) {
         )
         dao.updateRoadmapItem(updated)
 
-        val updatedItems = dao.getRoadmapItems()
+        val updatedItems = dao.getRoadmapItems(uid)
         val total = updatedItems.size
         val completed = updatedItems.count { it.isCompleted }
         val percent = if (total > 0) (completed.toFloat() / total.toFloat()) * 100f else 0f
 
-        val roadmap = dao.getActiveRoadmap()
+        val roadmap = dao.getActiveRoadmap(uid)
         if (roadmap != null) {
             dao.insertOrUpdateRoadmap(
                 roadmap.copy(
-                    totalTasks = total,
                     completedTasks = completed,
-                    progressPercent = percent
+                    progressPercent = percent,
+                    status = if (completed == total && total > 0) "completed" else "in_progress"
                 )
             )
         }
 
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
-                eventName = if (updated.isCompleted) "Roadmap Task Completed" else "Roadmap Task Reopened",
-                detail = updated.title
+                userId = uid,
+                eventName = "Roadmap Task Toggled",
+                detail = "${target.title} -> ${if (updated.isCompleted) "Completed" else "Incomplete"}"
             )
         )
     }
 
-    suspend fun analyzeResumeText(rawText: String, filename: String = "Resume.pdf"): ResumeAudit = withContext(Dispatchers.IO) {
+    suspend fun analyzeResumeText(rawText: String, filename: String): ResumeAudit = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val lower = rawText.lowercase()
-        val profile = dao.getUserProfile()
+        val profile = dao.getUserProfile(uid)
         val targetRole = profile?.targetRole ?: "Full Stack Engineer"
 
         val detectedSkills = mutableListOf<String>()
@@ -561,6 +623,7 @@ class CareerRepository(private val dao: CareerDao) {
         }.joinToString("\n")
 
         val audit = ResumeAudit(
+            userId = uid,
             filename = filename,
             targetRole = targetRole,
             overallScore = overallScore,
@@ -575,9 +638,10 @@ class CareerRepository(private val dao: CareerDao) {
         )
 
         dao.insertResumeAudit(audit)
-        recalibrateAudit()
+        recalibrateAudit(uid)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Resume Analyzed",
                 detail = "ATS Score calculated: $overallScore/100"
             )
@@ -586,9 +650,11 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun startInterviewSession(roleTarget: String, difficulty: String): InterviewSession = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val sessionId = UUID.randomUUID().toString()
         val session = InterviewSession(
             id = sessionId,
+            userId = uid,
             roleTarget = roleTarget,
             difficulty = difficulty,
             status = "in_progress",
@@ -600,6 +666,7 @@ class CareerRepository(private val dao: CareerDao) {
         dao.insertOrUpdateInterview(session)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Mock Interview Started",
                 detail = "Started $difficulty interview for $roleTarget"
             )
@@ -612,6 +679,7 @@ class CareerRepository(private val dao: CareerDao) {
         questionIndex: Int,
         answerText: String
     ): InterviewAnswer = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val question = BenchmarkCatalog.INTERVIEW_QUESTIONS[questionIndex]
         val lowerAnswer = answerText.lowercase()
 
@@ -638,6 +706,7 @@ class CareerRepository(private val dao: CareerDao) {
         val improvement = "Recommendation: Frame your answers using the STAR method (Situation, Task, Action, Result) and explicitly mention performance trade-offs."
 
         val answer = InterviewAnswer(
+            userId = uid,
             interviewId = sessionId,
             questionNumber = questionIndex + 1,
             questionText = question.questionText,
@@ -654,9 +723,9 @@ class CareerRepository(private val dao: CareerDao) {
 
         dao.insertInterviewAnswer(answer)
 
-        val answers = dao.getInterviewAnswers(sessionId)
+        val answers = dao.getInterviewAnswers(sessionId, uid)
         val avgScore = if (answers.isNotEmpty()) answers.map { it.score }.average().roundToInt() else score
-        val session = dao.getInterviewSession(sessionId)
+        val session = dao.getInterviewSession(sessionId, uid)
         if (session != null) {
             val isCompleted = answers.size >= session.totalQuestions
             dao.insertOrUpdateInterview(
@@ -669,10 +738,11 @@ class CareerRepository(private val dao: CareerDao) {
             )
         }
 
-        recalibrateAudit()
+        recalibrateAudit(uid)
 
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Interview Answer Submitted",
                 detail = "Question ${questionIndex + 1} scored $score/100"
             )
@@ -682,7 +752,8 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun getNextBestAction(): NextBestAction = withContext(Dispatchers.IO) {
-        val profile = dao.getUserProfile()
+        val uid = currentUid()
+        val profile = dao.getUserProfile(uid)
         if (profile == null || profile.targetRole.isBlank()) {
             return@withContext NextBestAction(
                 actionId = "nba_onboarding",
@@ -698,7 +769,7 @@ class CareerRepository(private val dao: CareerDao) {
         }
 
         // Check for highest-impact unresolved red flag / demerit in Audit
-        val auditIssues = dao.getAuditIssues().filter { it.status != "RESOLVED" }
+        val auditIssues = dao.getAuditIssues(uid).filter { it.status != "RESOLVED" }
         val topRedFlag = auditIssues.firstOrNull { it.severity == "CRITICAL" }
             ?: auditIssues.firstOrNull { it.severity == "HIGH" }
 
@@ -722,7 +793,7 @@ class CareerRepository(private val dao: CareerDao) {
             )
         }
 
-        val gaps = dao.getSkillGaps()
+        val gaps = dao.getSkillGaps(uid)
         if (gaps.isEmpty()) {
             return@withContext NextBestAction(
                 actionId = "nba_skill_gap",
@@ -737,7 +808,7 @@ class CareerRepository(private val dao: CareerDao) {
             )
         }
 
-        val roadmap = dao.getActiveRoadmap()
+        val roadmap = dao.getActiveRoadmap(uid)
         if (roadmap == null) {
             return@withContext NextBestAction(
                 actionId = "nba_roadmap",
@@ -752,7 +823,7 @@ class CareerRepository(private val dao: CareerDao) {
             )
         }
 
-        val items = dao.getRoadmapItems()
+        val items = dao.getRoadmapItems(uid)
         val nextTask = items.find { !it.isCompleted }
         if (nextTask != null) {
             return@withContext NextBestAction(
@@ -783,18 +854,21 @@ class CareerRepository(private val dao: CareerDao) {
 
     // Projects CRUD
     suspend fun addProject(project: PortfolioProject) = withContext(Dispatchers.IO) {
-        dao.insertProject(project)
-        recalibrateAudit()
+        val uid = currentUid()
+        dao.insertProject(project.copy(userId = uid))
+        recalibrateAudit(uid)
     }
 
     suspend fun updateProject(project: PortfolioProject) = withContext(Dispatchers.IO) {
-        dao.updateProject(project)
-        recalibrateAudit()
+        val uid = currentUid()
+        dao.updateProject(project.copy(userId = uid))
+        recalibrateAudit(uid)
     }
 
     suspend fun deleteProject(project: PortfolioProject) = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         dao.deleteProject(project)
-        recalibrateAudit()
+        recalibrateAudit(uid)
     }
 
     // ==========================================
@@ -813,6 +887,7 @@ class CareerRepository(private val dao: CareerDao) {
         dao.updateLearningResource(updated)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = currentUid(),
                 eventName = "Learning Started",
                 detail = "Started '${resource.title}' (${resource.provider})"
             )
@@ -840,6 +915,7 @@ class CareerRepository(private val dao: CareerDao) {
         dao.updateLearningResource(updated)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = currentUid(),
                 eventName = "Learning Progress Logged",
                 detail = "${resource.title}: $cappedPercent% (${totalMinutes}m logged)"
             )
@@ -870,6 +946,7 @@ class CareerRepository(private val dao: CareerDao) {
 
             dao.insertAnalyticsEvent(
                 AnalyticsEvent(
+                    userId = currentUid(),
                     eventName = "Learning Verified & Completed",
                     detail = "Mastered '${resource.title}' (+${resource.estimatedMinutes}m competency credit)"
                 )
@@ -878,6 +955,7 @@ class CareerRepository(private val dao: CareerDao) {
         } else {
             dao.insertAnalyticsEvent(
                 AnalyticsEvent(
+                    userId = currentUid(),
                     eventName = "Comprehension Check Attempted",
                     detail = "Quiz attempt incorrect for '${resource.title}'. Review required."
                 )
@@ -901,6 +979,7 @@ class CareerRepository(private val dao: CareerDao) {
         recalibrateAudit()
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = currentUid(),
                 eventName = "Learning Module Reset",
                 detail = "Reset progress for '${resource.title}'"
             )
@@ -919,6 +998,7 @@ class CareerRepository(private val dao: CareerDao) {
     // REAL GITHUB INTEGRATION & API TELEMETRY
     // ==========================================
     suspend fun validateAndConnectGitHub(username: String): GitHubValidationResult = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val trimmed = username.trim()
         if (trimmed.isBlank()) {
             val errResult = GitHubValidationResult.Error(400, "Please enter a valid GitHub username.")
@@ -926,9 +1006,10 @@ class CareerRepository(private val dao: CareerDao) {
         }
 
         // Set state to CHECKING
-        val existing = dao.getIntegration("github") ?: IntegrationAccount(provider = "github")
+        val existing = dao.getIntegration("github", uid) ?: IntegrationAccount(provider = "github", userId = uid)
         dao.insertOrUpdateIntegration(
             existing.copy(
+                userId = uid,
                 username = trimmed,
                 connectionStatus = "CHECKING",
                 errorMessage = ""
@@ -945,6 +1026,7 @@ class CareerRepository(private val dao: CareerDao) {
 
                 val connectedAccount = IntegrationAccount(
                     provider = "github",
+                    userId = uid,
                     username = profile.username,
                     connectionStatus = "CONNECTED",
                     isConnected = true,
@@ -963,10 +1045,11 @@ class CareerRepository(private val dao: CareerDao) {
                     errorMessage = ""
                 )
                 dao.insertOrUpdateIntegration(connectedAccount)
-                recalibrateAudit()
+                recalibrateAudit(uid)
 
                 dao.insertAnalyticsEvent(
                     AnalyticsEvent(
+                        userId = uid,
                         eventName = "GitHub Connected",
                         detail = "Verified GitHub account '${profile.username}' (${profile.publicRepos} repos, ${profile.followers} followers)"
                     )
@@ -975,6 +1058,7 @@ class CareerRepository(private val dao: CareerDao) {
             is GitHubValidationResult.UserNotFound -> {
                 val notFoundAccount = IntegrationAccount(
                     provider = "github",
+                    userId = uid,
                     username = trimmed,
                     connectionStatus = "NOT_FOUND",
                     isConnected = false,
@@ -982,10 +1066,11 @@ class CareerRepository(private val dao: CareerDao) {
                     details = "User '$trimmed' not found on GitHub."
                 )
                 dao.insertOrUpdateIntegration(notFoundAccount)
-                recalibrateAudit()
+                recalibrateAudit(uid)
 
                 dao.insertAnalyticsEvent(
                     AnalyticsEvent(
+                        userId = uid,
                         eventName = "GitHub Verification Failed",
                         detail = "User '$trimmed' does not exist on GitHub (HTTP 404)"
                     )
@@ -994,6 +1079,7 @@ class CareerRepository(private val dao: CareerDao) {
             is GitHubValidationResult.RateLimited -> {
                 val rateLimitedAccount = IntegrationAccount(
                     provider = "github",
+                    userId = uid,
                     username = trimmed,
                     connectionStatus = "RATE_LIMITED",
                     isConnected = false,
@@ -1005,6 +1091,7 @@ class CareerRepository(private val dao: CareerDao) {
             is GitHubValidationResult.Error -> {
                 val errorAccount = IntegrationAccount(
                     provider = "github",
+                    userId = uid,
                     username = trimmed,
                     connectionStatus = "ERROR",
                     isConnected = false,
@@ -1019,8 +1106,10 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun disconnectGitHub() = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val disconnected = IntegrationAccount(
             provider = "github",
+            userId = uid,
             username = "",
             connectionStatus = "NOT_CONNECTED",
             isConnected = false,
@@ -1039,10 +1128,11 @@ class CareerRepository(private val dao: CareerDao) {
             errorMessage = ""
         )
         dao.insertOrUpdateIntegration(disconnected)
-        recalibrateAudit()
+        recalibrateAudit(uid)
 
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "GitHub Disconnected",
                 detail = "Disconnected GitHub integration and cleared telemetry."
             )
@@ -1050,7 +1140,9 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun importGitHubRepoToPortfolio(repo: GitHubRepoItem) = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val newProject = PortfolioProject(
+            userId = uid,
             title = repo.name,
             description = repo.description.ifBlank { "Production repository synced from GitHub (${repo.language})." },
             repositoryUrl = repo.url,
@@ -1060,10 +1152,11 @@ class CareerRepository(private val dao: CareerDao) {
             skillsTargeted = repo.language
         )
         dao.insertProject(newProject)
-        recalibrateAudit()
+        recalibrateAudit(uid)
 
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "GitHub Repo Imported",
                 detail = "Imported '${repo.name}' (${repo.language}, ${repo.stars} stars) into portfolio projects."
             )
@@ -1088,18 +1181,20 @@ class CareerRepository(private val dao: CareerDao) {
 
     // Integration Sync
     suspend fun toggleIntegration(provider: String, username: String) = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         if (provider == "github") {
-            val current = dao.getIntegration("github")
+            val current = dao.getIntegration("github", uid)
             if (current?.isConnected == true) {
                 disconnectGitHub()
             } else {
                 validateAndConnectGitHub(username)
             }
         } else {
-            val existing = dao.getIntegration(provider)
+            val existing = dao.getIntegration(provider, uid)
             val isNowConnected = !(existing?.isConnected ?: false)
             val updated = IntegrationAccount(
                 provider = provider,
+                userId = uid,
                 username = username.ifBlank { "linkedin-user" },
                 connectionStatus = if (isNowConnected) "CONNECTED" else "NOT_CONNECTED",
                 isConnected = isNowConnected,
@@ -1107,17 +1202,18 @@ class CareerRepository(private val dao: CareerDao) {
                 details = if (isNowConnected) "Profile linked • Keyword visibility synced" else "Disconnected"
             )
             dao.insertOrUpdateIntegration(updated)
-            recalibrateAudit()
+            recalibrateAudit(uid)
         }
     }
 
     // === FEATURE 1: JOB DESCRIPTION MATCHER ===
     suspend fun recalculateJobMatch(jobPostingId: String): JobMatchResult = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val job = dao.getJobPosting(jobPostingId) ?: JobMatcherEngine.PRESET_JOB_POSTINGS.first()
-        val profile = dao.getUserProfile()
-        val skills = dao.getUserSkills()
-        val projects = dao.getProjects()
-        val latestResume = dao.getLatestResumeAudit()
+        val profile = dao.getUserProfile(uid)
+        val skills = dao.getUserSkills(uid)
+        val projects = dao.getProjects(uid)
+        val latestResume = dao.getLatestResumeAudit(uid)
 
         val match = JobMatcherEngine.evaluateJobMatch(
             jobPosting = job,
@@ -1125,7 +1221,7 @@ class CareerRepository(private val dao: CareerDao) {
             skills = skills,
             projects = projects,
             latestResume = latestResume
-        )
+        ).copy(userId = uid)
         dao.insertJobMatchResult(match)
         return@withContext match
     }
@@ -1137,6 +1233,7 @@ class CareerRepository(private val dao: CareerDao) {
         minExp: Float,
         jdText: String
     ): JobMatchResult = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val extractedKeywords = mutableListOf<String>()
         val candidates = listOf(
             "Kotlin", "Java", "TypeScript", "React", "Node.js", "Python", "Go", "Distributed Systems",
@@ -1166,10 +1263,10 @@ class CareerRepository(private val dao: CareerDao) {
         )
         dao.insertJobPosting(customPosting)
 
-        val profile = dao.getUserProfile()
-        val skills = dao.getUserSkills()
-        val projects = dao.getProjects()
-        val latestResume = dao.getLatestResumeAudit()
+        val profile = dao.getUserProfile(uid)
+        val skills = dao.getUserSkills(uid)
+        val projects = dao.getProjects(uid)
+        val latestResume = dao.getLatestResumeAudit(uid)
 
         val match = JobMatcherEngine.evaluateJobMatch(
             jobPosting = customPosting,
@@ -1177,10 +1274,11 @@ class CareerRepository(private val dao: CareerDao) {
             skills = skills,
             projects = projects,
             latestResume = latestResume
-        )
+        ).copy(userId = uid)
         dao.insertJobMatchResult(match)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Custom JD Matched",
                 detail = "Matched against ${customPosting.company} (${customPosting.title}): Score ${match.matchScore}%"
             )
@@ -1198,16 +1296,17 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun applyBulletReplacement(originalBullet: String, newBulletText: String) = withContext(Dispatchers.IO) {
-        val latest = dao.getLatestResumeAudit()
+        val uid = currentUid()
+        val latest = dao.getLatestResumeAudit(uid)
         if (latest != null) {
             val updatedResumeText = if (latest.rawText.contains(originalBullet)) {
                 latest.rawText.replace(originalBullet, newBulletText)
             } else {
                 "${latest.rawText}\n• $newBulletText"
             }
-            val reAudited = analyzeResumeText(updatedResumeText, latest.filename)
+            val reAudited = analyzeResumeText(updatedResumeText, latest.filename).copy(userId = uid)
             dao.insertResumeAudit(reAudited)
-            recalibrateAudit()
+            recalibrateAudit(uid)
         }
     }
 
@@ -1218,6 +1317,7 @@ class CareerRepository(private val dao: CareerDao) {
         userAnswer: String,
         isFollowUp: Boolean
     ): Pair<ConversationMessage, Int> = withContext(Dispatchers.IO) {
+        val uid = currentUid()
         val (aiMessage, score) = ConversationalInterviewEngine.evaluateAnswerAndGenerateResponseWithAi(
             currentQuestion = question,
             userAnswer = userAnswer,
@@ -1225,8 +1325,9 @@ class CareerRepository(private val dao: CareerDao) {
         )
 
         // Save answer entry
-        val existingAnswers = dao.getInterviewAnswers(sessionId)
+        val existingAnswers = dao.getInterviewAnswers(sessionId, uid)
         val newAnswer = InterviewAnswer(
+            userId = uid,
             interviewId = sessionId,
             questionNumber = existingAnswers.size + 1,
             questionText = question,
@@ -1243,20 +1344,21 @@ class CareerRepository(private val dao: CareerDao) {
         dao.insertInterviewAnswer(newAnswer)
 
         // Update overall session score
-        val allAnswers = dao.getInterviewAnswers(sessionId)
+        val allAnswers = dao.getInterviewAnswers(sessionId, uid)
         val avgScore = allAnswers.map { it.score }.average().toInt()
-        val session = dao.getInterviewSession(sessionId)
+        val session = dao.getInterviewSession(sessionId, uid)
         if (session != null) {
-            dao.insertOrUpdateInterview(session.copy(overallScore = avgScore, status = if (isFollowUp) "completed" else "in_progress"))
+            dao.insertOrUpdateInterview(session.copy(userId = uid, overallScore = avgScore, status = if (isFollowUp) "completed" else "in_progress"))
         }
 
-        recalibrateAudit()
+        recalibrateAudit(uid)
         return@withContext Pair(aiMessage, score)
     }
 
     // === FEATURE 4: 1-CLICK CAREER STARTER PRESETS (COLD-START RESOLUTION) ===
     suspend fun applyCareerStarterTemplate(roleName: String) = withContext(Dispatchers.IO) {
-        val currentProfile = dao.getUserProfile() ?: UserProfile()
+        val uid = currentUid()
+        val currentProfile = dao.getUserProfile(uid) ?: UserProfile(id = uid)
         
         val (headline, industry, salary, skills, projects) = when (roleName) {
             "Android Mobile Engineer" -> {
@@ -1265,15 +1367,16 @@ class CareerRepository(private val dao: CareerDao) {
                     "Consumer Mobile & FinTech",
                     "$145,000 - $185,000",
                     listOf(
-                        UserSkill(skillName = "Kotlin & Coroutines", category = "Mobile", proficiencyLevel = 5, verified = true),
-                        UserSkill(skillName = "Jetpack Compose", category = "Mobile", proficiencyLevel = 5, verified = true),
-                        UserSkill(skillName = "Room & SQLite Persistence", category = "Mobile", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "Android Architecture (MVVM/MVI)", category = "Mobile", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "Performance Profiling & Memory Leaks", category = "Mobile", proficiencyLevel = 3, verified = false),
-                        UserSkill(skillName = "Gradle & CI/CD Automation", category = "DevOps & Cloud", proficiencyLevel = 3, verified = false)
+                        UserSkill(userId = uid, skillName = "Kotlin & Coroutines", category = "Mobile", proficiencyLevel = 5, verified = true),
+                        UserSkill(userId = uid, skillName = "Jetpack Compose", category = "Mobile", proficiencyLevel = 5, verified = true),
+                        UserSkill(userId = uid, skillName = "Room & SQLite Persistence", category = "Mobile", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "Android Architecture (MVVM/MVI)", category = "Mobile", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "Performance Profiling & Memory Leaks", category = "Mobile", proficiencyLevel = 3, verified = false),
+                        UserSkill(userId = uid, skillName = "Gradle & CI/CD Automation", category = "DevOps & Cloud", proficiencyLevel = 3, verified = false)
                     ),
                     listOf(
                         PortfolioProject(
+                            userId = uid,
                             title = "High-Performance Mobile Finance & Trading App",
                             description = "Real-time crypto & stock portfolio tracker with Jetpack Compose Canvas charts, offline Room caching, and biometrics.",
                             repositoryUrl = "https://github.com/alexchen/compose-fintech",
@@ -1283,6 +1386,7 @@ class CareerRepository(private val dao: CareerDao) {
                             skillsTargeted = "Mobile, Jetpack Compose, State Management"
                         ),
                         PortfolioProject(
+                            userId = uid,
                             title = "Offline-First Voice AI Audio Journal",
                             description = "Low-latency audio transcription and AI summarizer using on-device ML Kit and background Coroutine workers.",
                             repositoryUrl = "https://github.com/alexchen/voice-ai-journal",
@@ -1300,102 +1404,108 @@ class CareerRepository(private val dao: CareerDao) {
                     "Enterprise AI & Autonomous Agents",
                     "$160,000 - $210,000",
                     listOf(
-                        UserSkill(skillName = "Python & PyTorch", category = "Programming Languages", proficiencyLevel = 5, verified = true),
-                        UserSkill(skillName = "LLM Prompting & Function Calling", category = "AI & ML", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "RAG & Vector Embeddings", category = "AI & ML", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "Vector Databases (pgvector/Pinecone)", category = "AI & ML", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "FastAPI & Model Serving", category = "Backend", proficiencyLevel = 3, verified = false),
-                        UserSkill(skillName = "Data Pipelines & Feature Stores", category = "Data", proficiencyLevel = 3, verified = false)
+                        UserSkill(userId = uid, skillName = "Python & PyTorch", category = "Programming Languages", proficiencyLevel = 5, verified = true),
+                        UserSkill(userId = uid, skillName = "LLM Prompting & Function Calling", category = "AI & ML", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "RAG & Vector Embeddings", category = "AI & ML", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "Vector Databases (pgvector/Pinecone)", category = "AI & ML", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "FastAPI & Model Serving", category = "Backend", proficiencyLevel = 3, verified = false),
+                        UserSkill(userId = uid, skillName = "Data Pipelines & Feature Stores", category = "Data", proficiencyLevel = 3, verified = false)
                     ),
                     listOf(
                         PortfolioProject(
+                            userId = uid,
                             title = "Enterprise Autonomous RAG Knowledge Base",
                             description = "High-accuracy semantic document intelligence engine with hybrid lexical-vector retrieval and self-corrective query reranking.",
                             repositoryUrl = "https://github.com/alexchen/enterprise-rag",
-                            liveUrl = "https://rag-demo.ai.platform",
+                            liveUrl = "https://rag-demo.careerhub.ai",
                             status = "completed",
-                            technologies = "Python, PyTorch, LangChain, Pinecone, FastAPI, Docker",
-                            skillsTargeted = "AI & ML, Vector Search, Scalable Serving"
+                            technologies = "Python, FastAPI, pgvector, LangChain, OpenAI/Gemini",
+                            skillsTargeted = "AI, Vector Search, Information Retrieval"
                         ),
                         PortfolioProject(
-                            title = "Real-time Agentic Code Review Assistant",
-                            description = "Multi-agent LLM orchestrator that pulls GitHub PRs, runs AST static analysis, and proposes verified diffs.",
-                            repositoryUrl = "https://github.com/alexchen/agentic-pr-reviewer",
-                            liveUrl = "https://ai-reviewer.cloud",
+                            userId = uid,
+                            title = "Agentic Code Review & Quality Assurance Bot",
+                            description = "Multi-agent LLM workflow analyzing PR diffs against security vulnerabilities, test coverage gaps, and architectural anti-patterns.",
+                            repositoryUrl = "https://github.com/alexchen/agentic-pr-review",
+                            liveUrl = "https://pr-agent.careerhub.ai",
                             status = "in_progress",
-                            technologies = "Python, Gemini API, Redis, Celery, Docker",
-                            skillsTargeted = "AI Agents, LLM Evaluation, Automation"
+                            technologies = "Python, PyTorch, Transformers, GitHub Webhooks",
+                            skillsTargeted = "AI Agents, Code Analysis, Developer Tooling"
                         )
                     )
                 )
             }
-            "DevOps / Cloud Architect" -> {
+            "DevOps / Cloud Platform Engineer" -> {
                 Quint(
-                    "Cloud Infrastructure & Reliability Architect",
-                    "Cloud Infrastructure & FinTech Scaleups",
+                    "Cloud Infrastructure & Platform Architect",
+                    "Cloud Computing & SaaS Infrastructure",
                     "$150,000 - $195,000",
                     listOf(
-                        UserSkill(skillName = "Terraform / IaC", category = "DevOps & Cloud", proficiencyLevel = 5, verified = true),
-                        UserSkill(skillName = "Kubernetes & Container Orchestration", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "AWS / GCP Cloud Architecture", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "Observability (Prometheus/Grafana)", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "CI/CD Pipelines (GitHub Actions)", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "Network Security & Zero Trust", category = "Security", proficiencyLevel = 3, verified = false)
+                        UserSkill(userId = uid, skillName = "Kubernetes & Container Orchestration", category = "DevOps & Cloud", proficiencyLevel = 5, verified = true),
+                        UserSkill(userId = uid, skillName = "AWS Cloud Architecture", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "Terraform & Infrastructure-as-Code", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "CI/CD Automation (GitHub Actions)", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "Observability (Prometheus/Grafana)", category = "DevOps & Cloud", proficiencyLevel = 3, verified = false),
+                        UserSkill(userId = uid, skillName = "Linux Internals & Bash Scripting", category = "Programming Languages", proficiencyLevel = 4, verified = true)
                     ),
                     listOf(
                         PortfolioProject(
-                            title = "Multi-Region Kubernetes Disaster Recovery Mesh",
-                            description = "Automated Terraform IaC provisioning with Istio service mesh, Prometheus observability, and zero-downtime failover.",
-                            repositoryUrl = "https://github.com/alexchen/k8s-mesh-infra",
-                            liveUrl = "https://mesh-status.infra.io",
+                            userId = uid,
+                            title = "Multi-Region Kubernetes Platform with GitOps",
+                            description = "Automated zero-downtime cluster provisioning with Terraform, ArgoCD GitOps pipelines, and Istio service mesh mTLS.",
+                            repositoryUrl = "https://github.com/alexchen/gitops-k8s-platform",
+                            liveUrl = "https://grafana.cloud-infra.dev",
                             status = "completed",
-                            technologies = "Terraform, Kubernetes, Helm, Istio, AWS EKS, Prometheus",
-                            skillsTargeted = "DevOps & Cloud, Zero Trust, High Availability"
+                            technologies = "Kubernetes, Terraform, ArgoCD, Helm, AWS EKS, Prometheus",
+                            skillsTargeted = "DevOps, Kubernetes, Infrastructure-as-Code"
                         ),
                         PortfolioProject(
-                            title = "GitOps Enterprise Continuous Delivery Engine",
-                            description = "ArgoCD and GitHub Actions pipeline with automated canary deployments, security vulnerability scanning, and Slack alerting.",
-                            repositoryUrl = "https://github.com/alexchen/gitops-cd-engine",
-                            liveUrl = "https://cd.internal.cloud",
+                            userId = uid,
+                            title = "Serverless Cloud Security Auditor & Auto-Remediator",
+                            description = "Event-driven security scanner detecting S3 public buckets, unrotated IAM keys, and deploying automated remediation lambdas.",
+                            repositoryUrl = "https://github.com/alexchen/cloud-security-auditor",
+                            liveUrl = "https://security.cloud-infra.dev",
                             status = "in_progress",
-                            technologies = "GitHub Actions, ArgoCD, Docker, Trivy, Vault",
-                            skillsTargeted = "CI/CD, Security, Infrastructure"
+                            technologies = "AWS Lambda, Python, EventBridge, CloudWatch",
+                            skillsTargeted = "Cloud Security, Serverless, Compliance Automation"
                         )
                     )
                 )
             }
-            else -> { // Default: Full Stack Engineer
+            else -> {
+                // Full Stack Engineer
                 Quint(
-                    "Senior Full Stack & Systems Engineer",
-                    "Fintech & Scalable Cloud Platforms",
+                    "Senior Full Stack Software Architect",
+                    "Enterprise B2B Software & FinTech",
                     "$140,000 - $180,000",
                     listOf(
-                        UserSkill(skillName = "TypeScript", category = "Programming Languages", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "React", category = "Frontend", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "Kotlin & Coroutines", category = "Mobile", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "Node.js / Express", category = "Backend", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "PostgreSQL & Index Tuning", category = "Databases", proficiencyLevel = 4, verified = true),
-                        UserSkill(skillName = "Docker & Containers", category = "DevOps & Cloud", proficiencyLevel = 3, verified = false),
-                        UserSkill(skillName = "System Design & Scalability", category = "Architecture", proficiencyLevel = 3, verified = false)
+                        UserSkill(userId = uid, skillName = "TypeScript & React", category = "Frontend", proficiencyLevel = 5, verified = true),
+                        UserSkill(userId = uid, skillName = "Node.js & Express / NestJS", category = "Backend", proficiencyLevel = 5, verified = true),
+                        UserSkill(userId = uid, skillName = "PostgreSQL & Database Design", category = "Databases", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "Redis Caching & PubSub", category = "Databases", proficiencyLevel = 3, verified = false),
+                        UserSkill(userId = uid, skillName = "Docker & Containerization", category = "DevOps & Cloud", proficiencyLevel = 4, verified = true),
+                        UserSkill(userId = uid, skillName = "RESTful & GraphQL API Design", category = "Backend", proficiencyLevel = 4, verified = true)
                     ),
                     listOf(
                         PortfolioProject(
-                            title = "Distributed High-Throughput Task Queue",
-                            description = "Asynchronous task orchestrator with Redis backed retry queues, worker concurrency pools, and telemetry.",
-                            repositoryUrl = "https://github.com/alexchen/distributed-queue",
-                            liveUrl = "https://queue-demo.dev.io",
+                            userId = uid,
+                            title = "Distributed Real-Time Collaboration Canvas",
+                            description = "Multiplayer interactive whiteboard powered by WebSockets, CRDT synchronization algorithms, and Redis pub/sub backplane.",
+                            repositoryUrl = "https://github.com/alexchen/realtime-canvas",
+                            liveUrl = "https://canvas.dev-preview.app",
                             status = "completed",
-                            technologies = "Kotlin, Coroutines, Redis, Docker, Prometheus",
-                            skillsTargeted = "Backend, Distributed Systems, Concurrency"
+                            technologies = "TypeScript, React, Node.js, WebSockets, Redis, PostgreSQL",
+                            skillsTargeted = "Full Stack, Concurrency, Real-Time Architecture"
                         ),
                         PortfolioProject(
-                            title = "Real-time Collaborative Whiteboard Engine",
-                            description = "Low-latency whiteboard application leveraging WebSockets, CRDT conflict resolution, and Compose canvas rendering.",
-                            repositoryUrl = "https://github.com/alexchen/crdt-canvas",
-                            liveUrl = "https://canvas.dev.io",
+                            userId = uid,
+                            title = "Idempotent Payment Gateway & Ledger Engine",
+                            description = "High-throughput financial ledger handling double-entry accounting, distributed locks, and automated reconciliation.",
+                            repositoryUrl = "https://github.com/alexchen/payment-ledger",
+                            liveUrl = "https://ledger.dev-preview.app",
                             status = "in_progress",
-                            technologies = "Jetpack Compose, WebSockets, TypeScript, Node.js",
-                            skillsTargeted = "Frontend, Real-time Systems, UI Performance"
+                            technologies = "Node.js, TypeScript, PostgreSQL, Docker, Jest",
+                            skillsTargeted = "Backend, Distributed Transactions, Financial Systems"
                         )
                     )
                 )
@@ -1405,6 +1515,7 @@ class CareerRepository(private val dao: CareerDao) {
         // 1. Update Profile
         dao.insertOrUpdateProfile(
             currentProfile.copy(
+                id = uid,
                 targetRole = roleName,
                 headline = headline,
                 targetIndustry = industry,
@@ -1414,19 +1525,20 @@ class CareerRepository(private val dao: CareerDao) {
         )
 
         // 2. Refresh Skills & Projects
-        dao.clearUserSkills()
+        dao.clearUserSkills(uid)
         dao.insertUserSkills(skills)
 
-        dao.clearProjects()
+        dao.clearProjects(uid)
         projects.forEach { dao.insertProject(it) }
 
         // 3. Recalibrate Skill Gaps and Roadmap
-        recalibrateSkillGaps(roleName)
-        generateRoadmapForRole(roleName)
-        recalibrateAudit()
+        recalibrateSkillGaps(roleName, uid)
+        generateRoadmapForRole(roleName, uid)
+        recalibrateAudit(uid)
 
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Career Preset Applied",
                 detail = "Applied full 1-click starter configuration for $roleName."
             )
@@ -1435,9 +1547,11 @@ class CareerRepository(private val dao: CareerDao) {
 
     // === JOB APPLICATION CRM ACTIONS ===
     suspend fun addJobApplication(app: JobApplication) = withContext(Dispatchers.IO) {
-        dao.insertJobApplication(app)
+        val uid = currentUid()
+        dao.insertJobApplication(app.copy(userId = uid))
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Job Application Added",
                 detail = "Added ${app.company} (${app.roleTitle}) to pipeline [${app.stage}]"
             )
@@ -1445,9 +1559,11 @@ class CareerRepository(private val dao: CareerDao) {
     }
 
     suspend fun updateJobApplicationStage(app: JobApplication, newStage: String) = withContext(Dispatchers.IO) {
-        dao.updateJobApplication(app.copy(stage = newStage))
+        val uid = currentUid()
+        dao.updateJobApplication(app.copy(userId = uid, stage = newStage))
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = uid,
                 eventName = "Application Stage Advanced",
                 detail = "${app.company} -> $newStage"
             )
@@ -1466,6 +1582,7 @@ class CareerRepository(private val dao: CareerDao) {
             dao.updateCodingChallenge(updated)
             dao.insertAnalyticsEvent(
                 AnalyticsEvent(
+                    userId = currentUid(),
                     eventName = if (updated.isCompleted) "Challenge Completed" else "Challenge Reopened",
                     detail = "Coding sandbox: ${challenge.title}"
                 )
@@ -1490,6 +1607,7 @@ class CareerRepository(private val dao: CareerDao) {
             dao.updateSkillSprint(updated)
             dao.insertAnalyticsEvent(
                 AnalyticsEvent(
+                    userId = currentUid(),
                     eventName = "Sprint Milestone Updated",
                     detail = "${sprint.sprintTitle}: $newCompleted/$total completed"
                 )
@@ -1504,6 +1622,7 @@ class CareerRepository(private val dao: CareerDao) {
             dao.updateSkillSprint(updated)
             dao.insertAnalyticsEvent(
                 AnalyticsEvent(
+                    userId = currentUid(),
                     eventName = "Sprint Badge Awarded",
                     detail = "Claimed ${sprint.badgeName} (+${sprint.rewardXp} XP)"
                 )
@@ -1516,6 +1635,7 @@ class CareerRepository(private val dao: CareerDao) {
         val opp = dao.getOpportunityById(opportunityId)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = currentUid(),
                 eventName = "Opportunity Status Changed",
                 detail = "${opp?.title ?: opportunityId} -> $newStatus"
             )
@@ -1531,6 +1651,7 @@ class CareerRepository(private val dao: CareerDao) {
         val opp = dao.getOpportunityById(opportunityId)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = currentUid(),
                 eventName = if (reminderSet) "Opportunity Reminder Set" else "Opportunity Reminder Removed",
                 detail = opp?.title ?: opportunityId
             )
@@ -1541,13 +1662,13 @@ class CareerRepository(private val dao: CareerDao) {
         dao.insertOpportunity(opportunity)
         dao.insertAnalyticsEvent(
             AnalyticsEvent(
+                userId = currentUid(),
                 eventName = "Custom Opportunity Added",
                 detail = opportunity.title
             )
         )
     }
 }
-
 
 private data class Quint<A, B, C, D, E>(
     val first: A,
@@ -1556,4 +1677,3 @@ private data class Quint<A, B, C, D, E>(
     val fourth: D,
     val fifth: E
 )
-

@@ -99,10 +99,10 @@ fun PeerMockScreen(
             item {
                 EmptyStateCard(
                     icon = Icons.Default.People,
-                    title = "No Peer Mocks Available",
-                    description = "Pair with fellow engineers for mutual technical interviews, trade-off defenses, and rubric feedback.",
-                    actionLabel = "Refresh Matches",
-                    onActionClick = { viewModel.initializeDefaultDataIfEmpty() }
+                    title = "No Peer Mocks Scheduled",
+                    description = "Pair with verified peer engineers for technical mock interviews, system design trade-off defenses, and rubric feedback once matches become available.",
+                    actionLabel = null,
+                    onActionClick = {}
                 )
             }
         } else {

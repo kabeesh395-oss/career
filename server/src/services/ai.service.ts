@@ -120,13 +120,83 @@ const ROLE_SKILL_REQUIREMENTS: Record<string, Array<{ skill: string; category: s
 };
 
 export class AIService {
-  private static apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || '';
+  private static getApiKey(): string {
+    return process.env.GEMINI_API_KEY?.trim() || '';
+  }
+
+  /**
+   * Real Google Gemini API request using gemini-2.5-flash with timeout and validation.
+   */
+  private static async callGemini(prompt: string, systemPrompt?: string): Promise<string | null> {
+    const key = this.getApiKey();
+    if (!key) return null;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 2048,
+              responseMimeType: 'application/json'
+            }
+          }),
+          signal: controller.signal
+        }
+      );
+
+      if (!response.ok) {
+        console.warn(`[AIService] Gemini API error ${response.status}: ${response.statusText}`);
+        return null;
+      }
+
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      return text ? text.trim() : null;
+    } catch (err: any) {
+      console.warn(`[AIService] Gemini API network/timeout error: ${err.message}`);
+      return null;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
 
   public static async analyzeCareerReadinessAndGaps(
     userSkills: Array<{ name: string; proficiency_level: number }>,
     targetRole: string,
     experienceYears: number = 0
   ): Promise<CareerReadinessResult> {
+    // Attempt real Gemini API if configured
+    if (this.getApiKey()) {
+      try {
+        const prompt = `Analyze career readiness for role "${targetRole}" with ${experienceYears} years experience. User skills: ${JSON.stringify(userSkills)}. Return JSON matching: {"readinessScore": number, "marketDemandRating": "High"|"Very High"|"Moderate", "roleRequirementsSummary": string, "skillGaps": [{"skillName": string, "category": string, "requiredLevel": number, "currentLevel": number, "gapScore": number, "priority": "high"|"medium"|"low", "recommendation": string}]}`;
+        const rawJson = await this.callGemini(prompt, "You are an expert tech career advisor. Provide strict JSON analysis.");
+        if (rawJson) {
+          const parsed = JSON.parse(rawJson);
+          if (typeof parsed.readinessScore === 'number' && Array.isArray(parsed.skillGaps)) {
+            return {
+              readinessScore: Math.min(100, Math.max(0, parsed.readinessScore)),
+              marketDemandRating: parsed.marketDemandRating || 'Very High',
+              roleRequirementsSummary: parsed.roleRequirementsSummary || `AI assessment calibrated for ${targetRole}.`,
+              skillGaps: parsed.skillGaps,
+              modelUsed: 'gemini-2.5-flash'
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('[AIService] Failed to parse Gemini response for readiness, falling back to deterministic engine.');
+      }
+    }
+
+    // Honest deterministic calculation
     const roleReqs = ROLE_SKILL_REQUIREMENTS[targetRole] || ROLE_SKILL_REQUIREMENTS['Full Stack Engineer'];
     
     let totalScoreWeight = 0;
@@ -165,7 +235,7 @@ export class AIService {
       marketDemandRating: 'Very High',
       roleRequirementsSummary: `Evaluation calibrated against production expectations for ${targetRole}. Identified ${skillGaps.length} target skill areas for elevation.`,
       skillGaps,
-      modelUsed: this.apiKey ? 'gemini-1.5-flash' : 'careerpilot-deterministic-nlp-v1'
+      modelUsed: 'careerpilot-deterministic-engine-v1'
     };
   }
 
@@ -298,7 +368,7 @@ export class AIService {
       targetRole,
       summary: `Tailored roadmap structured across 3 phases targeting ${skillGaps.length} identified gap areas with real milestone deliverables.`,
       phases,
-      modelUsed: this.apiKey ? 'gemini-1.5-flash' : 'careerpilot-deterministic-nlp-v1'
+      modelUsed: 'careerpilot-deterministic-engine-v1'
     };
   }
 
@@ -381,7 +451,7 @@ export class AIService {
       strengths,
       weaknesses,
       recommendations,
-      modelUsed: this.apiKey ? 'gemini-1.5-flash' : 'careerpilot-deterministic-nlp-v1'
+      modelUsed: 'careerpilot-deterministic-engine-v1'
     };
   }
 
@@ -482,7 +552,7 @@ export class AIService {
       technicalScore,
       feedback,
       suggestedImprovement: improvement,
-      modelUsed: this.apiKey ? 'gemini-1.5-flash' : 'careerpilot-deterministic-nlp-v1'
+      modelUsed: 'careerpilot-deterministic-engine-v1'
     };
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { CareerHubLogo } from '../Common/CareerHubLogo';
@@ -38,7 +38,6 @@ export const navSections: NavSection[] = [
       { id: 'edge-ai', label: 'Edge AI (Snapdragon)', icon: '⚡' },
       { id: 'integrations', label: 'Integrations', icon: '⬢' },
       { id: 'analytics', label: 'Analytics', icon: '▦' },
-      { id: 'templates', label: 'UI Templates', icon: '❖' },
       { id: 'profile', label: 'Profile', icon: '○' },
     ],
   },
@@ -129,13 +128,6 @@ const renderNavIcon = (id: string, isActive: boolean) => {
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 3v18h18" />
           <path d="m19 9-5 5-4-4-3 3" />
-        </svg>
-      );
-    case 'templates':
-      return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
-          <line x1="12" x2="12.01" y1="18" y2="18" />
         </svg>
       );
     case 'edge-ai':

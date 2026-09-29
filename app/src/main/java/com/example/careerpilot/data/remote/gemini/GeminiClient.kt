@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.Body
@@ -16,11 +17,11 @@ import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
 interface GeminiApiService {
-    @POST("v1beta/models/gemini-3.5-flash:generateContent")
+    @POST("v1beta/models/gemini-2.5-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String,
         @Body request: GeminiGenerateRequest
-    ): GeminiGenerateResponse
+    ): Response<GeminiGenerateResponse>
 }
 
 object GeminiClient {
@@ -95,9 +96,16 @@ object GeminiClient {
                 )
             )
             val response = service.generateContent(getApiKey(), request)
-            response.candidates?.firstOrNull()?.content?.parts?.joinToString("\n") { it.text ?: "" }
+            if (!response.isSuccessful) {
+                val code = response.code()
+                val errorDetails = response.errorBody()?.string()
+                Log.e("GeminiClient", "Gemini API HTTP Error $code: $errorDetails")
+                return@withContext null
+            }
+            val body = response.body()
+            body?.candidates?.firstOrNull()?.content?.parts?.joinToString("\n") { it.text ?: "" }
         } catch (e: Exception) {
-            Log.w("GeminiClient", "generateText failed: ${e.message}")
+            Log.e("GeminiClient", "generateText exception: ${e.message}")
             null
         }
     }

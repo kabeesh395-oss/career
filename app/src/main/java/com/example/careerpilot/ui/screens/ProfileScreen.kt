@@ -187,7 +187,7 @@ fun ProfileScreen(
                             value = authName,
                             onValueChange = { authName = it },
                             label = { Text("Your Full Name", fontSize = 12.sp) },
-                            placeholder = { Text("e.g. Alex Chen", fontSize = 12.sp) },
+                            placeholder = { Text("e.g. Jane Doe", fontSize = 12.sp) },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryBlue,

@@ -29,8 +29,7 @@ export default function EdgeAiPage() {
     
     // Perform real local text tokenization on sample text
     const sampleText = 'Senior Full Stack Engineer with expertise in TypeScript, React, Node.js, and PostgreSQL distributed systems.';
-    const words = sampleText.toLowerCase().split(/\s+/);
-    const uniqueTokens = new Set(words);
+    sampleText.toLowerCase().split(/\s+/);
     const clientParseMs = Math.round((performance.now() - startClient) * 100) / 100;
 
     // Measure real server roundtrip

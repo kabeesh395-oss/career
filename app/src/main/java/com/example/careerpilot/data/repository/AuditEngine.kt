@@ -342,7 +342,7 @@ object AuditEngine {
         if (interviewAnswers.isNotEmpty()) evidencePoints++
         if (skills.isNotEmpty()) evidencePoints++
 
-        val hasEvaluatedData = evidencePoints > 0 || profile?.readinessScore != null
+        val hasEvaluatedData = evidencePoints > 0 || (profile?.readinessScore != null && profile.readinessScore > 0)
         val coveragePercent = ((evidencePoints.toFloat() / maxPoints.toFloat()) * 100f).roundToInt()
         
         val profileConfidence = when {
@@ -352,20 +352,27 @@ object AuditEngine {
             else -> "LOW"
         }
 
+        // For new candidates without evaluated data, penalties do not apply (0 scoreImpact)
+        val finalizedIssues = if (!hasEvaluatedData) {
+            deduplicatedIssues.map { it.copy(scoreImpact = 0) }
+        } else {
+            deduplicatedIssues
+        }
+
         // Calculate Totals & Summary
-        val openIssues = if (hasEvaluatedData) deduplicatedIssues.filter { it.status != "RESOLVED" } else emptyList()
+        val openIssues = if (hasEvaluatedData) finalizedIssues.filter { it.status != "RESOLVED" } else emptyList()
         val totalDemerits = openIssues.sumOf { it.scoreImpact }
         val baseReadiness = profile?.readinessScore
-        val netAuditScore = if (baseReadiness != null) max(0, min(100, baseReadiness + totalDemerits)) else null
+        val netAuditScore = if (hasEvaluatedData && baseReadiness != null) max(0, min(100, baseReadiness + totalDemerits)) else null
 
         val criticalCount = openIssues.count { it.severity == "CRITICAL" }
         val highCount = openIssues.count { it.severity == "HIGH" }
         val mediumCount = openIssues.count { it.severity == "MEDIUM" }
         val lowCount = openIssues.count { it.severity == "LOW" }
-        val resolvedCount = deduplicatedIssues.count { it.status == "RESOLVED" }
+        val resolvedCount = finalizedIssues.count { it.status == "RESOLVED" }
 
         val summary = AuditScoreSummary(
-            readinessScore = baseReadiness,
+            readinessScore = if (hasEvaluatedData) baseReadiness else null,
             netAuditScore = netAuditScore,
             totalDemerits = totalDemerits,
             criticalCount = criticalCount,
@@ -373,7 +380,7 @@ object AuditEngine {
             mediumCount = mediumCount,
             lowCount = lowCount,
             resolvedCount = resolvedCount,
-            totalIssuesCount = if (hasEvaluatedData) deduplicatedIssues.size else 0,
+            totalIssuesCount = if (hasEvaluatedData) finalizedIssues.size else 0,
             evidenceCoveragePercent = coveragePercent,
             profileConfidence = profileConfidence,
             isOfflineEvaluated = true,
@@ -381,6 +388,6 @@ object AuditEngine {
             lastEvaluatedAt = System.currentTimeMillis()
         )
 
-        return Pair(deduplicatedIssues, summary)
+        return Pair(finalizedIssues, summary)
     }
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import AuthPage from './components/Auth/AuthPage';
 import Sidebar from './components/Layout/Sidebar';
 import AppHeader from './components/Layout/AppHeader';
@@ -15,10 +16,9 @@ import IntegrationsPage from './components/Integrations/IntegrationsPage';
 import AnalyticsPage from './components/Analytics/AnalyticsPage';
 import ProfilePage from './components/Profile/ProfilePage';
 import EdgeAiPage from './components/EdgeAI/EdgeAiPage';
-import MobileUiTemplates from './components/Templates/MobileUiTemplates';
 import './index.css';
 
-function AppContent() {
+export function AppContent() {
   const { user, loading } = useAuth();
   const [activePage, setActivePage] = useState('dashboard');
 
@@ -50,8 +50,8 @@ function AppContent() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'hsl(222, 47%, 7%)',
-        color: '#94a3b8',
+        background: 'hsl(var(--bg-base))',
+        color: 'hsl(var(--text-secondary))',
         fontSize: 16
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -98,8 +98,6 @@ function AppContent() {
         return <AnalyticsPage />;
       case 'edge-ai':
         return <EdgeAiPage />;
-      case 'templates':
-        return <MobileUiTemplates />;
       case 'profile':
         return <ProfilePage />;
       default:
@@ -108,7 +106,7 @@ function AppContent() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'hsl(222, 47%, 7%)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'hsl(var(--bg-base))' }}>
       <Sidebar activePage={activePage} onNavigate={navigateTo} />
       <main style={{
         flex: 1,
@@ -124,10 +122,22 @@ function AppContent() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  </React.StrictMode>
-);
+export function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}
+

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.careerpilot.data.model.CareerOpportunity
 import com.example.careerpilot.ui.components.BulletSeparator
+import com.example.careerpilot.ui.components.CompanyLogoBadge
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.theme.*
@@ -532,6 +533,8 @@ private fun OpportunityCard(
                     Spacer(modifier = Modifier.width(Dimens.SpaceSm))
                     BulletSeparator(color = TextMuted)
                     Spacer(modifier = Modifier.width(Dimens.SpaceSm))
+                    CompanyLogoBadge(company = opportunity.providerOrHost, size = 18.dp)
+                    Spacer(modifier = Modifier.width(Dimens.SpaceXs))
                     Text(
                         text = opportunity.providerOrHost,
                         style = MaterialTheme.typography.labelSmall,

@@ -7,21 +7,21 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CareerDao {
     // User Profile
-    @Query("SELECT * FROM user_profile WHERE id = 'default_user' LIMIT 1")
-    fun getUserProfileFlow(): Flow<UserProfile?>
+    @Query("SELECT * FROM user_profile WHERE id = :userId LIMIT 1")
+    fun getUserProfileFlow(userId: String): Flow<UserProfile?>
 
-    @Query("SELECT * FROM user_profile WHERE id = 'default_user' LIMIT 1")
-    suspend fun getUserProfile(): UserProfile?
+    @Query("SELECT * FROM user_profile WHERE id = :userId LIMIT 1")
+    suspend fun getUserProfile(userId: String): UserProfile?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateProfile(profile: UserProfile)
 
     // User Skills
-    @Query("SELECT * FROM user_skills ORDER BY category ASC, skillName ASC")
-    fun getUserSkillsFlow(): Flow<List<UserSkill>>
+    @Query("SELECT * FROM user_skills WHERE userId = :userId ORDER BY category ASC, skillName ASC")
+    fun getUserSkillsFlow(userId: String): Flow<List<UserSkill>>
 
-    @Query("SELECT * FROM user_skills")
-    suspend fun getUserSkills(): List<UserSkill>
+    @Query("SELECT * FROM user_skills WHERE userId = :userId")
+    suspend fun getUserSkills(userId: String): List<UserSkill>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserSkill(skill: UserSkill)
@@ -32,38 +32,41 @@ interface CareerDao {
     @Delete
     suspend fun deleteUserSkill(skill: UserSkill)
 
-    @Query("DELETE FROM user_skills")
-    suspend fun clearUserSkills()
+    @Query("DELETE FROM user_skills WHERE userId = :userId")
+    suspend fun clearUserSkills(userId: String)
 
     // Skill Gaps
-    @Query("SELECT * FROM skill_gaps ORDER BY gapScore DESC, priority DESC")
-    fun getSkillGapsFlow(): Flow<List<SkillGap>>
+    @Query("SELECT * FROM skill_gaps WHERE userId = :userId ORDER BY gapScore DESC, priority DESC")
+    fun getSkillGapsFlow(userId: String): Flow<List<SkillGap>>
 
-    @Query("SELECT * FROM skill_gaps ORDER BY gapScore DESC")
-    suspend fun getSkillGaps(): List<SkillGap>
+    @Query("SELECT * FROM skill_gaps WHERE userId = :userId ORDER BY gapScore DESC")
+    suspend fun getSkillGaps(userId: String): List<SkillGap>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSkillGaps(gaps: List<SkillGap>)
 
-    @Query("DELETE FROM skill_gaps")
-    suspend fun clearSkillGaps()
+    @Query("DELETE FROM skill_gaps WHERE userId = :userId")
+    suspend fun clearSkillGaps(userId: String)
 
     // Roadmaps
-    @Query("SELECT * FROM roadmaps WHERE id = 'active_roadmap' LIMIT 1")
-    fun getActiveRoadmapFlow(): Flow<Roadmap?>
+    @Query("SELECT * FROM roadmaps WHERE userId = :userId ORDER BY id DESC LIMIT 1")
+    fun getActiveRoadmapFlow(userId: String): Flow<Roadmap?>
 
-    @Query("SELECT * FROM roadmaps WHERE id = 'active_roadmap' LIMIT 1")
-    suspend fun getActiveRoadmap(): Roadmap?
+    @Query("SELECT * FROM roadmaps WHERE userId = :userId ORDER BY id DESC LIMIT 1")
+    suspend fun getActiveRoadmap(userId: String): Roadmap?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateRoadmap(roadmap: Roadmap)
 
-    // Roadmap Items
-    @Query("SELECT * FROM roadmap_items WHERE roadmapId = 'active_roadmap' ORDER BY phaseNumber ASC, orderIndex ASC")
-    fun getRoadmapItemsFlow(): Flow<List<RoadmapItem>>
+    @Query("DELETE FROM roadmaps WHERE userId = :userId")
+    suspend fun clearRoadmaps(userId: String)
 
-    @Query("SELECT * FROM roadmap_items WHERE roadmapId = 'active_roadmap' ORDER BY phaseNumber ASC, orderIndex ASC")
-    suspend fun getRoadmapItems(): List<RoadmapItem>
+    // Roadmap Items
+    @Query("SELECT * FROM roadmap_items WHERE userId = :userId ORDER BY phaseNumber ASC, orderIndex ASC")
+    fun getRoadmapItemsFlow(userId: String): Flow<List<RoadmapItem>>
+
+    @Query("SELECT * FROM roadmap_items WHERE userId = :userId ORDER BY phaseNumber ASC, orderIndex ASC")
+    suspend fun getRoadmapItems(userId: String): List<RoadmapItem>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRoadmapItems(items: List<RoadmapItem>)
@@ -71,15 +74,15 @@ interface CareerDao {
     @Update
     suspend fun updateRoadmapItem(item: RoadmapItem)
 
-    @Query("DELETE FROM roadmap_items WHERE roadmapId = 'active_roadmap'")
-    suspend fun clearRoadmapItems()
+    @Query("DELETE FROM roadmap_items WHERE userId = :userId")
+    suspend fun clearRoadmapItems(userId: String)
 
     // Portfolio Projects
-    @Query("SELECT * FROM portfolio_projects ORDER BY id DESC")
-    fun getProjectsFlow(): Flow<List<PortfolioProject>>
+    @Query("SELECT * FROM portfolio_projects WHERE userId = :userId ORDER BY id DESC")
+    fun getProjectsFlow(userId: String): Flow<List<PortfolioProject>>
 
-    @Query("SELECT * FROM portfolio_projects ORDER BY id DESC")
-    suspend fun getProjects(): List<PortfolioProject>
+    @Query("SELECT * FROM portfolio_projects WHERE userId = :userId ORDER BY id DESC")
+    suspend fun getProjects(userId: String): List<PortfolioProject>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProject(project: PortfolioProject)
@@ -90,46 +93,49 @@ interface CareerDao {
     @Delete
     suspend fun deleteProject(project: PortfolioProject)
 
-    @Query("DELETE FROM portfolio_projects")
-    suspend fun clearProjects()
+    @Query("DELETE FROM portfolio_projects WHERE userId = :userId")
+    suspend fun clearProjects(userId: String)
 
     // Resume Audits
-    @Query("SELECT * FROM resume_audits ORDER BY createdAt DESC")
-    fun getResumeAuditsFlow(): Flow<List<ResumeAudit>>
+    @Query("SELECT * FROM resume_audits WHERE userId = :userId ORDER BY createdAt DESC")
+    fun getResumeAuditsFlow(userId: String): Flow<List<ResumeAudit>>
 
-    @Query("SELECT * FROM resume_audits ORDER BY createdAt DESC")
-    suspend fun getResumeAudits(): List<ResumeAudit>
+    @Query("SELECT * FROM resume_audits WHERE userId = :userId ORDER BY createdAt DESC")
+    suspend fun getResumeAudits(userId: String): List<ResumeAudit>
 
-    @Query("SELECT * FROM resume_audits ORDER BY createdAt DESC LIMIT 1")
-    fun getLatestResumeAuditFlow(): Flow<ResumeAudit?>
+    @Query("SELECT * FROM resume_audits WHERE userId = :userId ORDER BY createdAt DESC LIMIT 1")
+    fun getLatestResumeAuditFlow(userId: String): Flow<ResumeAudit?>
 
-    @Query("SELECT * FROM resume_audits ORDER BY createdAt DESC LIMIT 1")
-    suspend fun getLatestResumeAudit(): ResumeAudit?
+    @Query("SELECT * FROM resume_audits WHERE userId = :userId ORDER BY createdAt DESC LIMIT 1")
+    suspend fun getLatestResumeAudit(userId: String): ResumeAudit?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertResumeAudit(audit: ResumeAudit)
 
+    @Query("DELETE FROM resume_audits WHERE userId = :userId")
+    suspend fun clearResumeAudits(userId: String)
+
     // Interview Sessions & Answers
-    @Query("SELECT * FROM interview_sessions ORDER BY createdAt DESC")
-    fun getInterviewsFlow(): Flow<List<InterviewSession>>
+    @Query("SELECT * FROM interview_sessions WHERE userId = :userId ORDER BY createdAt DESC")
+    fun getInterviewsFlow(userId: String): Flow<List<InterviewSession>>
 
-    @Query("SELECT * FROM interview_sessions ORDER BY createdAt DESC")
-    suspend fun getInterviews(): List<InterviewSession>
+    @Query("SELECT * FROM interview_sessions WHERE userId = :userId ORDER BY createdAt DESC")
+    suspend fun getInterviews(userId: String): List<InterviewSession>
 
-    @Query("SELECT * FROM interview_sessions WHERE id = :sessionId LIMIT 1")
-    suspend fun getInterviewSession(sessionId: String): InterviewSession?
+    @Query("SELECT * FROM interview_sessions WHERE id = :sessionId AND userId = :userId LIMIT 1")
+    suspend fun getInterviewSession(sessionId: String, userId: String): InterviewSession?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateInterview(session: InterviewSession)
 
-    @Query("SELECT * FROM interview_answers WHERE interviewId = :sessionId ORDER BY questionNumber ASC")
-    fun getInterviewAnswersFlow(sessionId: String): Flow<List<InterviewAnswer>>
+    @Query("SELECT * FROM interview_answers WHERE interviewId = :sessionId AND userId = :userId ORDER BY questionNumber ASC")
+    fun getInterviewAnswersFlow(sessionId: String, userId: String): Flow<List<InterviewAnswer>>
 
-    @Query("SELECT * FROM interview_answers WHERE interviewId = :sessionId ORDER BY questionNumber ASC")
-    suspend fun getInterviewAnswers(sessionId: String): List<InterviewAnswer>
+    @Query("SELECT * FROM interview_answers WHERE interviewId = :sessionId AND userId = :userId ORDER BY questionNumber ASC")
+    suspend fun getInterviewAnswers(sessionId: String, userId: String): List<InterviewAnswer>
 
-    @Query("SELECT * FROM interview_answers ORDER BY submittedAt DESC")
-    suspend fun getAllInterviewAnswers(): List<InterviewAnswer>
+    @Query("SELECT * FROM interview_answers WHERE userId = :userId ORDER BY submittedAt DESC")
+    suspend fun getAllInterviewAnswers(userId: String): List<InterviewAnswer>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertInterviewAnswer(answer: InterviewAnswer)
@@ -154,27 +160,30 @@ interface CareerDao {
     suspend fun clearLearningResources()
 
     // Integrations
-    @Query("SELECT * FROM integrations")
-    fun getIntegrationsFlow(): Flow<List<IntegrationAccount>>
+    @Query("SELECT * FROM integrations WHERE userId = :userId")
+    fun getIntegrationsFlow(userId: String): Flow<List<IntegrationAccount>>
 
-    @Query("SELECT * FROM integrations")
-    suspend fun getIntegrations(): List<IntegrationAccount>
+    @Query("SELECT * FROM integrations WHERE userId = :userId")
+    suspend fun getIntegrations(userId: String): List<IntegrationAccount>
 
-    @Query("SELECT * FROM integrations WHERE provider = :provider LIMIT 1")
-    suspend fun getIntegration(provider: String): IntegrationAccount?
+    @Query("SELECT * FROM integrations WHERE provider = :provider AND userId = :userId LIMIT 1")
+    suspend fun getIntegration(provider: String, userId: String): IntegrationAccount?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateIntegration(account: IntegrationAccount)
 
+    @Query("DELETE FROM integrations WHERE userId = :userId")
+    suspend fun clearIntegrations(userId: String)
+
     // Audit Issues & Red Flags
-    @Query("SELECT * FROM audit_issues ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END, createdAt DESC")
-    fun getAuditIssuesFlow(): Flow<List<AuditIssue>>
+    @Query("SELECT * FROM audit_issues WHERE userId = :userId ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END, createdAt DESC")
+    fun getAuditIssuesFlow(userId: String): Flow<List<AuditIssue>>
 
-    @Query("SELECT * FROM audit_issues ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END, createdAt DESC")
-    suspend fun getAuditIssues(): List<AuditIssue>
+    @Query("SELECT * FROM audit_issues WHERE userId = :userId ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END, createdAt DESC")
+    suspend fun getAuditIssues(userId: String): List<AuditIssue>
 
-    @Query("SELECT * FROM audit_issues WHERE id = :issueId LIMIT 1")
-    suspend fun getAuditIssue(issueId: String): AuditIssue?
+    @Query("SELECT * FROM audit_issues WHERE id = :issueId AND userId = :userId LIMIT 1")
+    suspend fun getAuditIssue(issueId: String, userId: String): AuditIssue?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAuditIssue(issue: AuditIssue)
@@ -188,15 +197,18 @@ interface CareerDao {
     @Delete
     suspend fun deleteAuditIssue(issue: AuditIssue)
 
-    @Query("DELETE FROM audit_issues")
-    suspend fun clearAuditIssues()
+    @Query("DELETE FROM audit_issues WHERE userId = :userId")
+    suspend fun clearAuditIssues(userId: String)
 
     // Analytics Events
-    @Query("SELECT * FROM analytics_events ORDER BY timestamp DESC LIMIT 20")
-    fun getRecentAnalyticsFlow(): Flow<List<AnalyticsEvent>>
+    @Query("SELECT * FROM analytics_events WHERE userId = :userId ORDER BY timestamp DESC LIMIT 20")
+    fun getRecentAnalyticsFlow(userId: String): Flow<List<AnalyticsEvent>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAnalyticsEvent(event: AnalyticsEvent)
+
+    @Query("DELETE FROM analytics_events WHERE userId = :userId")
+    suspend fun clearAnalyticsEvents(userId: String)
 
     // Target Job Postings & Match Results
     @Query("SELECT * FROM job_postings ORDER BY isPreset DESC, company ASC")
@@ -214,27 +226,30 @@ interface CareerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertJobPostings(postings: List<TargetJobPosting>)
 
-    @Query("SELECT * FROM job_matches ORDER BY calculatedAt DESC")
-    fun getJobMatchesFlow(): Flow<List<JobMatchResult>>
+    @Query("SELECT * FROM job_matches WHERE userId = :userId ORDER BY calculatedAt DESC")
+    fun getJobMatchesFlow(userId: String): Flow<List<JobMatchResult>>
 
-    @Query("SELECT * FROM job_matches WHERE jobPostingId = :jobPostingId ORDER BY calculatedAt DESC LIMIT 1")
-    fun getJobMatchForPostingFlow(jobPostingId: String): Flow<JobMatchResult?>
+    @Query("SELECT * FROM job_matches WHERE jobPostingId = :jobPostingId AND userId = :userId ORDER BY calculatedAt DESC LIMIT 1")
+    fun getJobMatchForPostingFlow(jobPostingId: String, userId: String): Flow<JobMatchResult?>
 
-    @Query("SELECT * FROM job_matches WHERE jobPostingId = :jobPostingId ORDER BY calculatedAt DESC LIMIT 1")
-    suspend fun getJobMatchForPosting(jobPostingId: String): JobMatchResult?
+    @Query("SELECT * FROM job_matches WHERE jobPostingId = :jobPostingId AND userId = :userId ORDER BY calculatedAt DESC LIMIT 1")
+    suspend fun getJobMatchForPosting(jobPostingId: String, userId: String): JobMatchResult?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertJobMatchResult(result: JobMatchResult)
 
-    @Query("DELETE FROM job_matches WHERE jobPostingId = :jobPostingId")
-    suspend fun deleteJobMatchForPosting(jobPostingId: String)
+    @Query("DELETE FROM job_matches WHERE jobPostingId = :jobPostingId AND userId = :userId")
+    suspend fun deleteJobMatchForPosting(jobPostingId: String, userId: String)
+
+    @Query("DELETE FROM job_matches WHERE userId = :userId")
+    suspend fun clearJobMatches(userId: String)
 
     // Job Applications Pipeline CRM
-    @Query("SELECT * FROM job_applications ORDER BY appliedDate DESC")
-    fun getJobApplicationsFlow(): Flow<List<JobApplication>>
+    @Query("SELECT * FROM job_applications WHERE userId = :userId ORDER BY appliedDate DESC")
+    fun getJobApplicationsFlow(userId: String): Flow<List<JobApplication>>
 
-    @Query("SELECT * FROM job_applications ORDER BY appliedDate DESC")
-    suspend fun getJobApplications(): List<JobApplication>
+    @Query("SELECT * FROM job_applications WHERE userId = :userId ORDER BY appliedDate DESC")
+    suspend fun getJobApplications(userId: String): List<JobApplication>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertJobApplication(app: JobApplication)
@@ -247,6 +262,9 @@ interface CareerDao {
 
     @Delete
     suspend fun deleteJobApplication(app: JobApplication)
+
+    @Query("DELETE FROM job_applications WHERE userId = :userId")
+    suspend fun clearJobApplications(userId: String)
 
     // Coding Sandbox Challenges
     @Query("SELECT * FROM coding_challenges ORDER BY isCompleted ASC, difficulty ASC")
@@ -270,6 +288,9 @@ interface CareerDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPeerMatches(peers: List<PeerMatch>)
+
+    @Query("DELETE FROM peer_matches WHERE id LIKE 'peer_%'")
+    suspend fun clearDummyPeerMatches()
 
     // Skill Sprints
     @Query("SELECT * FROM skill_sprints ORDER BY isClaimed ASC, currentDay DESC")

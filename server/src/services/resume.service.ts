@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
 import { getDatabase } from '../db/database.js';
 
 export interface ExtractedResumeData {
@@ -19,20 +20,40 @@ export async function extractTextFromResume(filePath: string, mimeType: string):
   }
 
   const ext = path.extname(filePath).toLowerCase();
+  let extractedText = '';
 
   if (mimeType === 'application/pdf' || ext === '.pdf') {
-    const dataBuffer = fs.readFileSync(filePath);
-    const pdfData = await (pdfParse as any)(dataBuffer);
-    return pdfData.text || '';
+    try {
+      const dataBuffer = fs.readFileSync(filePath);
+      const pdfData = await (pdfParse as any)(dataBuffer);
+      extractedText = pdfData.text || '';
+    } catch (err: any) {
+      throw new Error(`Failed to parse PDF document: ${err.message || 'Corrupted or unreadable PDF structure.'}`);
+    }
   } else if (mimeType === 'text/plain' || ext === '.txt') {
-    return fs.readFileSync(filePath, 'utf8');
+    extractedText = fs.readFileSync(filePath, 'utf8');
+  } else if (
+    mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    ext === '.docx'
+  ) {
+    try {
+      const result = await mammoth.extractRawText({ path: filePath });
+      extractedText = result.value || '';
+    } catch (err: any) {
+      throw new Error(`Failed to extract text from DOCX: The document may be corrupted, password-protected, or invalid (${err.message || 'Parser error'}).`);
+    }
+  } else if (mimeType === 'application/msword' || ext === '.doc') {
+    throw new Error('Legacy binary .DOC format is not supported. Please export your resume as modern .DOCX or .PDF and re-upload.');
   } else {
-    // For DOC/DOCX or binary text fallback, extract visible ASCII strings
-    const buffer = fs.readFileSync(filePath);
-    const raw = buffer.toString('utf8');
-    const cleaned = raw.replace(/[^\x20-\x7E\n\r\t]/g, ' ');
-    return cleaned.trim();
+    throw new Error(`Unsupported resume format "${ext || mimeType}". Supported formats: PDF, DOCX, TXT.`);
   }
+
+  const trimmed = extractedText.trim();
+  if (!trimmed) {
+    throw new Error('The uploaded resume document contains no readable text.');
+  }
+
+  return trimmed;
 }
 
 export function parseResumeContent(text: string): ExtractedResumeData {

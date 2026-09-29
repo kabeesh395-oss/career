@@ -43,12 +43,12 @@ fun ExportCenterScreen(
     val roadmapItems by viewModel.roadmapItems.collectAsState()
 
     val profile = profileState ?: UserProfile(
-        fullName = "Alex Chen",
-        email = "alex.chen@dev.io",
-        location = "San Francisco, CA",
-        targetRole = "Senior Full Stack Engineer",
-        bio = "Senior Software Engineer specializing in distributed backend systems, microservices, and mobile architectures.",
-        education = "B.S. in Computer Science"
+        fullName = "",
+        email = "",
+        location = "",
+        targetRole = "Software Engineer",
+        bio = "",
+        education = ""
     )
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0: System Design Cheat Sheets, 1: ATS Resume Export, 2: Career Roadmap Export
@@ -60,14 +60,24 @@ fun ExportCenterScreen(
     // Clean plain ATS text generator
     val atsPlainText = remember(profile, skills) {
         buildString {
-            appendLine("${profile.fullName.uppercase()} | ${profile.targetRole}")
-            appendLine("${profile.email} | ${profile.location} | linkedin.com/in/alexchen | github.com/alexchen")
+            val displayName = profile.fullName.ifEmpty { "CANDIDATE NAME" }.uppercase()
+            val displayRole = profile.targetRole.ifEmpty { "SOFTWARE ENGINEER" }
+            appendLine("$displayName | $displayRole")
+            val contactItems = listOfNotNull(
+                profile.email.takeIf { it.isNotBlank() },
+                profile.location.takeIf { it.isNotBlank() }
+            )
+            if (contactItems.isNotEmpty()) {
+                appendLine(contactItems.joinToString(" | "))
+            }
             appendLine()
-            appendLine("PROFESSIONAL SUMMARY")
-            appendLine(profile.bio)
-            appendLine()
+            if (profile.bio.isNotBlank()) {
+                appendLine("PROFESSIONAL SUMMARY")
+                appendLine(profile.bio)
+                appendLine()
+            }
             appendLine("TECHNICAL SKILLS")
-            appendLine("Core: " + skills.joinToString(", ") { it.skillName })
+            appendLine("Core: " + (if (skills.isNotEmpty()) skills.joinToString(", ") { it.skillName } else "Add your verified skills in Career Hub"))
             appendLine("Architectures: Microservices, Distributed Systems, REST, gRPC, CI/CD, Event-Driven Kafka")
             appendLine()
             appendLine("EXPERIENCE")

@@ -32,7 +32,7 @@ class FirestoreSyncManager(
      * Sync User Profile to Cloud Firestore
      */
     suspend fun syncProfileToCloud(profile: UserProfile): Boolean = withContext(Dispatchers.IO) {
-        val userId = authManager.getCurrentUserId()
+        val userId = authManager.getCurrentUserId() ?: return@withContext false
         try {
             val profileMap = mapOf(
                 "id" to profile.id,
@@ -66,7 +66,7 @@ class FirestoreSyncManager(
      * Sync Job Application to Cloud Firestore
      */
     suspend fun syncJobApplicationToCloud(app: JobApplication): Boolean = withContext(Dispatchers.IO) {
-        val userId = authManager.getCurrentUserId()
+        val userId = authManager.getCurrentUserId() ?: return@withContext false
         try {
             val appMap = mapOf(
                 "id" to app.id,
@@ -97,7 +97,7 @@ class FirestoreSyncManager(
      * Sync Interview Session to Cloud Firestore
      */
     suspend fun syncInterviewSessionToCloud(session: InterviewSession): Boolean = withContext(Dispatchers.IO) {
-        val userId = authManager.getCurrentUserId()
+        val userId = authManager.getCurrentUserId() ?: return@withContext false
         try {
             val sessionMap = mapOf(
                 "id" to session.id,
@@ -127,7 +127,7 @@ class FirestoreSyncManager(
      * Sync all user skills to Cloud Firestore
      */
     suspend fun syncSkillsToCloud(skills: List<UserSkill>): Boolean = withContext(Dispatchers.IO) {
-        val userId = authManager.getCurrentUserId()
+        val userId = authManager.getCurrentUserId() ?: return@withContext false
         try {
             val batch = firestore.batch()
             val collection = firestore.collection("users").document(userId).collection("skills")
@@ -157,7 +157,7 @@ class FirestoreSyncManager(
      * Sync Portfolio Projects to Cloud Firestore
      */
     suspend fun syncProjectsToCloud(projects: List<PortfolioProject>): Boolean = withContext(Dispatchers.IO) {
-        val userId = authManager.getCurrentUserId()
+        val userId = authManager.getCurrentUserId() ?: return@withContext false
         try {
             val batch = firestore.batch()
             val collection = firestore.collection("users").document(userId).collection("projects")
@@ -189,7 +189,7 @@ class FirestoreSyncManager(
      * Download and merge cloud data from Firestore into local Room database
      */
     suspend fun downloadAllFromCloud(targetDao: CareerDao): Int = withContext(Dispatchers.IO) {
-        val userId = authManager.getCurrentUserId()
+        val userId = authManager.getCurrentUserId() ?: return@withContext 0
         var downloadCount = 0
         try {
             // 1. Download Profile
@@ -201,8 +201,9 @@ class FirestoreSyncManager(
             if (profileDoc.exists()) {
                 val data = profileDoc.data
                 if (data != null) {
-                    val localProfile = targetDao.getUserProfile() ?: UserProfile()
+                    val localProfile = targetDao.getUserProfile(userId) ?: UserProfile(id = userId)
                     val mergedProfile = localProfile.copy(
+                        id = userId,
                         fullName = (data["fullName"] as? String) ?: localProfile.fullName,
                         headline = (data["headline"] as? String) ?: localProfile.headline,
                         email = (data["email"] as? String) ?: localProfile.email,
@@ -231,6 +232,7 @@ class FirestoreSyncManager(
                 val d = doc.data ?: continue
                 val app = JobApplication(
                     id = (d["id"] as? String) ?: doc.id,
+                    userId = userId,
                     company = (d["company"] as? String) ?: "Company",
                     roleTitle = (d["roleTitle"] as? String) ?: "Engineer",
                     location = (d["location"] as? String) ?: "Remote",
@@ -256,6 +258,7 @@ class FirestoreSyncManager(
                 val d = doc.data ?: continue
                 cloudSkills.add(
                     UserSkill(
+                        userId = userId,
                         skillName = (d["skillName"] as? String) ?: doc.id,
                         category = (d["category"] as? String) ?: "Core",
                         proficiencyLevel = (d["proficiencyLevel"] as? Number)?.toInt() ?: 3,

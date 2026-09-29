@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.careerpilot.data.model.LearningResource
+import com.example.careerpilot.ui.components.CompanyLogoBadge
 import com.example.careerpilot.ui.components.EmptyStateCard
 import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
@@ -74,7 +75,7 @@ fun LearningScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
+        contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -343,17 +344,27 @@ private fun LearningResourceFunctionalCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Provider & Duration
+            // Provider Offering & Company Logo & Duration
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Source: ${resource.provider}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AccentCyan
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    CompanyLogoBadge(company = resource.provider, size = 22.dp)
+                    Text(
+                        text = "Offered by ${resource.provider}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AccentCyan,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -365,7 +376,7 @@ private fun LearningResourceFunctionalCard(
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
-                        text = "${resource.estimatedMinutes} min estimated",
+                        text = "${resource.estimatedMinutes} min",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary
                     )
@@ -593,10 +604,17 @@ fun LearningStudyDialog(
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = "Provider / Publisher:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                Text(text = resource.provider, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = AccentCyan)
+                                Text(text = "Offered By:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    CompanyLogoBadge(company = resource.provider, size = 20.dp)
+                                    Text(text = resource.provider, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = AccentCyan)
+                                }
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
