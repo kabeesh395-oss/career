@@ -57,12 +57,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      clearToken();
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
     const token = localStorage.getItem('cp_token');
     if (token) {
       restoreSession();
     } else {
       setLoading(false);
     }
+
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
   }, [restoreSession]);
 
   const login = async (email: string, password: string) => {

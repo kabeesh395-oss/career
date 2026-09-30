@@ -46,7 +46,10 @@ export async function api<T = any>(
 
   if (res.status === 401) {
     clearToken();
-    window.location.hash = '#/login';
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      window.location.hash = '';
+    }
     throw new Error('Session expired. Please log in again.');
   }
 

@@ -18,13 +18,72 @@ export interface AiJob {
   updatedAt: number;
 }
 
-class AiQueueManager {
+export class AiQueueManager {
   private queue: Map<string, AiJob> = new Map();
   private processing: boolean = false;
+  private processIntervalTimer: NodeJS.Timeout | null = null;
+  private cleanupIntervalTimer: NodeJS.Timeout | null = null;
+  private isStopped: boolean = false;
+
+  // TTL for retaining completed or failed jobs before eviction (15 minutes)
+  private readonly jobTtlMs: number = 15 * 60 * 1000;
 
   constructor() {
-    // Process queue every 500ms
-    setInterval(() => this.processNext(), 500);
+    this.start();
+  }
+
+  /**
+   * Start processing and cleanup loops
+   */
+  public start(): void {
+    if (this.processIntervalTimer) {
+      clearInterval(this.processIntervalTimer);
+    }
+    if (this.cleanupIntervalTimer) {
+      clearInterval(this.cleanupIntervalTimer);
+    }
+
+    this.isStopped = false;
+
+    // Process queue every 500ms without blocking process exit
+    this.processIntervalTimer = setInterval(() => {
+      if (!this.isStopped) {
+        this.processNext().catch(err => {
+          console.error('[AiQueue] Unexpected error in processNext:', err);
+        });
+      }
+    }, 500);
+
+    // Node unref to prevent keeping process alive during tests or shutdown
+    if (this.processIntervalTimer.unref) {
+      this.processIntervalTimer.unref();
+    }
+
+    // Run TTL cleanup every 60 seconds
+    this.cleanupIntervalTimer = setInterval(() => {
+      if (!this.isStopped) {
+        this.cleanupExpiredJobs();
+      }
+    }, 60 * 1000);
+
+    if (this.cleanupIntervalTimer.unref) {
+      this.cleanupIntervalTimer.unref();
+    }
+  }
+
+  /**
+   * Graceful shutdown of the queue processing
+   */
+  public shutdown(): void {
+    this.isStopped = true;
+    if (this.processIntervalTimer) {
+      clearInterval(this.processIntervalTimer);
+      this.processIntervalTimer = null;
+    }
+    if (this.cleanupIntervalTimer) {
+      clearInterval(this.cleanupIntervalTimer);
+      this.cleanupIntervalTimer = null;
+    }
   }
 
   /**
@@ -71,10 +130,29 @@ class AiQueueManager {
   }
 
   /**
+   * Remove completed and failed jobs exceeding the TTL.
+   * Never removes QUEUED, PROCESSING, or RETRYING jobs.
+   */
+  public cleanupExpiredJobs(customTtlMs: number = this.jobTtlMs): number {
+    const now = Date.now();
+    let removedCount = 0;
+
+    for (const [id, job] of this.queue.entries()) {
+      const isTerminal = job.status === 'COMPLETED' || job.status === 'FAILED';
+      if (isTerminal && now - job.updatedAt > customTtlMs) {
+        this.queue.delete(id);
+        removedCount++;
+      }
+    }
+
+    return removedCount;
+  }
+
+  /**
    * Process next queued job in background
    */
   private async processNext() {
-    if (this.processing) return;
+    if (this.processing || this.isStopped) return;
     
     const pendingJob = Array.from(this.queue.values()).find(j => j.status === 'QUEUED' || j.status === 'RETRYING');
     if (!pendingJob) return;
