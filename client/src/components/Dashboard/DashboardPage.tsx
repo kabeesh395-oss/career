@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import PatternWaves from '../Common/PatternWaves';
+import { Sparkles, ArrowRight, ShieldCheck, Target, Zap, FileText, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 
 interface NextAction {
   actionId: string;
@@ -80,8 +82,16 @@ export default function DashboardPage({ onNavigate }: Props) {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-        <div style={{ color: '#94a3b8', fontSize: 15 }}>Loading dashboard…</div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 380, gap: 12 }}>
+        <div style={{
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          border: '3px solid rgba(59, 130, 246, 0.2)',
+          borderTopColor: '#3b82f6',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <div style={{ color: '#94a3b8', fontSize: 14, fontWeight: 500 }}>Calibrating dashboard metrics…</div>
       </div>
     );
   }
@@ -96,30 +106,167 @@ export default function DashboardPage({ onNavigate }: Props) {
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (analytics?.tasks?.percent || 0);
   const nextPendingTask = roadmapData?.items?.find(i => i.status !== 'completed');
 
+  const targetRoleName = profile?.target_role || analytics?.targetRole || 'Full Stack Engineer';
+
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      {/* Header */}
-      <div>
-        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>
-          Welcome back, <span className="gradient-text">{user?.fullName?.split(' ')[0] || 'Engineer'}</span>
-        </h1>
-        <p style={{ color: '#94a3b8', fontSize: 14 }}>
-          {profile?.target_role ? `Tracking toward: ${profile.target_role}` : 'Set your career target to begin.'}
-        </p>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      
+      {/* Premium Hero Welcome Banner with PatternWaves */}
+      <div
+        className="glass-card"
+        style={{
+          position: 'relative',
+          borderRadius: 18,
+          padding: '28px 28px 24px',
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%)',
+          border: '1px solid rgba(59, 130, 246, 0.25)',
+          overflow: 'hidden',
+          boxShadow: '0 12px 36px -8px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04)'
+        }}
+      >
+        {/* Subtle WebGL PatternWaves Ambient Layer */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          opacity: 0.22,
+          pointerEvents: 'auto'
+        }}>
+          <PatternWaves
+            preset="silk"
+            color="#38bdf8"
+            backgroundColor="transparent"
+            fade="edges"
+            fadeSize={0.6}
+            interactive={true}
+            speed={0.2}
+            markSize={0.85}
+            cursorSize={45}
+            cursorStrength={0.5}
+          />
+        </div>
+
+        {/* Foreground Content */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span className="badge badge-primary" style={{ fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Zap size={11} /> CAREER RADAR ACTIVE
+                </span>
+                <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>
+                  Role: <strong style={{ color: '#e2e8f0' }}>{targetRoleName}</strong>
+                </span>
+              </div>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', margin: 0 }}>
+                Welcome back, <span className="gradient-text">{user?.fullName?.split(' ')[0] || 'Developer'}</span>
+              </h1>
+              <p style={{ color: '#94a3b8', fontSize: 13.5, margin: '6px 0 0', maxWidth: 640, lineHeight: 1.5 }}>
+                Your engineering milestones and skill gaps are actively synchronized. Complete high-priority tasks to improve role readiness.
+              </p>
+            </div>
+
+            {/* Readiness Index Metric Pill */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              padding: '10px 18px',
+              borderRadius: 14,
+              background: 'rgba(15, 23, 42, 0.75)',
+              border: '1px solid rgba(59, 130, 246, 0.35)',
+              backdropFilter: 'blur(12px)'
+            }}>
+              <div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.04em', fontWeight: 600 }}>
+                  Readiness Index
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: readiness >= 70 ? '#34d399' : '#38bdf8', lineHeight: 1.1 }}>
+                  {readiness > 0 ? `${readiness}%` : 'Calibrating'}
+                </div>
+              </div>
+              <div style={{
+                width: 38,
+                height: 38,
+                borderRadius: '50%',
+                background: 'rgba(59, 130, 246, 0.15)',
+                border: '1px solid rgba(59, 130, 246, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#60a5fa'
+              }}>
+                <Target size={18} />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Action Buttons */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 4 }}>
+            <button
+              className="btn-primary"
+              onClick={() => onNavigate('resume')}
+              style={{ fontSize: 13, padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <FileText size={14} /> Scan Resume
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => onNavigate('roadmap')}
+              style={{ fontSize: 13, padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <Target size={14} /> View Roadmap
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => onNavigate('career')}
+              style={{ fontSize: 13, padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <Sparkles size={14} /> Calibrate Skills
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => onNavigate('interview')}
+              style={{ fontSize: 13, padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <ShieldCheck size={14} /> Mock Interview
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Next Best Action Card */}
       {nextAction && (
-        <div className="glass-card glow-primary" style={{ padding: '28px 28px 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <span className="badge badge-primary" style={{ fontSize: 11 }}>NEXT BEST ACTION</span>
-            <span className="badge badge-warning" style={{ fontSize: 11 }}>{nextAction.priority.toUpperCase()}</span>
+        <div
+          className="glass-card glow-primary"
+          style={{
+            padding: '24px 26px',
+            borderRadius: 16,
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(26, 39, 68, 0.85) 100%)',
+            border: '1px solid rgba(59, 130, 246, 0.35)',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="badge badge-primary" style={{ fontSize: 10, letterSpacing: '0.04em' }}>
+                RECOMMENDED FOCUS
+              </span>
+              <span className="badge badge-warning" style={{ fontSize: 10 }}>
+                {nextAction.priority.toUpperCase()}
+              </span>
+            </div>
+            <span style={{ color: '#94a3b8', fontSize: 12 }}>
+              Estimated: ~{nextAction.estimatedMinutes} min
+            </span>
           </div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{nextAction.title}</h2>
-          <p style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.7, marginBottom: 6 }}>
+          <h2 style={{ fontSize: 19, fontWeight: 700, color: '#f8fafc', marginBottom: 6 }}>
+            {nextAction.title}
+          </h2>
+          <p style={{ color: '#cbd5e1', fontSize: 13.5, lineHeight: 1.6, marginBottom: 6 }}>
             {nextAction.whyItMatters}
           </p>
-          <p style={{ color: '#64748b', fontSize: 12, marginBottom: 16 }}>
+          <p style={{ color: '#64748b', fontSize: 12, marginBottom: 14 }}>
             Evidence: {nextAction.evidence}
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -130,12 +277,10 @@ export default function DashboardPage({ onNavigate }: Props) {
                 onNavigate(route);
               }}
               id="nba-cta"
+              style={{ fontSize: 13.5, padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
-              {nextAction.ctaText} →
+              {nextAction.ctaText} <ArrowRight size={14} />
             </button>
-            <span style={{ color: '#64748b', fontSize: 12 }}>
-              ~{nextAction.estimatedMinutes} min
-            </span>
           </div>
         </div>
       )}
@@ -145,13 +290,14 @@ export default function DashboardPage({ onNavigate }: Props) {
         className="glass-card"
         style={{
           padding: '24px 26px',
+          borderRadius: 16,
           background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.85) 0%, rgba(19, 29, 53, 0.9) 100%)',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25), 0 0 16px rgba(59, 130, 246, 0.08)'
+          border: '1px solid rgba(59, 130, 246, 0.25)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)'
         }}
         id="roadmap-progress-tracker"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 18 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginBottom: 18 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span className="badge badge-primary" style={{ fontSize: 10, letterSpacing: '0.05em' }}>
@@ -161,17 +307,17 @@ export default function DashboardPage({ onNavigate }: Props) {
                 {roadmapData?.roadmap?.title || (profile?.target_role ? `${profile.target_role} Roadmap` : 'Active Roadmap')}
               </span>
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#f8fafc', letterSpacing: '-0.01em' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#f8fafc', letterSpacing: '-0.01em', margin: 0 }}>
               Roadmap Progress Summary
             </h2>
           </div>
 
           <button
             className="btn-secondary"
-            style={{ padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ padding: '7px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
             onClick={() => onNavigate('roadmap')}
           >
-            Manage Full Roadmap →
+            Manage Full Roadmap <ChevronRight size={14} />
           </button>
         </div>
 
@@ -196,7 +342,7 @@ export default function DashboardPage({ onNavigate }: Props) {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Top Score & Master Progress Bar */}
+            {/* Master Progress Bar */}
             <div>
               <div style={{
                 display: 'flex',
@@ -206,7 +352,7 @@ export default function DashboardPage({ onNavigate }: Props) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <span style={{
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: 800,
                     color: progressPercent === 100 ? '#10b981' : '#38bdf8',
                     lineHeight: 1
@@ -223,7 +369,7 @@ export default function DashboardPage({ onNavigate }: Props) {
                   alignItems: 'center',
                   gap: 8,
                   background: 'rgba(15, 23, 42, 0.6)',
-                  padding: '6px 12px',
+                  padding: '5px 12px',
                   borderRadius: 20,
                   border: '1px solid rgba(51, 65, 85, 0.5)'
                 }}>
@@ -240,21 +386,24 @@ export default function DashboardPage({ onNavigate }: Props) {
                 </div>
               </div>
 
-              {/* Master Progress Bar Container */}
-              <div className="progress-track-container">
+              {/* Master Progress Track */}
+              <div className="progress-track-container" style={{ height: 8, borderRadius: 6, background: 'rgba(30, 41, 59, 0.8)', overflow: 'hidden' }}>
                 <div
                   className="progress-bar-fill"
                   style={{
+                    height: '100%',
+                    borderRadius: 6,
                     width: `${Math.max(2, progressPercent)}%`,
                     background: progressPercent === 100
                       ? 'linear-gradient(90deg, #10b981 0%, #34d399 100%)'
-                      : 'linear-gradient(90deg, #2563eb 0%, #06b6d4 50%, #10b981 100%)'
+                      : 'linear-gradient(90deg, #2563eb 0%, #06b6d4 50%, #10b981 100%)',
+                    transition: 'width 0.4s ease'
                   }}
                 />
               </div>
             </div>
 
-            {/* Concise Upcoming Milestone Card */}
+            {/* Upcoming Milestone Card */}
             {nextPendingTask && (
               <div style={{
                 display: 'flex',
@@ -269,9 +418,9 @@ export default function DashboardPage({ onNavigate }: Props) {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 200, flex: 1 }}>
                   <div style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 6,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 7,
                     border: '1px solid rgba(59, 130, 246, 0.4)',
                     background: 'rgba(37, 99, 235, 0.15)',
                     display: 'flex',
@@ -281,7 +430,7 @@ export default function DashboardPage({ onNavigate }: Props) {
                     fontSize: 13,
                     fontWeight: 700
                   }}>
-                    →
+                    <ChevronRight size={16} />
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -307,67 +456,70 @@ export default function DashboardPage({ onNavigate }: Props) {
       </div>
 
       {/* Metrics Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-        {/* Readiness Score */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
         <MetricCard
           label="Career Readiness"
           value={`${readiness}%`}
-          detail={analytics?.targetRole || 'Not set'}
+          detail={targetRoleName}
           color="#3b82f6"
+          icon={<Target size={16} color="#3b82f6" />}
         />
-        {/* Tasks */}
         <MetricCard
           label="Roadmap Tasks"
           value={totalTasks > 0 ? `${completedTasks}/${totalTasks}` : '—'}
           detail={totalTasks > 0 ? `${progressPercent}% complete` : 'No roadmap yet'}
           color="#10b981"
+          icon={<CheckCircle2 size={16} color="#10b981" />}
         />
-        {/* Skills */}
         <MetricCard
           label="Skills Acquired"
           value={`${analytics?.skills.acquired || 0}`}
           detail={`${analytics?.skills.gapsIdentified || 0} gaps identified`}
           color="#8b5cf6"
+          icon={<Sparkles size={16} color="#8b5cf6" />}
         />
-        {/* Interviews */}
         <MetricCard
           label="Mock Interviews"
           value={`${analytics?.interviews.completed || 0}`}
           detail={analytics?.interviews.completed ? `Avg score: ${analytics.interviews.averageScore}%` : 'No interviews yet'}
           color="#06b6d4"
+          icon={<ShieldCheck size={16} color="#06b6d4" />}
         />
-        {/* Projects */}
         <MetricCard
           label="Portfolio Projects"
           value={`${analytics?.projects.total || 0}`}
           detail={`${analytics?.projects.completed || 0} completed`}
           color="#f59e0b"
+          icon={<Zap size={16} color="#f59e0b" />}
         />
-        {/* Resume */}
         <MetricCard
           label="Resume ATS Score"
           value={analytics?.resume ? `${analytics.resume.overallScore}%` : '—'}
-          detail={analytics?.resume ? 'Last analysis available' : 'No resume analyzed'}
+          detail={analytics?.resume ? 'Latest ATS analysis' : 'No resume analyzed'}
           color="#ef4444"
+          icon={<FileText size={16} color="#ef4444" />}
         />
       </div>
 
-      {/* Recent Activity */}
-      <div className="glass-card" style={{ padding: '20px 24px' }}>
-        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16, color: '#e2e8f0' }}>Recent Activity</h3>
+      {/* Recent Activity Audit Trail */}
+      <div className="glass-card" style={{ padding: '20px 24px', borderRadius: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <Activity size={16} color="#60a5fa" />
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Verified Activity Stream</h3>
+        </div>
         {(!analytics?.recentActivity || analytics.recentActivity.length === 0) ? (
-          <p style={{ color: '#64748b', fontSize: 13 }}>No activity yet. Complete actions above to build your history.</p>
+          <p style={{ color: '#64748b', fontSize: 13, margin: 0 }}>No telemetry recorded yet. Complete roadmap milestones or scan resumes to generate verified events.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {analytics.recentActivity.slice(0, 6).map((evt, i) => (
               <div key={i} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '8px 0', borderBottom: '1px solid rgba(51,65,85,0.3)'
+                padding: '8px 10px', borderRadius: 8, background: 'rgba(30, 41, 59, 0.3)', border: '1px solid rgba(51, 65, 85, 0.25)'
               }}>
-                <span style={{ fontSize: 13, color: '#cbd5e1' }}>
+                <span style={{ fontSize: 13, color: '#cbd5e1', fontWeight: 500 }}>
                   {evt.eventName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                 </span>
-                <span style={{ fontSize: 11, color: '#64748b' }}>
+                <span style={{ fontSize: 11.5, color: '#64748b' }}>
                   {new Date(evt.timestamp).toLocaleString()}
                 </span>
               </div>
@@ -379,18 +531,20 @@ export default function DashboardPage({ onNavigate }: Props) {
   );
 }
 
-function MetricCard({ label, value, detail, color }: { label: string; value: string; detail: string; color: string }) {
+function MetricCard({ label, value, detail, color, icon }: { label: string; value: string; detail: string; color: string; icon?: React.ReactNode }) {
   return (
-    <div className="glass-card" style={{ padding: '20px 22px' }}>
-      <div style={{
-        width: 8, height: 8, borderRadius: '50%',
-        background: color, marginBottom: 12,
-        boxShadow: `0 0 10px ${color}60`
-      }} />
-      <div style={{ fontSize: 26, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>{value}</div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 2 }}>{label}</div>
+    <div className="glass-card" style={{ padding: '18px 20px', borderRadius: 14, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: color,
+          boxShadow: `0 0 10px ${color}60`
+        }} />
+        {icon}
+      </div>
+      <div style={{ fontSize: 24, fontWeight: 800, color: '#f1f5f9', marginBottom: 3, letterSpacing: '-0.02em' }}>{value}</div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: '#94a3b8', marginBottom: 2 }}>{label}</div>
       <div style={{ fontSize: 11, color: '#64748b' }}>{detail}</div>
     </div>
   );
 }
-

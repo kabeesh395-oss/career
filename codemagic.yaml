@@ -1,18 +1,64 @@
 workflows:
-  android-workflow:
-    name: CareerHub Native Android APK Build
+  android-release-workflow:
+    name: Career Hub Android APK Build
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
       vars:
         PACKAGE_NAME: "com.aistudio.careerpilot.vynwkq"
       java: 21
+      android_signing:
+        - android_keystore
+    triggering:
+      events:
+        - push
+        - tag
+        - pull_request
+      branch_patterns:
+        - pattern: '*'
+          include: true
+          source: true
     scripts:
-      - name: Build Native Android Release APK
+      - name: Prepare Build Environment and Keystore
         script: |
-          chmod +x gradlew || true
-          ./gradlew clean assembleRelease -x lint -x lintVitalRelease
-          cp -f app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CareerHub.apk 2>/dev/null || true
+          set -e
+          echo "Preparing environment for Career Hub Android build..."
+          chmod +x gradlew
+
+          # Ensure .env exists for Secrets Gradle Plugin
+          if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+            cp .env.example .env
+          fi
+
+          # Decode or generate keystore if not already present
+          if [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then
+            echo "Decoding debug.keystore from base64..."
+            (base64 --decode debug.keystore.base64 > debug.keystore 2>/dev/null || base64 -d debug.keystore.base64 > debug.keystore 2>/dev/null || true)
+          fi
+
+          if [ ! -f "debug.keystore" ]; then
+            echo "Generating fallback signing keystore..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=CareerHub Debug,O=AIStudio,C=US"
+          fi
+      - name: Build Android Release APK
+        script: |
+          set -e
+          echo "Building Release APK via Gradle..."
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+          # Create a friendly named copy for easy identification in artifacts
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            cp -f app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CareerHub-release.apk
+            echo "Release APK generated successfully at app/build/outputs/apk/release/CareerHub-release.apk"
+          fi
     artifacts:
-      - app/build/outputs/apk/release/CareerHub.apk
+      - app/build/outputs/apk/release/CareerHub-release.apk
       - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/apk/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - kabeesh395@gmail.com
+        notify:
+          success: true
+          failure: true

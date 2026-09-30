@@ -8,9 +8,11 @@ class CareerPilotApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         try {
-            FirebaseApp.initializeApp(this)
+            if (FirebaseApp.getApps(this).isEmpty()) {
+                FirebaseApp.initializeApp(this)
+            }
             Log.d("CareerPilotApp", "FirebaseApp successfully initialized.")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w("CareerPilotApp", "FirebaseApp init note: ${e.message}")
         }
     }

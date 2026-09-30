@@ -150,7 +150,7 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
     expect(screen.queryByTestId('auth-page')).toBeNull();
   });
 
-  it('renders correct page when mounted with an initial hash route', () => {
+  it('renders correct page when mounted with an initial hash route', async () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: mockAuthenticatedUser,
       profile: null,
@@ -165,11 +165,11 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
 
     render(<AppContent />);
 
-    expect(screen.getByTestId('roadmap-page')).toBeDefined();
+    expect(await screen.findByTestId('roadmap-page')).toBeDefined();
     expect(screen.queryByTestId('dashboard-page')).toBeNull();
   });
 
-  it('transitions between active pages on hashchange event', () => {
+  it('transitions between active pages on hashchange event', async () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: mockAuthenticatedUser,
       profile: null,
@@ -189,7 +189,7 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
       window.location.hash = '#/career';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('career-page')).toBeDefined();
+    expect(await screen.findByTestId('career-page')).toBeDefined();
     expect(screen.queryByTestId('dashboard-page')).toBeNull();
 
     // Transition to Resume
@@ -197,7 +197,7 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
       window.location.hash = '#/resume';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('resume-page')).toBeDefined();
+    expect(await screen.findByTestId('resume-page')).toBeDefined();
     expect(screen.queryByTestId('career-page')).toBeNull();
 
     // Transition to Projects
@@ -205,49 +205,49 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
       window.location.hash = '#/projects';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('projects-page')).toBeDefined();
+    expect(await screen.findByTestId('projects-page')).toBeDefined();
 
     // Transition to Interview
     act(() => {
       window.location.hash = '#/interview';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('interview-page')).toBeDefined();
+    expect(await screen.findByTestId('interview-page')).toBeDefined();
 
     // Transition to Learning
     act(() => {
       window.location.hash = '#/learning';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('learning-page')).toBeDefined();
+    expect(await screen.findByTestId('learning-page')).toBeDefined();
 
     // Transition to Integrations
     act(() => {
       window.location.hash = '#/integrations';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('integrations-page')).toBeDefined();
+    expect(await screen.findByTestId('integrations-page')).toBeDefined();
 
     // Transition to Analytics
     act(() => {
       window.location.hash = '#/analytics';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('analytics-page')).toBeDefined();
+    expect(await screen.findByTestId('analytics-page')).toBeDefined();
 
     // Transition to Edge AI
     act(() => {
       window.location.hash = '#/edge-ai';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('edge-ai-page')).toBeDefined();
+    expect(await screen.findByTestId('edge-ai-page')).toBeDefined();
 
     // Transition to Profile
     act(() => {
       window.location.hash = '#/profile';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByTestId('profile-page')).toBeDefined();
+    expect(await screen.findByTestId('profile-page')).toBeDefined();
   });
 
   it('falls back to DashboardPage when navigation receives an unknown hash', () => {

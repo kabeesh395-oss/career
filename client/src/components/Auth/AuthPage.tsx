@@ -1,5 +1,8 @@
 import { useState, FormEvent } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import PatternWaves from '../Common/PatternWaves';
+import { CareerHubLogo } from '../Common/CareerHubLogo';
+import { ShieldCheck, Sparkles, Cpu, ArrowRight } from 'lucide-react';
 
 export default function AuthPage() {
   const { login, signup } = useAuth();
@@ -27,70 +30,175 @@ export default function AuthPage() {
     }
   };
 
+  const handleQuickFill = () => {
+    setEmail('demo@careerhub.dev');
+    setPassword('DemoCareer2026!');
+    if (!isLogin) {
+      setFullName('Jordan Vance');
+    }
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
+      width: '100%',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       background: 'hsl(var(--bg-base))',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      padding: '24px 16px'
     }}>
-      {/* Ambient glow orbs using theme accents */}
+      {/* Interactive WebGL PatternWaves Ambient Canvas */}
       <div style={{
-        position: 'absolute', top: '15%', left: '20%', width: 400, height: 400,
-        background: 'radial-gradient(circle, hsla(var(--primary), 0.12) 0%, transparent 70%)',
-        borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none'
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        opacity: 0.32,
+        pointerEvents: 'auto'
+      }}>
+        <PatternWaves
+          preset="silk"
+          color="#3b82f6"
+          backgroundColor="transparent"
+          fade="edges"
+          fadeSize={0.65}
+          interactive={true}
+          cursorSize={60}
+          cursorStrength={0.7}
+          speed={0.25}
+          markSize={0.9}
+        />
+      </div>
+
+      {/* Ambient background gradient accents */}
+      <div style={{
+        position: 'absolute',
+        top: '12%',
+        left: '18%',
+        width: 480,
+        height: 480,
+        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%)',
+        borderRadius: '50%',
+        filter: 'blur(80px)',
+        pointerEvents: 'none'
       }} />
       <div style={{
-        position: 'absolute', bottom: '10%', right: '15%', width: 350, height: 350,
-        background: 'radial-gradient(circle, hsla(var(--accent-purple), 0.10) 0%, transparent 70%)',
-        borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none'
+        position: 'absolute',
+        bottom: '10%',
+        right: '15%',
+        width: 420,
+        height: 420,
+        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%)',
+        borderRadius: '50%',
+        filter: 'blur(80px)',
+        pointerEvents: 'none'
       }} />
 
-      <div className="glass-panel animate-fade-in" style={{
-        width: '100%', maxWidth: 440, padding: '40px 36px', position: 'relative', zIndex: 1
-      }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8
-          }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 12,
-              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent-cyan)))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 20, fontWeight: 800, color: '#fff',
-              boxShadow: '0 0 20px hsla(var(--primary), 0.4)'
-            }}>⬡</div>
-            <span style={{ fontSize: 22, fontWeight: 700 }} className="gradient-text">
-              Career Hub
-            </span>
+      {/* Main Glass Card */}
+      <div
+        className="glass-panel animate-fade-in"
+        style={{
+          width: '100%',
+          maxWidth: 460,
+          padding: '36px 32px',
+          position: 'relative',
+          zIndex: 10,
+          borderRadius: 20,
+          background: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(59, 130, 246, 0.22)',
+          boxShadow: '0 20px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04)'
+        }}
+      >
+        {/* Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <CareerHubLogo size={42} showSubtitle={true} />
           </div>
-          <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 14 }}>
-            {isLogin ? 'Welcome back. Sign in to your developer workspace.' : 'Create your engineer portfolio & career workspace.'}
+          <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 13.5, lineHeight: 1.5, margin: '8px 0 0' }}>
+            {isLogin
+              ? 'Sign in to access your calibrated career roadmap, ATS resumes, and engineering velocity.'
+              : 'Create your production portfolio workspace and start your career roadmap.'}
           </p>
+        </div>
+
+        {/* Feature Highlights Pills */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 6,
+          flexWrap: 'wrap',
+          marginBottom: 22
+        }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '3px 8px',
+            borderRadius: 6,
+            background: 'rgba(59, 130, 246, 0.12)',
+            border: '1px solid rgba(59, 130, 246, 0.25)',
+            color: '#93c5fd',
+            fontSize: 11,
+            fontWeight: 500
+          }}>
+            <Sparkles size={11} /> ATS Scanner
+          </span>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '3px 8px',
+            borderRadius: 6,
+            background: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+            color: '#6ee7b7',
+            fontSize: 11,
+            fontWeight: 500
+          }}>
+            <ShieldCheck size={11} /> Phased Roadmaps
+          </span>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '3px 8px',
+            borderRadius: 6,
+            background: 'rgba(168, 85, 247, 0.12)',
+            border: '1px solid rgba(168, 85, 247, 0.25)',
+            color: '#d8b4fe',
+            fontSize: 11,
+            fontWeight: 500
+          }}>
+            <Cpu size={11} /> Edge AI
+          </span>
         </div>
 
         {error && (
           <div style={{
-            background: 'hsla(var(--danger), 0.12)',
-            border: '1px solid hsla(var(--danger), 0.35)',
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
             borderRadius: 10,
-            padding: '10px 14px',
+            padding: '11px 14px',
             marginBottom: 20,
-            color: 'hsl(var(--danger))',
-            fontSize: 13
+            color: '#f87171',
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
           }}>
-            {error}
+            <span>⚠️</span>
+            <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {!isLogin && (
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'hsl(var(--text-secondary))', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
                 Full Name
               </label>
               <input
@@ -101,13 +209,41 @@ export default function AuthPage() {
                 onChange={e => setFullName(e.target.value)}
                 required={!isLogin}
                 id="auth-fullname"
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: '1px solid rgba(51, 65, 85, 0.8)',
+                  color: '#f8fafc',
+                  fontSize: 14,
+                  boxSizing: 'border-box'
+                }}
               />
             </div>
           )}
+
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'hsl(var(--text-secondary))', marginBottom: 6 }}>
-              Email Address
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 500, color: '#94a3b8' }}>
+                Email Address
+              </label>
+              <button
+                type="button"
+                onClick={handleQuickFill}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#60a5fa',
+                  fontSize: 11.5,
+                  cursor: 'pointer',
+                  padding: 0,
+                  textDecoration: 'underline'
+                }}
+              >
+                Quick fill sample
+              </button>
+            </div>
             <input
               className="input-field"
               type="email"
@@ -116,10 +252,21 @@ export default function AuthPage() {
               onChange={e => setEmail(e.target.value)}
               required
               id="auth-email"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 8,
+                background: 'rgba(15, 23, 42, 0.6)',
+                border: '1px solid rgba(51, 65, 85, 0.8)',
+                color: '#f8fafc',
+                fontSize: 14,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
+
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'hsl(var(--text-secondary))', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
               Password
             </label>
             <input
@@ -131,6 +278,16 @@ export default function AuthPage() {
               required
               minLength={6}
               id="auth-password"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 8,
+                background: 'rgba(15, 23, 42, 0.6)',
+                border: '1px solid rgba(51, 65, 85, 0.8)',
+                color: '#f8fafc',
+                fontSize: 14,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
@@ -138,15 +295,28 @@ export default function AuthPage() {
             className="btn-primary"
             type="submit"
             disabled={loading}
-            style={{ width: '100%', marginTop: 8, padding: '12px 20px', fontSize: 15, opacity: loading ? 0.7 : 1 }}
+            style={{
+              width: '100%',
+              marginTop: 6,
+              padding: '12px 20px',
+              fontSize: 14.5,
+              fontWeight: 600,
+              opacity: loading ? 0.7 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
             id="auth-submit"
           >
-            {loading ? 'Processing…' : (isLogin ? 'Sign In' : 'Create Account')}
+            {loading ? 'Processing…' : (isLogin ? 'Sign In' : 'Create Workspace Account')}
+            {!loading && <ArrowRight size={15} />}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 24 }}>
-          <span style={{ color: 'hsl(var(--text-muted))', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', marginTop: 22, paddingTop: 16, borderTop: '1px solid rgba(51, 65, 85, 0.4)' }}>
+          <span style={{ color: '#94a3b8', fontSize: 13 }}>
             {isLogin ? "Don't have an account?" : 'Already have an account?'}
           </span>
           <button
@@ -154,7 +324,7 @@ export default function AuthPage() {
             style={{
               background: 'none',
               border: 'none',
-              color: 'hsl(var(--primary))',
+              color: '#3b82f6',
               cursor: 'pointer',
               fontWeight: 600,
               fontSize: 13,
@@ -162,7 +332,7 @@ export default function AuthPage() {
             }}
             id="auth-toggle"
           >
-            {isLogin ? 'Sign Up' : 'Sign In'}
+            {isLogin ? 'Create Account' : 'Sign In'}
           </button>
         </div>
       </div>

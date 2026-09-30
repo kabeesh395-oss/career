@@ -8,6 +8,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -28,8 +29,16 @@ data class AuthUserState(
 
 class FirebaseAuthManager(private val context: Context) {
 
-    private val auth: FirebaseAuth by lazy {
-        FirebaseAuth.getInstance()
+    private fun getAuthSafe(): FirebaseAuth? {
+        return try {
+            if (FirebaseApp.getApps(context).isEmpty()) {
+                FirebaseApp.initializeApp(context)
+            }
+            FirebaseAuth.getInstance()
+        } catch (e: Throwable) {
+            Log.w("FirebaseAuthManager", "Firebase Auth not available / not configured: ${e.message}")
+            null
+        }
     }
 
     private val credentialManager: CredentialManager by lazy {
@@ -42,20 +51,20 @@ class FirebaseAuthManager(private val context: Context) {
     init {
         checkCurrentAuth()
         try {
-            auth.addAuthStateListener { firebaseAuth ->
+            getAuthSafe()?.addAuthStateListener { firebaseAuth ->
                 val user = firebaseAuth.currentUser
                 updateUserState(user)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w("FirebaseAuthManager", "Firebase Auth init note: ${e.message}")
         }
     }
 
     private fun checkCurrentAuth() {
         try {
-            val current = auth.currentUser
+            val current = getAuthSafe()?.currentUser
             updateUserState(current)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w("FirebaseAuthManager", "Firebase check auth error: ${e.message}")
             _userState.value = AuthUserState(
                 uid = null,
@@ -100,6 +109,9 @@ class FirebaseAuthManager(private val context: Context) {
         }
         _userState.value = _userState.value.copy(isSyncing = true, statusMessage = "Authenticating account...")
 
+        val auth = getAuthSafe()
+            ?: return Result.failure(IllegalStateException("Firebase Auth is not configured on this device."))
+
         return try {
             val authResult = auth.signInWithEmailAndPassword(trimmedEmail, pass).await()
             val user = authResult.user
@@ -128,6 +140,9 @@ class FirebaseAuthManager(private val context: Context) {
         }
         _userState.value = _userState.value.copy(isSyncing = true, statusMessage = "Creating Career Hub account...")
 
+        val auth = getAuthSafe()
+            ?: return Result.failure(IllegalStateException("Firebase Auth is not configured on this device."))
+
         return try {
             val authResult = auth.createUserWithEmailAndPassword(trimmedEmail, pass).await()
             val user = authResult.user
@@ -150,6 +165,9 @@ class FirebaseAuthManager(private val context: Context) {
      */
     suspend fun signInWithGoogle(webClientId: String? = null): Result<AuthUserState> {
         _userState.value = _userState.value.copy(isSyncing = true, statusMessage = "Initiating Google Sign-In...")
+
+        val auth = getAuthSafe()
+            ?: return Result.failure(IllegalStateException("Firebase Auth is not configured on this device."))
 
         return try {
             val serverClientId = webClientId ?: "default_client_id"
@@ -194,14 +212,18 @@ class FirebaseAuthManager(private val context: Context) {
      */
     fun signOut() {
         try {
-            auth.signOut()
-        } catch (e: Exception) {
+            getAuthSafe()?.signOut()
+        } catch (e: Throwable) {
             Log.w("FirebaseAuthManager", "Sign out note: ${e.message}")
         }
         updateUserState(null)
     }
 
     fun getCurrentUserId(): String? {
-        return auth.currentUser?.uid ?: _userState.value.uid
+        return try {
+            getAuthSafe()?.currentUser?.uid ?: _userState.value.uid
+        } catch (e: Throwable) {
+            _userState.value.uid
+        }
     }
 }
