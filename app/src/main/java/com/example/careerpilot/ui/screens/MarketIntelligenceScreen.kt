@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -95,7 +96,29 @@ fun MarketIntelligenceScreen(
                             )
                         }
                         Column {
-                            PulsingLiveBadge(text = "SEARCH GROUNDING ACTIVE", color = AccentCyan)
+                            val badgeText: String
+                            val badgeColor: Color
+                            val subtitleText: String
+
+                            if (isSearching) {
+                                badgeText = "LOADING LIVE DATA..."
+                                badgeColor = WarningAmber
+                                subtitleText = "Executing grounded intelligence query..."
+                            } else if (searchResult == null) {
+                                badgeText = "NO DATA LOADED"
+                                badgeColor = TextMuted
+                                subtitleText = "Select a preset or enter query below"
+                            } else if (searchResult?.isLiveSearch == true) {
+                                badgeText = "LIVE SEARCH GROUNDED"
+                                badgeColor = AccentCyan
+                                subtitleText = "Powered by gemini-2.5-flash with live googleSearch (${searchResult?.sources?.size ?: 0} sources cited)"
+                            } else {
+                                badgeText = "CACHED BENCHMARK DATA"
+                                badgeColor = PrimaryBlue
+                                subtitleText = "Silicon Valley benchmark intelligence dataset (Offline Mode)"
+                            }
+
+                            PulsingLiveBadge(text = badgeText, color = badgeColor)
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Market Intelligence Hub",
@@ -104,7 +127,7 @@ fun MarketIntelligenceScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = "Powered by gemini-3.5-flash with googleSearch tool",
+                                text = subtitleText,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextMuted,
                                 fontSize = 10.sp

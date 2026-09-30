@@ -1,6 +1,7 @@
 package com.example.careerpilot.ui.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.careerpilot.data.firebase.AuthUserState
@@ -156,6 +157,34 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
     private val _userMessage = MutableStateFlow<String?>(null)
     val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
 
+    private val _salaryNegotiation = MutableStateFlow(SalaryNegotiationState())
+    val salaryNegotiation: StateFlow<SalaryNegotiationState> = _salaryNegotiation.asStateFlow()
+
+    fun updateSalaryNegotiation(
+        baseSalary: Double,
+        equityGrant: Double,
+        signOn: Double,
+        bonusPercent: Double,
+        scenarioIndex: Int
+    ) {
+        _salaryNegotiation.value = SalaryNegotiationState(
+            baseSalary = baseSalary,
+            equityGrant = equityGrant,
+            signOn = signOn,
+            bonusPercent = bonusPercent,
+            selectedScenarioIndex = scenarioIndex
+        )
+        viewModelScope.launch {
+            try {
+                val current = userProfile.value ?: return@launch
+                val encoded = "${baseSalary.toLong()};${equityGrant.toLong()};${signOn.toLong()};${bonusPercent.toLong()};$scenarioIndex"
+                repository.updateProfile(current.copy(targetSalary = encoded))
+            } catch (e: Exception) {
+                Log.w("CareerViewModel", "Could not persist salary model: ${e.message}")
+            }
+        }
+    }
+
     init {
         val db = AppDatabase.getDatabase(application)
         val currentUserIdFlow = authManager.userState.map { state ->
@@ -228,6 +257,25 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
         opportunities = repository.opportunitiesFlow.stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
+
+        viewModelScope.launch {
+            userProfile.collectLatest { prof ->
+                if (prof != null && prof.targetSalary.isNotBlank()) {
+                    try {
+                        val parts = prof.targetSalary.split(";")
+                        if (parts.size >= 5) {
+                            _salaryNegotiation.value = SalaryNegotiationState(
+                                baseSalary = parts[0].toDoubleOrNull() ?: 165000.0,
+                                equityGrant = parts[1].toDoubleOrNull() ?: 200000.0,
+                                signOn = parts[2].toDoubleOrNull() ?: 20000.0,
+                                bonusPercent = parts[3].toDoubleOrNull() ?: 15.0,
+                                selectedScenarioIndex = parts[4].toIntOrNull() ?: 0
+                            )
+                        }
+                    } catch (_: Exception) {}
+                }
+            }
+        }
 
         viewModelScope.launch {
             authUserState.collectLatest { authState ->

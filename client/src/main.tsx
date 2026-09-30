@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -6,21 +6,52 @@ import AuthPage from './components/Auth/AuthPage';
 import Sidebar from './components/Layout/Sidebar';
 import AppHeader from './components/Layout/AppHeader';
 import DashboardPage from './components/Dashboard/DashboardPage';
-import CareerPage from './components/Career/CareerPage';
-import RoadmapPage from './components/Roadmap/RoadmapPage';
-import ResumePage from './components/Resume/ResumePage';
-import ProjectsPage from './components/Projects/ProjectsPage';
-import InterviewPage from './components/Interview/InterviewPage';
-import LearningPage from './components/Learning/LearningPage';
-import IntegrationsPage from './components/Integrations/IntegrationsPage';
-import AnalyticsPage from './components/Analytics/AnalyticsPage';
-import ProfilePage from './components/Profile/ProfilePage';
-import EdgeAiPage from './components/EdgeAI/EdgeAiPage';
 import './index.css';
+
+// Code splitting: Secondary pages loaded dynamically via React.lazy
+const CareerPage = lazy(() => import('./components/Career/CareerPage'));
+const RoadmapPage = lazy(() => import('./components/Roadmap/RoadmapPage'));
+const ResumePage = lazy(() => import('./components/Resume/ResumePage'));
+const ProjectsPage = lazy(() => import('./components/Projects/ProjectsPage'));
+const InterviewPage = lazy(() => import('./components/Interview/InterviewPage'));
+const LearningPage = lazy(() => import('./components/Learning/LearningPage'));
+const IntegrationsPage = lazy(() => import('./components/Integrations/IntegrationsPage'));
+const AnalyticsPage = lazy(() => import('./components/Analytics/AnalyticsPage'));
+const ProfilePage = lazy(() => import('./components/Profile/ProfilePage'));
+const EdgeAiPage = lazy(() => import('./components/EdgeAI/EdgeAiPage'));
+
+function PageLoadingFallback() {
+  return (
+    <div
+      style={{
+        padding: '60px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 14,
+        color: 'hsl(var(--text-secondary))',
+      }}
+    >
+      <div
+        style={{
+          width: 32,
+          height: 32,
+          border: '3px solid rgba(59, 130, 246, 0.2)',
+          borderTopColor: '#38bdf8',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }}
+      />
+      <span style={{ fontSize: 13, color: 'hsl(var(--text-muted))' }}>Loading view…</span>
+    </div>
+  );
+}
 
 export function AppContent() {
   const { user, loading } = useAuth();
   const [activePage, setActivePage] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Simple Hash Router sync
   useEffect(() => {
@@ -45,21 +76,28 @@ export function AppContent() {
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'hsl(var(--bg-base))',
-        color: 'hsl(var(--text-secondary))',
-        fontSize: 16
-      }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'hsl(var(--bg-base))',
+          color: 'hsl(var(--text-secondary))',
+          fontSize: 16,
+        }}
+      >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 40, height: 40, border: '3px solid rgba(59,130,246,0.2)',
-            borderTopColor: '#3b82f6', borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: '3px solid rgba(59,130,246,0.2)',
+              borderTopColor: '#3b82f6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }}
+          />
           <span>Authenticating Session…</span>
         </div>
         <style>{`
@@ -75,7 +113,7 @@ export function AppContent() {
     return <AuthPage />;
   }
 
-  // Render correct page view
+  // Render correct page view inside Suspense boundary
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
@@ -107,16 +145,21 @@ export function AppContent() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'hsl(var(--bg-base))' }}>
-      <Sidebar activePage={activePage} onNavigate={navigateTo} />
-      <main style={{
-        flex: 1,
-        marginLeft: 240, // Match sidebar width
-        padding: '24px 36px 48px',
-        maxWidth: 1240,
-        width: 'calc(100% - 240px)'
-      }}>
-        <AppHeader activePage={activePage} onNavigate={navigateTo} />
-        {renderPage()}
+      <Sidebar
+        activePage={activePage}
+        onNavigate={navigateTo}
+        isOpenMobile={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
+      />
+      <main className="app-main-content">
+        <AppHeader
+          activePage={activePage}
+          onNavigate={navigateTo}
+          onToggleMobileMenu={() => setIsMobileMenuOpen(prev => !prev)}
+        />
+        <Suspense fallback={<PageLoadingFallback />}>
+          {renderPage()}
+        </Suspense>
       </main>
     </div>
   );
@@ -140,4 +183,3 @@ if (rootElement) {
     </React.StrictMode>
   );
 }
-

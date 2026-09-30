@@ -48,6 +48,8 @@ export const navItems: NavItem[] = navSections.flatMap((section) => section.item
 interface Props {
   activePage: string;
   onNavigate: (page: string) => void;
+  isOpenMobile?: boolean;
+  onCloseMobile?: () => void;
 }
 
 // Crisp, pixel-aligned vector icons for navigation
@@ -275,51 +277,55 @@ function NavButton({
   );
 }
 
-export default function Sidebar({ activePage, onNavigate }: Props) {
+export default function Sidebar({ activePage, onNavigate, isOpenMobile = false, onCloseMobile }: Props) {
   const { user, logout } = useAuth();
 
+  const handleNav = (page: string) => {
+    onNavigate(page);
+    onCloseMobile?.();
+  };
+
   return (
-    <motion.aside
-      initial={{ x: -240, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-      className="sidebar-container"
-      style={{
-        width: 240,
-        height: '100vh',
-        background: 'rgba(11, 15, 25, 0.98)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderRight: '1px solid rgba(51, 65, 85, 0.5)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '16px 12px',
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        zIndex: 50,
-        boxSizing: 'border-box',
-      }}
-    >
-      {/* Brand Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.35 }}
-        onClick={() => onNavigate('dashboard')}
-        className="sidebar-brand"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '6px 8px 16px 8px',
-          marginBottom: 12,
-          borderBottom: '1px solid rgba(51, 65, 85, 0.35)',
-          cursor: 'pointer',
-        }}
+    <>
+      {isOpenMobile && (
+        <div
+          className="sidebar-backdrop"
+          onClick={onCloseMobile}
+          data-testid="sidebar-backdrop"
+        />
+      )}
+      <aside
+        className={`sidebar-container ${isOpenMobile ? 'mobile-open' : ''}`}
+        aria-label="Sidebar Navigation"
       >
-        <CareerHubLogo size={34} showSubtitle={true} />
-      </motion.div>
+        {/* Brand Header */}
+        <div
+          className="sidebar-brand"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            padding: '6px 8px 16px 8px',
+            marginBottom: 12,
+            borderBottom: '1px solid rgba(51, 65, 85, 0.35)',
+          }}
+        >
+          <div
+            onClick={() => handleNav('dashboard')}
+            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+          >
+            <CareerHubLogo size={34} showSubtitle={true} />
+          </div>
+          <button
+            type="button"
+            className="sidebar-mobile-close-btn"
+            onClick={onCloseMobile}
+            aria-label="Close navigation"
+          >
+            ✕
+          </button>
+        </div>
 
       {/* Categorized Navigation with Professional Spacing & Consistent Margins */}
       <nav
@@ -378,7 +384,7 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
                     key={item.id}
                     item={item}
                     isActive={isActive}
-                    onNavigate={onNavigate}
+                    onNavigate={handleNav}
                     index={globalIndex}
                   />
                 );
@@ -507,7 +513,8 @@ export default function Sidebar({ activePage, onNavigate }: Props) {
           Sign Out
         </motion.button>
       </motion.div>
-    </motion.aside>
+    </aside>
+    </>
   );
 }
 

@@ -53,6 +53,16 @@ export async function api<T = any>(
     throw new Error('Session expired. Please log in again.');
   }
 
+  if (res.status === 429) {
+    let msg = 'Too many requests. Please wait a moment before trying again.';
+    try {
+      const errData = await res.json();
+      if (errData?.error) msg = typeof errData.error === 'string' ? errData.error : errData.error.message || msg;
+      else if (errData?.message) msg = errData.message;
+    } catch { /* empty */ }
+    throw new Error(msg);
+  }
+
   if (!res.ok) {
     let errorMessage = `API request failed with status ${res.status}`;
     try {

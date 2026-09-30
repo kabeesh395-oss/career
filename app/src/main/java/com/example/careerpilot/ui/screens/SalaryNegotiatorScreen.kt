@@ -23,6 +23,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.careerpilot.data.model.SalaryNegotiationState
 import com.example.careerpilot.data.repository.SalaryNegotiationEngine
 import com.example.careerpilot.ui.animation.*
 import com.example.careerpilot.ui.components.*
@@ -37,13 +38,31 @@ fun SalaryNegotiatorScreen(
     modifier: Modifier = Modifier
 ) {
     val clipboardManager = LocalClipboardManager.current
-    var baseSalaryInput by remember { mutableStateOf("165000") }
-    var equityGrantInput by remember { mutableStateOf("200000") }
-    var signOnInput by remember { mutableStateOf("20000") }
-    var bonusPercentInput by remember { mutableStateOf("15") }
-    var selectedScenarioIndex by remember { mutableIntStateOf(0) }
+    val salaryState by viewModel.salaryNegotiation.collectAsState()
+
+    var baseSalaryInput by remember(salaryState.baseSalary) { mutableStateOf(salaryState.baseSalary.toLong().toString()) }
+    var equityGrantInput by remember(salaryState.equityGrant) { mutableStateOf(salaryState.equityGrant.toLong().toString()) }
+    var signOnInput by remember(salaryState.signOn) { mutableStateOf(salaryState.signOn.toLong().toString()) }
+    var bonusPercentInput by remember(salaryState.bonusPercent) { mutableStateOf(salaryState.bonusPercent.toLong().toString()) }
+    var selectedScenarioIndex by remember(salaryState.selectedScenarioIndex) { mutableIntStateOf(salaryState.selectedScenarioIndex) }
     var showCopiedToast by remember { mutableStateOf(false) }
     var triggerCelebration by remember { mutableStateOf(false) }
+
+    fun syncState(
+        base: String = baseSalaryInput,
+        equity: String = equityGrantInput,
+        sign: String = signOnInput,
+        bonus: String = bonusPercentInput,
+        scenario: Int = selectedScenarioIndex
+    ) {
+        viewModel.updateSalaryNegotiation(
+            baseSalary = base.toDoubleOrNull() ?: 165000.0,
+            equityGrant = equity.toDoubleOrNull() ?: 200000.0,
+            signOn = sign.toDoubleOrNull() ?: 20000.0,
+            bonusPercent = bonus.toDoubleOrNull() ?: 15.0,
+            scenarioIndex = scenario
+        )
+    }
 
     val baseSalary = baseSalaryInput.toDoubleOrNull() ?: 165000.0
     val equityGrant = equityGrantInput.toDoubleOrNull() ?: 200000.0
@@ -169,14 +188,22 @@ fun SalaryNegotiatorScreen(
                 ) {
                     OutlinedTextField(
                         value = baseSalaryInput,
-                        onValueChange = { baseSalaryInput = it.filter { c -> c.isDigit() } },
+                        onValueChange = {
+                            val clean = it.filter { c -> c.isDigit() }
+                            baseSalaryInput = clean
+                            syncState(base = clean)
+                        },
                         label = { Text("Base Salary ($)") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = equityGrantInput,
-                        onValueChange = { equityGrantInput = it.filter { c -> c.isDigit() } },
+                        onValueChange = {
+                            val clean = it.filter { c -> c.isDigit() }
+                            equityGrantInput = clean
+                            syncState(equity = clean)
+                        },
                         label = { Text("4-Yr RSU ($)") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
@@ -191,14 +218,22 @@ fun SalaryNegotiatorScreen(
                 ) {
                     OutlinedTextField(
                         value = signOnInput,
-                        onValueChange = { signOnInput = it.filter { c -> c.isDigit() } },
+                        onValueChange = {
+                            val clean = it.filter { c -> c.isDigit() }
+                            signOnInput = clean
+                            syncState(sign = clean)
+                        },
                         label = { Text("Sign-on Bonus ($)") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
                     OutlinedTextField(
                         value = bonusPercentInput,
-                        onValueChange = { bonusPercentInput = it.filter { c -> c.isDigit() } },
+                        onValueChange = {
+                            val clean = it.filter { c -> c.isDigit() }
+                            bonusPercentInput = clean
+                            syncState(bonus = clean)
+                        },
                         label = { Text("Target Bonus (%)") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
@@ -225,7 +260,10 @@ fun SalaryNegotiatorScreen(
                     val scenario = scenarios[idx]
                     FilterChip(
                         selected = isSelected,
-                        onClick = { selectedScenarioIndex = idx },
+                        onClick = {
+                            selectedScenarioIndex = idx
+                            syncState(scenario = idx)
+                        },
                         label = { Text(scenario.title, fontSize = 11.sp) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = PrimaryBlue,

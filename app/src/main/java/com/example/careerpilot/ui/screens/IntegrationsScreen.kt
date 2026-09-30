@@ -129,13 +129,13 @@ fun IntegrationsScreen(
                             }
                             Column {
                                 Text(
-                                    text = "GitHub Integration",
+                                    text = "Public GitHub Profile Lookup",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary
                                 )
                                 Text(
-                                    text = "api.github.com Telemetry",
+                                    text = "api.github.com Public Telemetry (No OAuth ownership claims)",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextSecondary
                                 )
@@ -144,12 +144,12 @@ fun IntegrationsScreen(
 
                         // Connection Status Badge
                         when {
-                            isConnected -> StatusBadge(text = "CONNECTED", statusType = "success")
+                            isConnected -> StatusBadge(text = "PUBLIC PROFILE SYNCED", statusType = "success")
                             isChecking -> StatusBadge(text = "CHECKING...", statusType = "primary")
-                            isNotFound -> StatusBadge(text = "NOT FOUND (404)", statusType = "danger")
+                            isNotFound -> StatusBadge(text = "USER NOT FOUND (404)", statusType = "danger")
                             isRateLimited -> StatusBadge(text = "RATE LIMITED", statusType = "warning")
-                            isError -> StatusBadge(text = "ERROR", statusType = "danger")
-                            else -> StatusBadge(text = "NOT CONNECTED", statusType = "neutral")
+                            isError -> StatusBadge(text = "LOOKUP ERROR", statusType = "danger")
+                            else -> StatusBadge(text = "NOT CONFIGURED", statusType = "neutral")
                         }
                     }
 
@@ -441,8 +441,16 @@ fun IntegrationsScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Verify & Connect via GitHub API", fontSize = 14.sp)
+                            Text("Lookup Public Profile via GitHub API", fontSize = 14.sp)
                         }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Reads public repository telemetry via api.github.com. This unauthenticated public lookup does not verify identity, private code, or account ownership.",
+                            fontSize = 11.sp,
+                            color = TextMuted,
+                            lineHeight = 15.sp
+                        )
                     }
                 }
             }
@@ -489,7 +497,7 @@ fun IntegrationsScreen(
                                     color = TextPrimary
                                 )
                                 Text(
-                                    text = "Professional network sync",
+                                    text = "Public Vanity URL Reference (Manual)",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextSecondary
                                 )
@@ -497,10 +505,19 @@ fun IntegrationsScreen(
                         }
 
                         StatusBadge(
-                            text = if (isConnected) "LINKED" else "NOT LINKED",
+                            text = if (isConnected) "PROFILE LINKED" else "MANUAL LINK",
                             statusType = if (isConnected) "success" else "neutral"
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "Store your public LinkedIn URL for recruiter profile export. Direct automated syncing is restricted by LinkedIn Developer policies; no simulated profiles are generated.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp
+                    )
 
                     Spacer(modifier = Modifier.height(14.dp))
 

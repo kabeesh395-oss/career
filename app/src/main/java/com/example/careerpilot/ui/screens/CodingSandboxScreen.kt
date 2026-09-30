@@ -108,7 +108,7 @@ fun CodingSandboxScreen(
                 appendLine("STATIC ANALYSIS: REVISION REQUIRED")
                 issues.forEach { appendLine("• [FAIL] $it") }
                 checksPassed.forEach { appendLine("• [PASS] $it") }
-                appendLine("\n[Note: Static heuristic check; JVM bytecode execution is simulated locally.]")
+                appendLine("\n[Engine: Static AST & structural validation. Live on-device JVM unit-test execution is not supported.]")
             }
             return Pair(false, report)
         }
@@ -117,7 +117,7 @@ fun CodingSandboxScreen(
             appendLine("STATIC ANALYSIS: PASSED")
             checksPassed.forEach { appendLine("• [PASS] $it") }
             appendLine("• [PASS] Target complexity pattern aligned: ${challenge.timeComplexityTarget}")
-            appendLine("\nNotice: Static structural validation complete. Actual on-device execution requires external JVM runtime.")
+            appendLine("\n[Notice: Static structural & syntax validation complete. Actual JVM bytecode execution requires external sandbox runtime.]")
         }
         return Pair(true, report)
     }
@@ -328,7 +328,7 @@ fun CodingSandboxScreen(
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                             border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                            modifier = Modifier.defaultMinSize(minHeight = 44.dp)
+                            modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                         ) {
                             Text(if (showSolution) "Hide Hint" else "Show Reference", fontSize = 12.sp, color = TextSecondary)
                         }
@@ -346,7 +346,7 @@ fun CodingSandboxScreen(
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
                             modifier = Modifier
-                                .defaultMinSize(minHeight = 44.dp)
+                                .defaultMinSize(minHeight = 48.dp)
                                 .testTag("run_code_tests_button")
                         ) {
                             Row(
@@ -355,7 +355,7 @@ fun CodingSandboxScreen(
                             ) {
                                 Icon(Icons.Default.Code, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Analyze Code Structure", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                Text("Run Static Analysis", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }

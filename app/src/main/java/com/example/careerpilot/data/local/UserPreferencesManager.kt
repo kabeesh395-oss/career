@@ -33,7 +33,7 @@ class UserPreferencesManager(private val context: Context) {
     }
 
     val targetRole: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[TARGET_ROLE] ?: "Full Stack Engineer"
+        prefs[TARGET_ROLE] ?: ""
     }
 
     val isOfflineMode: Flow<Boolean> = context.dataStore.data.map { prefs ->

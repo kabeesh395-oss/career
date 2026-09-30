@@ -1,0 +1,6 @@
+Jane Doe
+Email: jane@example.com
+Senior Full Stack Engineer
+Experience: 5 years building scalable applications in TypeScript, React, Node.js, and PostgreSQL.
+Education: BS in Computer Science.
+Architected microservices with 99.9% uptime and reduced latency by 30%.

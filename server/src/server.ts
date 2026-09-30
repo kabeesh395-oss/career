@@ -9,6 +9,7 @@ import { initDatabase, getDatabase } from './db/database.js';
 import { errorHandler } from './middleware/error.js';
 import { apiLimiter, expensiveAiLimiter } from './middleware/rateLimit.js';
 import { validateAuthConfig } from './middleware/auth.js';
+import { aiQueueManager } from './services/aiQueue.service.js';
 
 import authRoutes from './routes/auth.routes.js';
 import profileRoutes from './routes/profile.routes.js';
@@ -30,7 +31,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const rawPort = process.env.PORT;
+const PORT = rawPort && !isNaN(Number(rawPort)) ? Number(rawPort) : 5000;
 
 // Initialize persistent SQLite Database
 initDatabase();
@@ -41,27 +43,68 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS Middleware
+// CORS Middleware - Configurable allowed origins
+const configuredOrigin = process.env.CORS_ORIGIN;
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173'
+];
+const allowedOrigins = configuredOrigin
+  ? (configuredOrigin === '*' ? ['*'] : configuredOrigin.split(',').map(o => o.trim()))
+  : defaultAllowedOrigins;
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    // Allow non-browser requests (mobile native Capacitor, server-to-server, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*')) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS policy rejection: Origin ${origin} not allowed`));
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id']
 }));
 
-// Rate Limiting
+// Global Rate Limiting for standard API endpoints
 app.use('/api/', apiLimiter);
+
+// Strict Rate Limiting for computationally heavy AI and upload endpoints
+const expensiveAiEndpoints = [
+  '/api/resume/upload',
+  '/api/v1/resume/upload',
+  '/api/resume/analyze',
+  '/api/v1/resume/analyze',
+  '/api/career/analyze',
+  '/api/v1/career/analyze',
+  '/api/career/recalibrate',
+  '/api/v1/career/recalibrate',
+  '/api/roadmap/generate',
+  '/api/v1/roadmap/generate',
+  '/api/interview/evaluate',
+  '/api/v1/interview/evaluate',
+  '/api/edge-ai/process',
+  '/api/v1/edge-ai/process'
+];
+app.use(expensiveAiEndpoints, expensiveAiLimiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Correlation ID & Request Logger
+// Correlation ID & Request Logger (suppressed during automated tests to avoid noisy output)
 app.use((req, res, next) => {
   const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   res.setHeader('x-request-id', requestId);
   const start = Date.now();
   res.on('finish', () => {
-    const duration = Date.now() - start;
-    console.log(`[HTTP] [${requestId}] ${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+    if (process.env.NODE_ENV !== 'test') {
+      const duration = Date.now() - start;
+      console.log(`[HTTP] [${requestId}] ${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+    }
   });
   next();
 });
@@ -130,7 +173,11 @@ const server = app.listen(PORT, () => {
 
 // Graceful Shutdown
 function gracefulShutdown(signal: string) {
-  console.log(`[Server] Received ${signal}, closing HTTP server & database connections...`);
+  console.log(`[Server] Received ${signal}, closing AI queue, HTTP server & database connections...`);
+  try {
+    aiQueueManager.shutdown();
+  } catch { /* empty */ }
+
   server.close(() => {
     try {
       const db = getDatabase();

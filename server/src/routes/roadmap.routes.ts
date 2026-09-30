@@ -72,9 +72,17 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response, next) 
     let totalTasks = 0;
 
     const createRoadmapTx = db.transaction(() => {
-      // Archive or remove old roadmaps for user
-      db.prepare('DELETE FROM roadmaps WHERE user_id = ?').run(userId);
+      // Archive or remove old roadmaps for user (child items first for foreign key integrity)
       db.prepare('DELETE FROM roadmap_items WHERE user_id = ?').run(userId);
+      db.prepare('DELETE FROM roadmaps WHERE user_id = ?').run(userId);
+
+      const taskCount = generated.phases.reduce((sum, phase) => sum + phase.items.length, 0);
+
+      // Insert parent roadmap record BEFORE child items
+      db.prepare(`
+        INSERT INTO roadmaps (id, user_id, title, target_role, summary, total_tasks, completed_tasks, progress_percent, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, 0, 0.0, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `).run(roadmapId, userId, generated.title, targetRole, generated.summary, taskCount);
 
       const insertItemStmt = db.prepare(`
         INSERT INTO roadmap_items (
@@ -105,11 +113,6 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response, next) 
           );
         }
       }
-
-      db.prepare(`
-        INSERT INTO roadmaps (id, user_id, title, target_role, summary, total_tasks, completed_tasks, progress_percent, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, 0, 0.0, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `).run(roadmapId, userId, generated.title, targetRole, generated.summary, totalTasks);
     });
 
     createRoadmapTx();
@@ -126,7 +129,8 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response, next) 
 
     return res.status(201).json({
       roadmap: activeRoadmap,
-      items
+      items,
+      modelUsed: generated.modelUsed
     });
   } catch (err) {
     next(err);

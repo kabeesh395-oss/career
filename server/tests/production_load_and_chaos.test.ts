@@ -54,7 +54,7 @@ async function runProductionLoadAndChaosSuite() {
   db.prepare('DELETE FROM profiles WHERE user_id = ?').run(testUserId);
   db.prepare('DELETE FROM users WHERE id = ?').run(testUserId);
 
-  const checkUser = db.prepare('SELECT count(*) as count FROM users WHERE id = ?').get() as { count: number };
+  const checkUser = db.prepare('SELECT count(*) as count FROM users WHERE id = ?').get(testUserId) as { count: number };
   if (checkUser.count !== 0) throw new Error('User privacy deletion failed! Record still present.');
   console.log('✅ [4/4] PRIVACY & ACCOUNT DELETION COMPLIANCE VERIFIED: 0 orphaned records.');
 

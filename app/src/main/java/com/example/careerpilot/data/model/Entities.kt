@@ -13,7 +13,7 @@ data class UserProfile(
     val location: String = "",
     val education: String = "",
     val experienceYears: Float = 0.0f,
-    val targetRole: String = "Full Stack Engineer",
+    val targetRole: String = "",
     val targetIndustry: String = "",
     val targetSalary: String = "",
     val targetCompanyTier: String = "Top Tech",
@@ -193,6 +193,14 @@ data class AnalyticsEvent(
     val eventName: String,
     val detail: String,
     val timestamp: Long = System.currentTimeMillis()
+)
+
+data class SalaryNegotiationState(
+    val baseSalary: Double = 165000.0,
+    val equityGrant: Double = 200000.0,
+    val signOn: Double = 20000.0,
+    val bonusPercent: Double = 15.0,
+    val selectedScenarioIndex: Int = 0
 )
 
 data class NextBestAction(

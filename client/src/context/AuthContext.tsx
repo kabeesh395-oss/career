@@ -102,6 +102,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearToken();
     setUser(null);
     setProfile(null);
+    if (typeof window !== 'undefined') {
+      window.location.hash = '';
+    }
   };
 
   const refreshProfile = async () => {

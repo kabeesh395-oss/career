@@ -33,19 +33,19 @@ export default function AuthPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, hsl(222, 47%, 7%) 0%, hsl(230, 40%, 12%) 50%, hsl(222, 47%, 7%) 100%)',
+      background: 'hsl(var(--bg-base))',
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Ambient glow orbs */}
+      {/* Ambient glow orbs using theme accents */}
       <div style={{
         position: 'absolute', top: '15%', left: '20%', width: 400, height: 400,
-        background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, hsla(var(--primary), 0.12) 0%, transparent 70%)',
         borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none'
       }} />
       <div style={{
         position: 'absolute', bottom: '10%', right: '15%', width: 350, height: 350,
-        background: 'radial-gradient(circle, rgba(168,85,247,0.10) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, hsla(var(--accent-purple), 0.10) 0%, transparent 70%)',
         borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none'
       }} />
 
@@ -59,24 +59,29 @@ export default function AuthPage() {
           }}>
             <div style={{
               width: 42, height: 42, borderRadius: 12,
-              background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent-cyan)))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 20, fontWeight: 800, color: '#fff',
-              boxShadow: '0 0 20px rgba(59,130,246,0.4)'
+              boxShadow: '0 0 20px hsla(var(--primary), 0.4)'
             }}>⬡</div>
             <span style={{ fontSize: 22, fontWeight: 700 }} className="gradient-text">
               Career Hub
             </span>
           </div>
-          <p style={{ color: '#94a3b8', fontSize: 14 }}>
+          <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 14 }}>
             {isLogin ? 'Welcome back. Sign in to your developer workspace.' : 'Create your engineer portfolio & career workspace.'}
           </p>
         </div>
 
         {error && (
           <div style={{
-            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
-            borderRadius: 10, padding: '10px 14px', marginBottom: 20, color: '#f87171', fontSize: 13
+            background: 'hsla(var(--danger), 0.12)',
+            border: '1px solid hsla(var(--danger), 0.35)',
+            borderRadius: 10,
+            padding: '10px 14px',
+            marginBottom: 20,
+            color: 'hsl(var(--danger))',
+            fontSize: 13
           }}>
             {error}
           </div>
@@ -85,7 +90,7 @@ export default function AuthPage() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {!isLogin && (
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'hsl(var(--text-secondary))', marginBottom: 6 }}>
                 Full Name
               </label>
               <input
@@ -100,7 +105,7 @@ export default function AuthPage() {
             </div>
           )}
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'hsl(var(--text-secondary))', marginBottom: 6 }}>
               Email Address
             </label>
             <input
@@ -114,7 +119,7 @@ export default function AuthPage() {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'hsl(var(--text-secondary))', marginBottom: 6 }}>
               Password
             </label>
             <input
@@ -141,14 +146,19 @@ export default function AuthPage() {
         </form>
 
         <div style={{ textAlign: 'center', marginTop: 24 }}>
-          <span style={{ color: '#64748b', fontSize: 13 }}>
+          <span style={{ color: 'hsl(var(--text-muted))', fontSize: 13 }}>
             {isLogin ? "Don't have an account?" : 'Already have an account?'}
           </span>
           <button
             onClick={() => { setIsLogin(!isLogin); setError(''); }}
             style={{
-              background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer',
-              fontWeight: 600, fontSize: 13, marginLeft: 6
+              background: 'none',
+              border: 'none',
+              color: 'hsl(var(--primary))',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 13,
+              marginLeft: 6
             }}
             id="auth-toggle"
           >

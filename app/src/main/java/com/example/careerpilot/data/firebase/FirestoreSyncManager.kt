@@ -24,15 +24,26 @@ class FirestoreSyncManager(
     private val dao: CareerDao? = null
 ) {
 
-    private val firestore: FirebaseFirestore by lazy {
-        FirebaseFirestore.getInstance()
+    private fun getFirestoreSafe(): FirebaseFirestore? {
+        return try {
+            FirebaseFirestore.getInstance()
+        } catch (e: Throwable) {
+            Log.w("FirestoreSync", "Firestore not available / not configured: ${e.message}")
+            null
+        }
     }
+
+    /**
+     * Check whether Firebase is initialized and available
+     */
+    fun isCloudConfigured(): Boolean = getFirestoreSafe() != null
 
     /**
      * Sync User Profile to Cloud Firestore
      */
     suspend fun syncProfileToCloud(profile: UserProfile): Boolean = withContext(Dispatchers.IO) {
         val userId = authManager.getCurrentUserId() ?: return@withContext false
+        val fs = getFirestoreSafe() ?: return@withContext false
         try {
             val profileMap = mapOf(
                 "id" to profile.id,
@@ -50,7 +61,7 @@ class FirestoreSyncManager(
                 "readinessScore" to (profile.readinessScore ?: 70),
                 "updatedAt" to System.currentTimeMillis()
             )
-            firestore.collection("users").document(userId)
+            fs.collection("users").document(userId)
                 .collection("profile").document("current")
                 .set(profileMap, SetOptions.merge())
                 .await()
@@ -67,6 +78,7 @@ class FirestoreSyncManager(
      */
     suspend fun syncJobApplicationToCloud(app: JobApplication): Boolean = withContext(Dispatchers.IO) {
         val userId = authManager.getCurrentUserId() ?: return@withContext false
+        val fs = getFirestoreSafe() ?: return@withContext false
         try {
             val appMap = mapOf(
                 "id" to app.id,
@@ -81,7 +93,7 @@ class FirestoreSyncManager(
                 "interviewDate" to app.interviewDate,
                 "updatedAt" to System.currentTimeMillis()
             )
-            firestore.collection("users").document(userId)
+            fs.collection("users").document(userId)
                 .collection("applications").document(app.id)
                 .set(appMap, SetOptions.merge())
                 .await()
@@ -98,6 +110,7 @@ class FirestoreSyncManager(
      */
     suspend fun syncInterviewSessionToCloud(session: InterviewSession): Boolean = withContext(Dispatchers.IO) {
         val userId = authManager.getCurrentUserId() ?: return@withContext false
+        val fs = getFirestoreSafe() ?: return@withContext false
         try {
             val sessionMap = mapOf(
                 "id" to session.id,
@@ -111,7 +124,7 @@ class FirestoreSyncManager(
                 "status" to session.status,
                 "updatedAt" to System.currentTimeMillis()
             )
-            firestore.collection("users").document(userId)
+            fs.collection("users").document(userId)
                 .collection("interviews").document(session.id)
                 .set(sessionMap, SetOptions.merge())
                 .await()
@@ -128,9 +141,10 @@ class FirestoreSyncManager(
      */
     suspend fun syncSkillsToCloud(skills: List<UserSkill>): Boolean = withContext(Dispatchers.IO) {
         val userId = authManager.getCurrentUserId() ?: return@withContext false
+        val fs = getFirestoreSafe() ?: return@withContext false
         try {
-            val batch = firestore.batch()
-            val collection = firestore.collection("users").document(userId).collection("skills")
+            val batch = fs.batch()
+            val collection = fs.collection("users").document(userId).collection("skills")
 
             skills.forEach { skill ->
                 val docRef = collection.document(skill.skillName.replace("/", "_"))
@@ -158,9 +172,10 @@ class FirestoreSyncManager(
      */
     suspend fun syncProjectsToCloud(projects: List<PortfolioProject>): Boolean = withContext(Dispatchers.IO) {
         val userId = authManager.getCurrentUserId() ?: return@withContext false
+        val fs = getFirestoreSafe() ?: return@withContext false
         try {
-            val batch = firestore.batch()
-            val collection = firestore.collection("users").document(userId).collection("projects")
+            val batch = fs.batch()
+            val collection = fs.collection("users").document(userId).collection("projects")
 
             projects.forEach { proj ->
                 val docRef = collection.document(proj.id.toString())
@@ -190,10 +205,11 @@ class FirestoreSyncManager(
      */
     suspend fun downloadAllFromCloud(targetDao: CareerDao): Int = withContext(Dispatchers.IO) {
         val userId = authManager.getCurrentUserId() ?: return@withContext 0
+        val fs = getFirestoreSafe() ?: return@withContext 0
         var downloadCount = 0
         try {
             // 1. Download Profile
-            val profileDoc = firestore.collection("users").document(userId)
+            val profileDoc = fs.collection("users").document(userId)
                 .collection("profile").document("current")
                 .get()
                 .await()
@@ -223,7 +239,7 @@ class FirestoreSyncManager(
             }
 
             // 2. Download Job Applications
-            val appsSnapshot = firestore.collection("users").document(userId)
+            val appsSnapshot = fs.collection("users").document(userId)
                 .collection("applications")
                 .get()
                 .await()
@@ -248,7 +264,7 @@ class FirestoreSyncManager(
             }
 
             // 3. Download Skills
-            val skillsSnapshot = firestore.collection("users").document(userId)
+            val skillsSnapshot = fs.collection("users").document(userId)
                 .collection("skills")
                 .get()
                 .await()
@@ -291,6 +307,32 @@ class FirestoreSyncManager(
         interviews: List<InterviewSession> = emptyList(),
         targetDao: CareerDao? = dao
     ): CloudSyncStatus = withContext(Dispatchers.IO) {
+        val currentUserId = authManager.getCurrentUserId()
+        if (currentUserId == null || !authManager.userState.value.isAuthenticated) {
+            return@withContext CloudSyncStatus(
+                isSyncing = false,
+                lastSyncTimestamp = "Offline Mode",
+                itemsSynced = 0,
+                itemsDownloaded = 0,
+                syncStatus = "Cloud Sync Unavailable: Please authenticate to enable cloud synchronization.",
+                isSuccess = false,
+                errorMessage = "User not authenticated"
+            )
+        }
+
+        val fs = getFirestoreSafe()
+        if (fs == null) {
+            return@withContext CloudSyncStatus(
+                isSyncing = false,
+                lastSyncTimestamp = "Offline Mode",
+                itemsSynced = 0,
+                itemsDownloaded = 0,
+                syncStatus = "Cloud Sync Not Configured: Firebase credentials not found. Operating safely in local offline database mode.",
+                isSuccess = false,
+                errorMessage = "Firebase not configured"
+            )
+        }
+
         var uploadedCount = 0
         try {
             val pSuccess = syncProfileToCloud(profile)
@@ -329,7 +371,7 @@ class FirestoreSyncManager(
                 isSyncing = false,
                 lastSyncTimestamp = timeStr,
                 itemsSynced = uploadedCount,
-                syncStatus = "Local storage active (Cloud note: ${e.localizedMessage ?: "offline ready"})",
+                syncStatus = "Cloud Sync Unavailable (${e.localizedMessage ?: "Firebase unreachable"}) - Operating in local offline mode.",
                 isSuccess = false,
                 errorMessage = e.message
             )

@@ -318,8 +318,11 @@ class CareerRepository(
 
     suspend fun recalibrateSkillGaps(targetRole: String, userId: String? = null) = withContext(Dispatchers.IO) {
         val uid = userId ?: currentUid()
-        val benchmarks = BenchmarkCatalog.ROLE_BENCHMARKS[targetRole]
-            ?: BenchmarkCatalog.ROLE_BENCHMARKS["Full Stack Engineer"]!!
+        if (targetRole.isBlank()) {
+            dao.clearSkillGaps(uid)
+            return@withContext
+        }
+        val benchmarks = BenchmarkCatalog.ROLE_BENCHMARKS[targetRole] ?: return@withContext
         val userSkills = dao.getUserSkills(uid).associateBy { it.skillName.lowercase() }
 
         var totalWeight = 0f

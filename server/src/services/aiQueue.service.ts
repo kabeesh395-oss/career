@@ -24,26 +24,36 @@ export class AiQueueManager {
   private processIntervalTimer: NodeJS.Timeout | null = null;
   private cleanupIntervalTimer: NodeJS.Timeout | null = null;
   private isStopped: boolean = false;
+  private isRunning: boolean = false;
 
-  // TTL for retaining completed or failed jobs before eviction (15 minutes)
-  private readonly jobTtlMs: number = 15 * 60 * 1000;
+  // TTL for retaining completed or failed jobs before eviction (configurable, default 15 minutes)
+  private readonly jobTtlMs: number;
+  private readonly maxTerminalJobs: number = 500;
 
-  constructor() {
+  constructor(customTtlMs: number = 15 * 60 * 1000) {
+    this.jobTtlMs = customTtlMs;
     this.start();
   }
 
   /**
-   * Start processing and cleanup loops
+   * Start processing and cleanup loops idempotently
    */
   public start(): void {
+    if (this.isRunning) {
+      return;
+    }
+
     if (this.processIntervalTimer) {
       clearInterval(this.processIntervalTimer);
+      this.processIntervalTimer = null;
     }
     if (this.cleanupIntervalTimer) {
       clearInterval(this.cleanupIntervalTimer);
+      this.cleanupIntervalTimer = null;
     }
 
     this.isStopped = false;
+    this.isRunning = true;
 
     // Process queue every 500ms without blocking process exit
     this.processIntervalTimer = setInterval(() => {
@@ -76,6 +86,7 @@ export class AiQueueManager {
    */
   public shutdown(): void {
     this.isStopped = true;
+    this.isRunning = false;
     if (this.processIntervalTimer) {
       clearInterval(this.processIntervalTimer);
       this.processIntervalTimer = null;
@@ -87,7 +98,7 @@ export class AiQueueManager {
   }
 
   /**
-   * Enqueue an AI job asynchronously with deduplication
+   * Enqueue an AI job asynchronously with deduplication and memory management
    */
   public enqueue(
     userId: string,
@@ -95,6 +106,10 @@ export class AiQueueManager {
     payload: any,
     idempotencyKey?: string
   ): AiJob {
+    // Proactive memory cleanup on enqueue
+    this.cleanupExpiredJobs();
+    this.enforceTerminalJobLimit();
+
     const key = idempotencyKey || `${userId}_${jobType}_${JSON.stringify(payload)}`;
     
     // Check if duplicate job is already queued or processing
@@ -146,6 +161,28 @@ export class AiQueueManager {
     }
 
     return removedCount;
+  }
+
+  /**
+   * Prevent memory growth under sustained load by evicting oldest terminal jobs
+   * when capacity threshold is reached.
+   */
+  private enforceTerminalJobLimit(): void {
+    const terminalJobs: AiJob[] = [];
+    for (const job of this.queue.values()) {
+      if (job.status === 'COMPLETED' || job.status === 'FAILED') {
+        terminalJobs.push(job);
+      }
+    }
+
+    if (terminalJobs.length > this.maxTerminalJobs) {
+      // Sort oldest updated first
+      terminalJobs.sort((a, b) => a.updatedAt - b.updatedAt);
+      const toRemove = terminalJobs.length - this.maxTerminalJobs;
+      for (let i = 0; i < toRemove; i++) {
+        this.queue.delete(terminalJobs[i].id);
+      }
+    }
   }
 
   /**

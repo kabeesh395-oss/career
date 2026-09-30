@@ -124,8 +124,12 @@ export class AIService {
     return process.env.GEMINI_API_KEY?.trim() || '';
   }
 
+  public static getModelName(): string {
+    return process.env.GEMINI_MODEL?.trim() || 'gemini-3.5-flash';
+  }
+
   /**
-   * Real Google Gemini API request using gemini-2.5-flash with timeout and validation.
+   * Real Google Gemini API request using supported model with timeout and validation.
    */
   private static async callGemini(prompt: string, systemPrompt?: string): Promise<string | null> {
     const key = this.getApiKey();
@@ -133,10 +137,11 @@ export class AIService {
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 12000);
+    const model = this.getModelName();
 
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -187,7 +192,7 @@ export class AIService {
               marketDemandRating: parsed.marketDemandRating || 'Very High',
               roleRequirementsSummary: parsed.roleRequirementsSummary || `AI assessment calibrated for ${targetRole}.`,
               skillGaps: parsed.skillGaps,
-              modelUsed: 'gemini-2.5-flash'
+              modelUsed: this.getModelName()
             };
           }
         }
@@ -519,7 +524,7 @@ export class AIService {
         technicalScore: 25,
         feedback: 'The submitted answer is too brief. Elaborate with technical trade-offs, architecture decisions, and real implementation details.',
         suggestedImprovement: 'Structure your response using the STAR (Situation, Task, Action, Result) format or explicitly address edge cases and system constraints.',
-        modelUsed: this.apiKey ? 'gemini-1.5-flash' : 'careerpilot-deterministic-nlp-v1'
+        modelUsed: this.getApiKey() ? this.getModelName() : 'careerpilot-deterministic-nlp-v1'
       };
     }
 
