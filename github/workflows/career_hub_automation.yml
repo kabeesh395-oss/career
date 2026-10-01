@@ -1,38 +1,18 @@
-name: Career Hub Read-Only Repository Inspection
+name: Career Hub Automation Pipeline
+
 on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       inspection_notes:
-        description: 'Optional note for this initial inspection run'
+        description: 'Execution trigger note'
         required: false
-        default: 'First read-only test run on main'
+        default: 'Automated run'
+
 permissions:
-  contents: read
-jobs:
-  inspect-repository:
-    name: Read-Only Repository State Inspection
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Source Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Python Environment
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Execute State Inspection Script
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python3 .github/scripts/inspect_project.py
-
-      - name: Upload Snapshot Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: career-hub-project-snapshot
-          path: career_hub_snapshot.json
-          retention-days: 14
+  contents: write
+  pull-requests: write
+  issues: write
