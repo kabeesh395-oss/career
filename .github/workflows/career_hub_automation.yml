@@ -1,4 +1,4 @@
-name: Career Hub Automation & Quality Gate
+name: "Career Hub Automation and Quality Gate"
 
 on:
   workflow_dispatch:
