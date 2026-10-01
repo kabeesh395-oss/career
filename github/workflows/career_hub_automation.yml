@@ -1,5 +1,4 @@
 name: Career Hub Read-Only Repository Inspection
-
 on:
   workflow_dispatch:
     inputs:
@@ -7,10 +6,8 @@ on:
         description: 'Optional note for this initial inspection run'
         required: false
         default: 'First read-only test run on main'
-
 permissions:
   contents: read
-
 jobs:
   inspect-repository:
     name: Read-Only Repository State Inspection
