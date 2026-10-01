@@ -21,13 +21,12 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.JobApplication
 import com.example.careerpilot.data.repository.GeneratedOutreachLetter
-import com.example.careerpilot.ui.components.GlassCard
-import com.example.careerpilot.ui.components.SectionHeader
-import com.example.careerpilot.ui.components.StatusBadge
+import com.example.careerpilot.ui.components.*
 import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
@@ -182,47 +181,28 @@ fun ApplicationTrackerScreen(
         // Applications List
         if (applications.isEmpty()) {
             item {
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.WorkOutline,
-                            contentDescription = null,
-                            tint = AccentCyan,
-                            modifier = Modifier.size(36.dp)
-                        )
-                        Text(
-                            text = "No Applications in Pipeline",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Track your job applications, interviews, and recruiter follow-ups. Tap '+ New' to log your first target position.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMuted,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                }
+                EmptyStateCard(
+                    icon = Icons.Default.WorkOutline,
+                    title = "No Applications in Pipeline",
+                    description = "Track your job applications, interviews, and recruiter follow-ups. Tap 'Add Job' to log your first target position.",
+                    actionLabel = "Add First Job",
+                    onActionClick = { showAddDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         } else if (filteredApplications.isEmpty()) {
             item {
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "No applications found in '$selectedFilterStage' stage.",
-                        color = TextMuted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                EmptyStateCard(
+                    icon = Icons.Default.FilterList,
+                    title = "No Applications in '$selectedFilterStage'",
+                    description = "There are no tracked opportunities in this stage. Select 'Show All' to view your entire pipeline.",
+                    actionLabel = "Show All Stages",
+                    onActionClick = { selectedFilterStage = "ALL" },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         } else {
-            items(filteredApplications) { app ->
+            items(filteredApplications, key = { it.id }) { app ->
                 ApplicationCard(
                     app = app,
                     onStageChange = { newStage -> viewModel.updateApplicationStage(app, newStage) },
@@ -356,33 +336,88 @@ fun ApplicationTrackerScreen(
 
     // Add Application Dialog
     if (showAddDialog) {
+        var companyTouched by remember { mutableStateOf(false) }
+        var roleTitleTouched by remember { mutableStateOf(false) }
+        val isCompanyError = companyTouched && companyInput.isBlank()
+        val isRoleError = roleTitleTouched && roleTitleInput.isBlank()
+        val isFormValid = companyInput.isNotBlank() && roleTitleInput.isNotBlank()
+
         AlertDialog(
-            onDismissRequest = { showAddDialog = false },
-            title = { Text("Track New Opportunity", fontWeight = FontWeight.Bold) },
+            onDismissRequest = {
+                showAddDialog = false
+                companyTouched = false
+                roleTitleTouched = false
+            },
+            title = {
+                Text(
+                    text = "Track New Opportunity",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
                         value = companyInput,
-                        onValueChange = { companyInput = it },
-                        label = { Text("Company Name") },
+                        onValueChange = {
+                            companyInput = it
+                            companyTouched = true
+                        },
+                        label = { Text("Company Name *") },
+                        isError = isCompanyError,
+                        supportingText = if (isCompanyError) {
+                            { Text("Company name is required", color = DangerRed) }
+                        } else null,
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedLabelColor = PrimaryBlue,
+                            errorBorderColor = DangerRed
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = roleTitleInput,
-                        onValueChange = { roleTitleInput = it },
-                        label = { Text("Role Title") },
+                        onValueChange = {
+                            roleTitleInput = it
+                            roleTitleTouched = true
+                        },
+                        label = { Text("Role Title *") },
+                        isError = isRoleError,
+                        supportingText = if (isRoleError) {
+                            { Text("Role title is required", color = DangerRed) }
+                        } else null,
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedLabelColor = PrimaryBlue,
+                            errorBorderColor = DangerRed
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = salaryInput,
                         onValueChange = { salaryInput = it },
                         label = { Text("Compensation Target") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = notesInput,
                         onValueChange = { notesInput = it },
-                        label = { Text("Recruiter & Interview Notes") },
+                        label = { Text("Recruiter & Interview Notes (Optional)") },
+                        maxLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -390,7 +425,9 @@ fun ApplicationTrackerScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (companyInput.isNotBlank() && roleTitleInput.isNotBlank()) {
+                        companyTouched = true
+                        roleTitleTouched = true
+                        if (isFormValid) {
                             viewModel.addJobApplication(
                                 company = companyInput.trim(),
                                 roleTitle = roleTitleInput.trim(),
@@ -404,16 +441,26 @@ fun ApplicationTrackerScreen(
                             companyInput = ""
                             roleTitleInput = ""
                             notesInput = ""
+                            companyTouched = false
+                            roleTitleTouched = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                    enabled = isFormValid,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryBlue,
+                        disabledContainerColor = PrimaryBlue.copy(alpha = 0.4f)
+                    )
                 ) {
                     Text("Save to Pipeline")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) {
-                    Text("Cancel")
+                TextButton(onClick = {
+                    showAddDialog = false
+                    companyTouched = false
+                    roleTitleTouched = false
+                }) {
+                    Text("Cancel", color = TextSecondary)
                 }
             }
         )
@@ -453,20 +500,26 @@ private fun ApplicationCard(
     GlassCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            CompanyLogoBadge(company = app.company, size = 42.dp)
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = app.company,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = app.roleTitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AccentCyan
+                    color = AccentCyan,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
