@@ -128,12 +128,23 @@ def detect_web_client(root: Path):
         "scope_status": "DEPRECATED / EXCLUDED (Per Project Specification)"
     }
 
+def safe_walk(root: Path):
+    skip_dirs = {".git", "node_modules", "build", ".gradle", ".kotlin", "dist"}
+    for current, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if d not in skip_dirs]
+        yield Path(current), dirs, files
+
 def detect_tests(root: Path):
     test_locations = []
-    for pattern in ["tests", "test", "__tests__", "spec"]:
-        for p in root.rglob(pattern):
-            if p.is_dir() and ".git" not in p.parts:
-                test_locations.append(str(p.relative_to(root)))
+    test_names = {"tests", "test", "__tests__", "spec"}
+    for current_path, dirs, _ in safe_walk(root):
+        for d in dirs:
+            if d.lower() in test_names:
+                try:
+                    rel = str((current_path / d).relative_to(root))
+                    test_locations.append(rel)
+                except Exception:
+                    pass
 
     return {
         "detected": len(test_locations) > 0,
@@ -155,19 +166,23 @@ def detect_github_actions(root: Path):
 
 def detect_firebase_and_ai(root: Path):
     firebase_files = []
-    for fname in ["firebase.json", ".firebaserc", "google-services.json", "GoogleService-Info.plist"]:
-        matches = list(root.rglob(fname))
-        for m in matches:
-            if ".git" not in m.parts:
-                firebase_files.append(str(m.relative_to(root)))
-
-    ai_patterns = ["*gemini*", "*ai_service*", "*model_config*"]
+    target_firebase = {"firebase.json", ".firebaserc", "google-services.json", "googleservice-info.plist"}
+    ai_keywords = ["gemini", "ai_service", "model_config"]
     ai_references = []
-    for pat in ai_patterns:
-        matches = list(root.rglob(pat))
-        for m in matches:
-            if ".git" not in m.parts:
-                ai_references.append(str(m.relative_to(root)))
+
+    for current_path, dirs, files in safe_walk(root):
+        for f in files:
+            f_lower = f.lower()
+            if f_lower in target_firebase:
+                try:
+                    firebase_files.append(str((current_path / f).relative_to(root)))
+                except Exception:
+                    pass
+            if any(k in f_lower for k in ai_keywords):
+                try:
+                    ai_references.append(str((current_path / f).relative_to(root)))
+                except Exception:
+                    pass
 
     return {
         "firebase": {
@@ -257,16 +272,19 @@ def main():
     }
 
     output_file = Path("career_hub_snapshot.json")
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(snapshot, f, indent=2)
 
     summary_md = generate_step_summary(snapshot)
     github_summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if github_summary_path:
-        with open(github_summary_path, "a") as f:
+        with open(github_summary_path, "a", encoding="utf-8") as f:
             f.write("\n" + summary_md + "\n")
     else:
-        print(summary_md)
+        try:
+            print(summary_md)
+        except UnicodeEncodeError:
+            sys.stdout.buffer.write((summary_md + "\n").encode("utf-8"))
 
 if __name__ == "__main__":
     main()
