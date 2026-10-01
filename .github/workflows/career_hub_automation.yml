@@ -110,7 +110,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'server/package.json'
 
-      - name: Install Server Dependencies (TASK-002: Bypasses client/)
+      - name: "Install Server Dependencies (TASK-002: Bypasses client/)"
         run: |
           npm install
 
