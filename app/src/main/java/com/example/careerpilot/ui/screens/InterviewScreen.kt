@@ -220,6 +220,109 @@ fun InterviewScreen(
                 }
             }
 
+            // Latest AI Evaluation & Structured Feedback Card
+            lastEval?.let { eval ->
+                item {
+                    GlassCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        borderColor = PrimaryBlueGlow.copy(alpha = 0.6f)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Analytics,
+                                    contentDescription = null,
+                                    tint = PrimaryBlueGlow,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "Round Evaluation Feedback",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
+                            CircularScoreGauge(
+                                score = eval.score,
+                                size = 52.dp,
+                                strokeWidth = 5.dp,
+                                label = "SCORE"
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Score metrics row (Clarity & Technical Depth)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(BgSurfaceElevated)
+                                    .padding(8.dp)
+                            ) {
+                                Text("Technical Depth", fontSize = 11.sp, color = TextSecondary)
+                                Text("${eval.technicalScore}/100", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AccentCyan)
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(BgSurfaceElevated)
+                                    .padding(8.dp)
+                            ) {
+                                Text("Communication Clarity", fontSize = 11.sp, color = TextSecondary)
+                                Text("${eval.clarityScore}/100", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryBlueLighter)
+                            }
+                        }
+
+                        if (eval.feedback.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Analysis & Trade-off Observations:",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = eval.feedback,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary,
+                                lineHeight = 18.sp
+                            )
+                        }
+
+                        if (eval.suggestedImprovement.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Actionable Counter-Argument Recommendation:",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = WarningAmber
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = eval.suggestedImprovement,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                }
+            }
+
             // Interactive Input Bar for Candidate Response
             item {
                 GlassCard(modifier = Modifier.fillMaxWidth()) {

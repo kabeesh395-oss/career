@@ -322,7 +322,12 @@ private fun LearningResourceFunctionalCard(
                 ) {
                     StatusBadge(text = resource.category, statusType = "primary")
                     StatusBadge(text = resource.resourceType, statusType = "neutral")
-                    StatusBadge(text = resource.difficulty, statusType = "neutral")
+                    val difficultyStatusType = when {
+                        resource.difficulty.contains("Beginner", ignoreCase = true) -> "success"
+                        resource.difficulty.contains("Advanced", ignoreCase = true) || resource.difficulty.contains("Hard", ignoreCase = true) -> "warning"
+                        else -> "primary"
+                    }
+                    StatusBadge(text = resource.difficulty, statusType = difficultyStatusType)
                 }
 
                 when {

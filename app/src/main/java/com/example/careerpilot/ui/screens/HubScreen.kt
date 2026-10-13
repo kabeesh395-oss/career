@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -32,6 +33,7 @@ import com.example.careerpilot.ui.theme.Dimens
 
 private data class HubItem(
     val title: String,
+    val description: String,
     val icon: ImageVector,
     val route: String,
     val iconTint: Color,
@@ -44,30 +46,30 @@ fun HubScreen(
     modifier: Modifier = Modifier
 ) {
     val careerSection = listOf(
-        HubItem("Skill Matrix", Icons.Default.Assessment, "career", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
-        HubItem("Roadmap", Icons.Default.Timeline, "roadmap", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f)),
-        HubItem("Market Intel", Icons.Default.TravelExplore, "market", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
-        HubItem("Audit Center", Icons.Default.Shield, "audit", WarningAmberLight, WarningAmber.copy(alpha = 0.12f))
+        HubItem("Skill Matrix", "Target role competency benchmarks", Icons.Default.Assessment, "career", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
+        HubItem("Roadmap", "Quarterly career milestones", Icons.Default.Timeline, "roadmap", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f)),
+        HubItem("Market Intel", "Hiring & compensation trends", Icons.Default.TravelExplore, "market", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
+        HubItem("Audit Center", "Enterprise verification checks", Icons.Default.Shield, "audit", WarningAmberLight, WarningAmber.copy(alpha = 0.12f))
     )
 
     val practiceSection = listOf(
-        HubItem("Code Sandbox", Icons.Default.Terminal, "sandbox", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
-        HubItem("Skill Sprints", Icons.Default.EmojiEvents, "sprints", WarningAmberLight, WarningAmber.copy(alpha = 0.12f)),
-        HubItem("Peer Mocks", Icons.Default.People, "peers", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
-        HubItem("Negotiator", Icons.Default.MonetizationOn, "negotiator", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f))
+        HubItem("Code Sandbox", "Live syntax & algorithm lab", Icons.Default.Terminal, "sandbox", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
+        HubItem("Skill Sprints", "Time-boxed learning challenges", Icons.Default.EmojiEvents, "sprints", WarningAmberLight, WarningAmber.copy(alpha = 0.12f)),
+        HubItem("Peer Mocks", "Collaborative mock sessions", Icons.Default.People, "peers", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
+        HubItem("Negotiator", "Salary & equity tactics", Icons.Default.MonetizationOn, "negotiator", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f))
     )
 
     val portfolioSection = listOf(
-        HubItem("Opportunities", Icons.Default.Stars, "opportunities", WarningAmberLight, WarningAmber.copy(alpha = 0.12f)),
-        HubItem("Projects", Icons.Default.Code, "projects", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
-        HubItem("Learning", Icons.Default.MenuBook, "learning", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
-        HubItem("Applications", Icons.Default.WorkOutline, "applications", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
-        HubItem("Export", Icons.Default.FileDownload, "export", TextSecondary, BgMuted)
+        HubItem("Opportunities", "Curated positions & tiers", Icons.Default.Stars, "opportunities", WarningAmberLight, WarningAmber.copy(alpha = 0.12f)),
+        HubItem("Projects", "Portfolio code artifacts", Icons.Default.Code, "projects", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
+        HubItem("Learning", "Certifications & pathways", Icons.Default.MenuBook, "learning", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
+        HubItem("Applications", "CRM pipeline & stages", Icons.Default.WorkOutline, "applications", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
+        HubItem("Export", "PDF & JSON reports", Icons.Default.FileDownload, "export", TextSecondary, BgMuted)
     )
 
     val settingsSection = listOf(
-        HubItem("Profile", Icons.Default.Person, "profile", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
-        HubItem("Integrations", Icons.Default.Sync, "integrations", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f))
+        HubItem("Profile", "Target preferences & background", Icons.Default.Person, "profile", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
+        HubItem("Integrations", "Sync GitHub, LinkedIn, Cloud", Icons.Default.Sync, "integrations", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f))
     )
 
     LazyColumn(
@@ -115,27 +117,34 @@ private fun HubGrid(
     items: List<HubItem>,
     onNavigate: (String) -> Unit
 ) {
-    val columns = 2
-    val rows = (items.size + columns - 1) / columns
-
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)) {
-        for (row in 0 until rows) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
-            ) {
-                for (col in 0 until columns) {
-                    val index = row * columns + col
-                    if (index < items.size) {
-                        HubGridItem(
-                            item = items[index],
-                            onClick = { onNavigate(items[index].route) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+        var i = 0
+        while (i < items.size) {
+            if (i == items.size - 1) {
+                // Balanced trailing item spans full width
+                HubGridItem(
+                    item = items[i],
+                    onClick = { onNavigate(items[i].route) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                i++
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                ) {
+                    HubGridItem(
+                        item = items[i],
+                        onClick = { onNavigate(items[i].route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    HubGridItem(
+                        item = items[i + 1],
+                        onClick = { onNavigate(items[i + 1].route) },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
+                i += 2
             }
         }
     }
@@ -149,19 +158,18 @@ private fun HubGridItem(
 ) {
     val shape = RoundedCornerShape(12.dp)
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .clip(shape)
             .background(BgSurface)
             .border(1.dp, BorderSubtle, shape)
             .clickable(onClick = onClick)
-            .padding(vertical = Dimens.SpaceLg, horizontal = Dimens.SpaceMd)
+            .padding(12.dp)
             .testTag("hub_item_${item.route}")
     ) {
         Box(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .size(38.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .background(item.iconBg),
             contentAlignment = Alignment.Center
         ) {
@@ -172,14 +180,25 @@ private fun HubGridItem(
                 modifier = Modifier.size(Dimens.IconMd)
             )
         }
-        Spacer(modifier = Modifier.height(Dimens.SpaceSm))
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = item.title,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = TextPrimary,
-            textAlign = TextAlign.Center,
-            maxLines = 1
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = item.description,
+            style = MaterialTheme.typography.bodySmall,
+            fontSize = 11.sp,
+            color = TextSecondary,
+            maxLines = 2,
+            minLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            lineHeight = 15.sp
         )
     }
 }

@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,8 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.repository.BenchmarkCatalog
@@ -76,6 +83,12 @@ fun ProfileScreen(
             var authEmail by remember { mutableStateOf("") }
             var authPassword by remember { mutableStateOf("") }
             var authName by remember { mutableStateOf("") }
+            var passwordVisible by remember { mutableStateOf(false) }
+
+            var authEmailError by remember { mutableStateOf<String?>(null) }
+            var authPasswordError by remember { mutableStateOf<String?>(null) }
+            var authNameError by remember { mutableStateOf<String?>(null) }
+            val focusManager = LocalFocusManager.current
 
             AnimatedGlowingGlassCard(
                 modifier = Modifier
@@ -90,7 +103,8 @@ fun ProfileScreen(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
                         Box(
                             modifier = Modifier
@@ -154,7 +168,12 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Button(
-                            onClick = { authMode = 0 },
+                            onClick = {
+                                authMode = 0
+                                authEmailError = null
+                                authPasswordError = null
+                                authNameError = null
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (authMode == 0) PrimaryBlue else Color.Transparent,
                                 contentColor = if (authMode == 0) Color.White else TextSecondary
@@ -167,7 +186,12 @@ fun ProfileScreen(
                         }
 
                         Button(
-                            onClick = { authMode = 1 },
+                            onClick = {
+                                authMode = 1
+                                authEmailError = null
+                                authPasswordError = null
+                                authNameError = null
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (authMode == 1) PrimaryBlue else Color.Transparent,
                                 contentColor = if (authMode == 1) Color.White else TextSecondary
@@ -185,15 +209,27 @@ fun ProfileScreen(
                     if (authMode == 1) {
                         OutlinedTextField(
                             value = authName,
-                            onValueChange = { authName = it },
+                            onValueChange = {
+                                authName = it
+                                if (authNameError != null && it.isNotBlank()) authNameError = null
+                            },
                             label = { Text("Your Full Name", fontSize = 12.sp) },
-                            placeholder = { Text("e.g. Jane Doe", fontSize = 12.sp) },
+                            placeholder = { Text("e.g. Alex Morgan", fontSize = 12.sp) },
                             singleLine = true,
+                            isError = authNameError != null,
+                            supportingText = if (authNameError != null) {
+                                { Text(authNameError!!, color = DangerRed, fontSize = 11.sp) }
+                            } else null,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Next
+                            ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryBlue,
                                 unfocusedBorderColor = BorderSubtle,
                                 focusedTextColor = TextPrimary,
-                                unfocusedTextColor = TextPrimary
+                                unfocusedTextColor = TextPrimary,
+                                errorBorderColor = DangerRed
                             ),
                             modifier = Modifier.fillMaxWidth().testTag("auth_name_field")
                         )
@@ -202,15 +238,27 @@ fun ProfileScreen(
 
                     OutlinedTextField(
                         value = authEmail,
-                        onValueChange = { authEmail = it },
+                        onValueChange = {
+                            authEmail = it
+                            if (authEmailError != null && it.isNotBlank()) authEmailError = null
+                        },
                         label = { Text("Email Address", fontSize = 12.sp) },
                         placeholder = { Text("engineer@careerhub.io", fontSize = 12.sp) },
                         singleLine = true,
+                        isError = authEmailError != null,
+                        supportingText = if (authEmailError != null) {
+                            { Text(authEmailError!!, color = DangerRed, fontSize = 11.sp) }
+                        } else null,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
                             unfocusedBorderColor = BorderSubtle,
                             focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
+                            unfocusedTextColor = TextPrimary,
+                            errorBorderColor = DangerRed
                         ),
                         modifier = Modifier.fillMaxWidth().testTag("auth_email_field")
                     )
@@ -219,15 +267,44 @@ fun ProfileScreen(
 
                     OutlinedTextField(
                         value = authPassword,
-                        onValueChange = { authPassword = it },
+                        onValueChange = {
+                            authPassword = it
+                            if (authPasswordError != null && it.isNotBlank()) authPasswordError = null
+                        },
                         label = { Text("Password", fontSize = 12.sp) },
                         placeholder = { Text("••••••••", fontSize = 12.sp) },
                         singleLine = true,
+                        isError = authPasswordError != null,
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { passwordVisible = !passwordVisible },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        },
+                        supportingText = if (authPasswordError != null) {
+                            { Text(authPasswordError!!, color = DangerRed, fontSize = 11.sp) }
+                        } else null,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryBlue,
                             unfocusedBorderColor = BorderSubtle,
                             focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
+                            unfocusedTextColor = TextPrimary,
+                            errorBorderColor = DangerRed
                         ),
                         modifier = Modifier.fillMaxWidth().testTag("auth_password_field")
                     )
@@ -240,19 +317,52 @@ fun ProfileScreen(
                     ) {
                         Button(
                             onClick = {
-                                val targetEmail = authEmail.ifBlank { "engineer@careerhub.io" }
-                                val targetPass = authPassword.ifBlank { "secure123" }
-                                if (authMode == 0) {
-                                    viewModel.signInWithEmail(targetEmail, targetPass)
+                                val emailClean = authEmail.trim()
+                                val passClean = authPassword.trim()
+                                val nameClean = authName.trim()
+
+                                var hasError = false
+                                if (authMode == 1 && nameClean.isBlank()) {
+                                    authNameError = "Please enter your name"
+                                    hasError = true
                                 } else {
-                                    viewModel.signUpWithEmail(authName, targetEmail, targetPass)
+                                    authNameError = null
+                                }
+
+                                if (emailClean.isBlank()) {
+                                    authEmailError = "Email is required"
+                                    hasError = true
+                                } else if (!emailClean.contains("@") || !emailClean.contains(".")) {
+                                    authEmailError = "Please enter a valid email address"
+                                    hasError = true
+                                } else {
+                                    authEmailError = null
+                                }
+
+                                if (passClean.isBlank()) {
+                                    authPasswordError = "Password is required"
+                                    hasError = true
+                                } else if (passClean.length < 6) {
+                                    authPasswordError = "Password must be at least 6 characters"
+                                    hasError = true
+                                } else {
+                                    authPasswordError = null
+                                }
+
+                                if (!hasError) {
+                                    focusManager.clearFocus()
+                                    if (authMode == 0) {
+                                        viewModel.signInWithEmail(emailClean, passClean)
+                                    } else {
+                                        viewModel.signUpWithEmail(nameClean, emailClean, passClean)
+                                    }
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .height(44.dp)
+                                .defaultMinSize(minHeight = 44.dp)
                                 .testTag("email_auth_submit_button")
                         ) {
                             Text(
@@ -269,7 +379,7 @@ fun ProfileScreen(
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .height(44.dp)
+                                .defaultMinSize(minHeight = 44.dp)
                                 .testTag("google_signin_button")
                         ) {
                             Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(16.dp), tint = PrimaryBlueGlow)
@@ -409,13 +519,14 @@ fun ProfileScreen(
             }
         }
 
+        // 1. Personal Information Card
         item {
+            var showSavedFeedback by remember { mutableStateOf(false) }
+
             GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Personal & Target Information",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                SectionHeader(
+                    title = "Personal Information",
+                    subtitle = "Profile identity and public summary"
                 )
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -424,7 +535,13 @@ fun ProfileScreen(
                     onValueChange = { fullName = it },
                     label = { Text("Full Name") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag("profile_fullname_input")
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -433,20 +550,58 @@ fun ProfileScreen(
                     value = headline,
                     onValueChange = { headline = it },
                     label = { Text("Professional Headline") },
+                    placeholder = { Text("e.g. Senior Backend & Distributed Systems Engineer") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag("profile_headline_input")
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
-                    value = targetRole,
-                    onValueChange = { targetRole = it },
-                    label = { Text("Target Engineering Role") },
+                    value = bio,
+                    onValueChange = { bio = it },
+                    label = { Text("Executive Summary / Bio") },
+                    minLines = 3,
+                    maxLines = 6,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag("profile_bio_input")
+                )
+            }
+        }
+
+        // 2. Education & Background Card
+        item {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                SectionHeader(
+                    title = "Education & Background",
+                    subtitle = "Credentials, industry tenure, and location"
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedTextField(
+                    value = education,
+                    onValueChange = { education = it },
+                    label = { Text("Education / Highest Degree") },
+                    placeholder = { Text("e.g. B.S. in Computer Science") },
                     singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("profile_target_role_input")
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag("profile_education_input")
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -459,26 +614,61 @@ fun ProfileScreen(
                         value = expYears,
                         onValueChange = { expYears = it },
                         label = { Text("Experience (Years)") },
+                        placeholder = { Text("e.g. 4.5") },
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.weight(1f).testTag("profile_experience_input")
                     )
                     OutlinedTextField(
                         value = location,
                         onValueChange = { location = it },
                         label = { Text("Location") },
+                        placeholder = { Text("e.g. Remote / US") },
                         singleLine = true,
-                        modifier = Modifier.weight(1f)
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.weight(1f).testTag("profile_location_input")
                     )
                 }
+            }
+        }
 
-                Spacer(modifier = Modifier.height(10.dp))
+        // 3. Career Target Preferences Card
+        item {
+            var saveFeedbackVisible by remember { mutableStateOf(false) }
+
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                SectionHeader(
+                    title = "Target Career Preferences",
+                    subtitle = "Target role, compensation, and company tier"
+                )
+                Spacer(modifier = Modifier.height(14.dp))
 
                 OutlinedTextField(
-                    value = education,
-                    onValueChange = { education = it },
-                    label = { Text("Education / Highest Degree") },
+                    value = targetRole,
+                    onValueChange = { targetRole = it },
+                    label = { Text("Target Engineering Role") },
+                    placeholder = { Text("e.g. Full Stack Engineer") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("profile_target_role_input")
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -487,39 +677,53 @@ fun ProfileScreen(
                     value = targetIndustry,
                     onValueChange = { targetIndustry = it },
                     label = { Text("Target Industry") },
+                    placeholder = { Text("e.g. FinTech / Enterprise SaaS / AI") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag("profile_industry_input")
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                OutlinedTextField(
-                    value = targetSalary,
-                    onValueChange = { targetSalary = it },
-                    label = { Text("Target Compensation Range") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedTextField(
+                        value = targetSalary,
+                        onValueChange = { targetSalary = it },
+                        label = { Text("Target Comp Range") },
+                        placeholder = { Text("e.g. $160K - $190K") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.weight(1f).testTag("profile_salary_input")
+                    )
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = targetCompanyTier,
-                    onValueChange = { targetCompanyTier = it },
-                    label = { Text("Target Company Tier") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = bio,
-                    onValueChange = { bio = it },
-                    label = { Text("Executive Summary / Bio") },
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    OutlinedTextField(
+                        value = targetCompanyTier,
+                        onValueChange = { targetCompanyTier = it },
+                        label = { Text("Company Tier") },
+                        placeholder = { Text("e.g. Series B+ / Tier-1") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSubtle,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.weight(1f).testTag("profile_company_tier_input")
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -538,16 +742,30 @@ fun ProfileScreen(
                             targetSalary = targetSalary.trim(),
                             targetCompanyTier = targetCompanyTier.trim()
                         )
+                        saveFeedbackVisible = true
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                         .testTag("save_profile_button")
                 ) {
-                    Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Save Profile & Recalibrate")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = if (saveFeedbackVisible) Icons.Default.CheckCircle else Icons.Default.Save,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (saveFeedbackVisible) "Profile Saved & Recalibrated" else "Save Profile & Recalibrate",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

@@ -156,6 +156,20 @@ fun ResumeAuditScreen(
 
         // ================= TAB 0: ATS AUDIT & SCORING =================
         if (selectedTab == 0) {
+            // Empty State if no audit exists yet
+            if (latestAudit == null) {
+                item {
+                    EmptyStateCard(
+                        icon = Icons.Default.Assessment,
+                        title = "No Resume Audit Performed",
+                        description = "Upload your resume PDF or paste resume text below to run an instant ATS compatibility analysis against industry benchmarks.",
+                        actionLabel = "Go to PDF Upload",
+                        onActionClick = { selectedTab = 3 },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
             // Latest Audit Results Card (if exists)
             if (latestAudit != null) {
                 item {
@@ -978,12 +992,33 @@ fun ResumeAuditScreen(
                     modifier = Modifier.fillMaxWidth(),
                     borderColor = DesignSystem.Colors.Purple.copy(alpha = 0.5f)
                 ) {
+                    val charCount = importResumeText.length
+                    val wordCount = if (importResumeText.isBlank()) 0 else importResumeText.trim().split("\\s+".toRegex()).size
+                    val isTextSufficient = importResumeText.trim().length >= 20
+
                     OutlinedTextField(
                         value = importResumeText,
                         onValueChange = { importResumeText = it },
                         label = { Text("Paste Raw Resume or PDF Text Here") },
                         minLines = 6,
                         maxLines = 10,
+                        supportingText = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = if (!isTextSufficient) "Enter at least 20 characters to parse" else "Ready to parse",
+                                    color = if (!isTextSufficient) DesignSystem.Colors.Warning else DesignSystem.Colors.Success,
+                                    fontSize = 11.sp
+                                )
+                                Text(
+                                    text = "$wordCount words · $charCount chars",
+                                    color = DesignSystem.Colors.TextMuted,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("import_resume_text_field")
@@ -993,11 +1028,12 @@ fun ResumeAuditScreen(
 
                     Button(
                         onClick = {
-                            if (importResumeText.isNotBlank()) {
-                                viewModel.importResumeFromText(importResumeText)
+                            if (isTextSufficient) {
+                                viewModel.importResumeFromText(importResumeText.trim())
                                 selectedTab = 0
                             }
                         },
+                        enabled = isTextSufficient,
                         colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Purple),
                         shape = DesignSystem.Shapes.shapeSm,
                         modifier = Modifier
