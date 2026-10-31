@@ -1,4 +1,4 @@
-import Database, { Database as DatabaseType } from 'better-sqlite3';
+import { Database } from 'node:sqlite';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,20 +8,43 @@ const __dirname = path.dirname(__filename);
 
 const DB_PATH = path.resolve(__dirname, '../../careerpilot.db');
 
-export let db: DatabaseType;
+export interface CareerDatabase extends Database {
+  transaction<T, A extends any[]>(fn: (...args: A) => T): (...args: A) => T;
+}
 
-export function initDatabase(): DatabaseType {
+export let db: CareerDatabase;
+
+export function initDatabase(): CareerDatabase {
   const dbDir = path.dirname(DB_PATH);
   if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
-  db = new Database(DB_PATH);
+  db = new Database(DB_PATH) as CareerDatabase;
+
+  // node:sqlite does not provide db.transaction; add a BEGIN/COMMIT/ROLLBACK shim
+  db.transaction = <T, A extends any[]>(fn: (...args: A) => T): ((...args: A) => T) => {
+    return (...args: A): T => {
+      db.exec('BEGIN TRANSACTION');
+      try {
+        const result = fn(...args);
+        db.exec('COMMIT');
+        return result;
+      } catch (err) {
+        try {
+          db.exec('ROLLBACK');
+        } catch {
+          /* ignore rollback errors */
+        }
+        throw err;
+      }
+    };
+  };
 
   // Enable WAL mode for high concurrent performance and Foreign Keys for relational integrity
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  db.pragma('synchronous = NORMAL');
+  db.exec('PRAGMA journal_mode = WAL');
+  db.exec('PRAGMA foreign_keys = ON');
+  db.exec('PRAGMA synchronous = NORMAL');
 
   // Read schema.sql
   const schemaPath = path.resolve(__dirname, 'schema.sql');
@@ -46,7 +69,7 @@ export function initDatabase(): DatabaseType {
   return db;
 }
 
-export function getDatabase(): DatabaseType {
+export function getDatabase(): CareerDatabase {
   if (!db) {
     return initDatabase();
   }
