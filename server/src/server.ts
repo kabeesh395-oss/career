@@ -23,6 +23,7 @@ import integrationsRoutes from './routes/integrations.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import userRoutes from './routes/user.routes.js';
 import edgeAiRoutes from './routes/edgeAi.routes.js';
+import readinessRoutes from './routes/readiness.routes.js';
 
 dotenv.config();
 validateAuthConfig();
@@ -151,7 +152,8 @@ const routePairs: Array<[string, express.Router]> = [
   ['/integrations', integrationsRoutes],
   ['/analytics', analyticsRoutes],
   ['/user', userRoutes],
-  ['/edge-ai', edgeAiRoutes]
+  ['/edge-ai', edgeAiRoutes],
+  ['/readiness', readinessRoutes]
 ];
 
 for (const [pathPrefix, router] of routePairs) {

@@ -16,6 +16,12 @@ interface NextAction {
   ctaText: string;
 }
 
+interface ReadinessSnapshot {
+  overallScore: number;
+  overallConfidence: number;
+  scoreVersion: string;
+}
+
 interface RoadmapItem {
   id: string;
   phase_number: number;
@@ -60,19 +66,23 @@ export default function DashboardPage({ onNavigate }: Props) {
   const { user, profile } = useAuth();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [nextAction, setNextAction] = useState<NextAction | null>(null);
+  const [readinessSnapshot, setReadinessSnapshot] = useState<ReadinessSnapshot | null>(null);
   const [roadmapData, setRoadmapData] = useState<RoadmapData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [analyticsRes, actionRes, roadmapRes] = await Promise.all([
+        const [analyticsRes, actionRes, roadmapRes, readinessRes] = await Promise.all([
           api('/analytics/dashboard').catch(() => ({ analytics: null })),
           api('/career/next-best-action').catch(() => ({ action: null })),
-          api('/roadmap').catch(() => ({ roadmap: null, items: [] }))
+          api('/roadmap').catch(() => ({ roadmap: null, items: [] })),
+          api('/readiness/current').catch(() => ({ snapshot: null, nextAction: null }))
         ]);
         if (analyticsRes?.analytics) setAnalytics(analyticsRes.analytics);
         if (actionRes?.action) setNextAction(actionRes.action);
+        if (readinessRes?.snapshot) setReadinessSnapshot(readinessRes.snapshot);
+        if (readinessRes?.nextAction) setNextAction(readinessRes.nextAction);
         if (roadmapRes) setRoadmapData(roadmapRes);
       } catch { /* empty */ }
       setLoading(false);
@@ -96,7 +106,8 @@ export default function DashboardPage({ onNavigate }: Props) {
     );
   }
 
-  const readiness = analytics?.readinessScore || 0;
+  const readiness = readinessSnapshot?.overallScore ?? analytics?.readinessScore ?? 0;
+  const readinessConfidence = readinessSnapshot ? Math.round(readinessSnapshot.overallConfidence * 100) : 0;
 
   // Calculate live roadmap stats
   const totalTasks = roadmapData?.items?.length || analytics?.tasks?.total || 0;
@@ -184,6 +195,11 @@ export default function DashboardPage({ onNavigate }: Props) {
                 <div style={{ fontSize: 22, fontWeight: 800, color: readiness >= 70 ? '#34d399' : '#38bdf8', lineHeight: 1.1 }}>
                   {readiness > 0 ? `${readiness}%` : 'Calibrating'}
                 </div>
+                {readinessSnapshot && (
+                  <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>
+                    {readinessConfidence}% evidence confidence
+                  </div>
+                )}
               </div>
               <div style={{
                 width: 38,

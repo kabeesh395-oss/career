@@ -294,6 +294,21 @@ CREATE TABLE IF NOT EXISTS ai_generation_cache (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Versioned readiness snapshots and explainable pillar evidence
+CREATE TABLE IF NOT EXISTS readiness_snapshots (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    overall_score INTEGER NOT NULL CHECK (overall_score BETWEEN 0 AND 100),
+    overall_confidence REAL NOT NULL CHECK (overall_confidence BETWEEN 0 AND 1),
+    score_version TEXT NOT NULL,
+    pillar_scores_json TEXT NOT NULL,
+    confidence_json TEXT NOT NULL,
+    evidence_coverage_json TEXT NOT NULL,
+    source_event_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Indexes for maximum query performance & integrity
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
@@ -311,3 +326,4 @@ CREATE INDEX IF NOT EXISTS idx_interviews_user ON interviews(user_id);
 CREATE INDEX IF NOT EXISTS idx_interview_answers_user ON interview_answers(user_id);
 CREATE INDEX IF NOT EXISTS idx_integrations_user ON integrations(user_id);
 CREATE INDEX IF NOT EXISTS idx_analytics_events_user ON analytics_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_readiness_snapshots_user_created ON readiness_snapshots(user_id, created_at DESC);
