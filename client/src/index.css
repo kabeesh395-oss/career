@@ -4,9 +4,11 @@
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* HSL Color System - Base Tokens */
-  --primary: 221 83% 53%;       /* #2563eb */
-  --primary-glow: 221 83% 60%;
+  /* HSL Color System - Base Tokens - Aligned with Android Design System */
+  --primary: 214 100% 58%;       /* #3B82F6 - matches Android Primary */
+  --primary-glow: 214 100% 64%;  /* #60A5FA - matches Android PrimaryLight */
+  --primary-container: 214 100% 13%; /* #1E3A5F - Android PrimaryContainer */
+  --on-primary: 0 0% 100%;        /* #FFFFFF - Android OnPrimary */
   --accent-cyan: 189 94% 43%;   /* #06b6d4 */
   --accent-purple: 271 91% 65%; /* #a855f7 */
   
@@ -14,16 +16,16 @@
   --warning: 38 92% 50%;        /* #f59e0b */
   --danger: 0 84% 60%;          /* #ef4444 */
 
-  /* Default Dark Mode Surfaces */
-  --bg-base: 222 47% 7%;        /* #0b0f19 */
-  --bg-surface: 222 47% 11%;    /* #0f172a */
-  --bg-card: 223 47% 14%;       /* #131d35 */
-  --bg-card-hover: 223 47% 18%; /* #1a2747 */
-  --bg-muted: 217 33% 18%;      /* #1e293b */
+  /* Default Dark Mode Surfaces - Aligned with Android Design System */
+  --bg-base: 222 47% 7%;        /* #080A13 - Android Dark950 */
+  --bg-surface: 222 47% 11%;    /* #0E1320 - Android Dark900 */
+  --bg-card: 223 47% 14%;       /* #161E30 - Android Dark800 */
+  --bg-card-hover: 223 47% 18%; /* #1E293B - Android Dark700 */
+  --bg-muted: 217 33% 18%;      /* #222E40 - Android Dark600 */
 
   --border-subtle: 217 33% 20%;
   --border-hover: 217 33% 30%;
-  --border-focus: 221 83% 53%;
+  --border-focus: 214 100% 58%;
 
   --text-primary: 210 40% 98%;
   --text-secondary: 215 20% 70%;
