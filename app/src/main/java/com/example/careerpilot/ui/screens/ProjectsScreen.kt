@@ -1,31 +1,21 @@
 package com.example.careerpilot.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.PortfolioProject
-import com.example.careerpilot.ui.components.EmptyStateCard
-import com.example.careerpilot.ui.components.GlassCard
-import com.example.careerpilot.ui.components.SectionHeader
-import com.example.careerpilot.ui.components.StatusBadge
-import com.example.careerpilot.ui.theme.*
+import com.example.careerpilot.ui.components.*
+import com.example.careerpilot.ui.theme.DesignSystem
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 @Composable
@@ -40,41 +30,61 @@ fun ProjectsScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = DesignSystem.Spacing.ContentHorizontal),
+        contentPadding = PaddingValues(
+            top = DesignSystem.Spacing.ContentTop,
+            bottom = DesignSystem.Spacing.ContentBottom
+        ),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Section)
     ) {
-        // Title
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Portfolio Project Hub",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Showcase production systems proving your technical competencies",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
-                }
+            Column {
+                Text(
+                    text = "Portfolio Projects",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = DesignSystem.Colors.TextPrimary
+                )
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                Text(
+                    text = "Showcase production systems proving your technical competencies",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = DesignSystem.Colors.TextSecondary
+                )
+            }
+        }
 
-                Button(
-                    onClick = { showAddDialog = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.testTag("add_project_button")
+        item {
+            CareerCardHighlight(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { showAddDialog = true }
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Add Project")
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Add Portfolio Project",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = DesignSystem.Colors.TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                        Text(
+                            text = "Document repositories, live demos, and architectural solutions.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = DesignSystem.Colors.TextSecondary
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Project",
+                        tint = DesignSystem.Colors.PrimaryLight,
+                        modifier = Modifier
+                            .size(DesignSystem.Sizing.IconLg)
+                            .clickable { showAddDialog = true }
+                    )
                 }
             }
         }
@@ -111,81 +121,96 @@ fun ProjectsScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PortfolioProjectCard(
     project: PortfolioProject,
     onDelete: () -> Unit
 ) {
-    GlassCard(modifier = Modifier.fillMaxWidth()) {
+    CareerCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = project.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-                modifier = Modifier.weight(1f)
-            )
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusBadge(text = project.status, statusType = if (project.status == "completed") "success" else "warning")
-                IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.DeleteOutline, contentDescription = "Delete", tint = TextMuted, modifier = Modifier.size(18.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = project.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = DesignSystem.Colors.TextPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
+                ) {
+                    StatusBadge(
+                        text = project.status,
+                        statusType = if (project.status == "completed") "success" else "primary"
+                    )
                 }
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(44.dp)) {
+                Icon(
+                    Icons.Default.DeleteOutline,
+                    contentDescription = "Delete",
+                    tint = DesignSystem.Colors.TextMuted,
+                    modifier = Modifier.size(DesignSystem.Sizing.IconMd)
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
         Text(
             text = project.description,
             style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
+            color = DesignSystem.Colors.TextSecondary,
             lineHeight = 18.sp
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
 
         // Technologies Chips
         if (project.technologies.isNotBlank()) {
             val techs = project.technologies.split(",").map { it.trim() }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
+            androidx.compose.foundation.lazy.grid.GridCells.Fixed(1)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 techs.forEach { tech ->
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(BgSurface)
-                            .border(1.dp, BorderSubtle, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                            .clip(RoundedCornerShape(DesignSystem.Shape.RadiusXs))
+                            .background(DesignSystem.Colors.BgSurface)
+                            .border(DesignSystem.Sizing.CardBorderWidth, DesignSystem.Colors.BorderDefault, RoundedCornerShape(DesignSystem.Shape.RadiusXs))
+                            .padding(horizontal = DesignSystem.Spacing.Space2, vertical = DesignSystem.Spacing.Space0)
                     ) {
-                        Text(text = tech, style = MaterialTheme.typography.labelSmall, color = PrimaryBlueGlow)
+                        Text(text = tech, style = MaterialTheme.typography.labelSmall, color = DesignSystem.Colors.PrimaryLight)
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space3),
             modifier = Modifier.fillMaxWidth()
         ) {
             if (project.repositoryUrl.isNotBlank()) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.Code, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
-                    Text(project.repositoryUrl, style = MaterialTheme.typography.labelSmall, color = AccentCyan)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)) {
+                    Icon(Icons.Default.Code, contentDescription = null, tint = DesignSystem.Colors.AccentCyan, modifier = Modifier.size(DesignSystem.Sizing.IconMd))
+                    Text(project.repositoryUrl, style = MaterialTheme.typography.labelSmall, color = DesignSystem.Colors.AccentCyan, maxLines = 1)
                 }
             }
             if (project.liveUrl.isNotBlank()) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.OpenInNew, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(16.dp))
-                    Text(project.liveUrl, style = MaterialTheme.typography.labelSmall, color = SuccessGreen)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)) {
+                    Icon(Icons.Default.OpenInNew, contentDescription = null, tint = DesignSystem.Colors.Success, modifier = Modifier.size(DesignSystem.Sizing.IconMd))
+                    Text(project.liveUrl, style = MaterialTheme.typography.labelSmall, color = DesignSystem.Colors.Success, maxLines = 1)
                 }
             }
         }
@@ -207,63 +232,63 @@ private fun AddProjectDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Portfolio Project", color = TextPrimary, fontWeight = FontWeight.Bold) },
+        title = { Text("Add Portfolio Project", color = DesignSystem.Colors.TextPrimary, fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)) {
+                CareerTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Project Title") },
+                    label = "Project Title",
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                CareerTextField(
                     value = desc,
                     onValueChange = { desc = it },
-                    label = { Text("Description & Problem Solved") },
-                    minLines = 3,
+                    label = "Description & Problem Solved",
+                    singleLine = false,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                CareerTextField(
                     value = tech,
                     onValueChange = { tech = it },
-                    label = { Text("Tech Stack (e.g. Kotlin, Redis, Docker)") },
+                    label = "Tech Stack (e.g. Kotlin, Redis, Docker)",
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                CareerTextField(
                     value = repo,
                     onValueChange = { repo = it },
-                    label = { Text("Repository URL") },
+                    label = "Repository URL",
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                CareerTextField(
                     value = live,
                     onValueChange = { live = it },
-                    label = { Text("Live URL (Optional)") },
+                    label = "Live URL (Optional)",
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            Button(
+            CareerButton(
+                text = "Add Project",
                 onClick = {
                     if (title.isNotBlank()) {
                         onConfirm(title.trim(), desc.trim(), repo.trim(), live.trim(), status, tech.trim(), skills.trim())
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
-            ) {
-                Text("Add Project")
-            }
+                variant = CareerButton.ButtonVariant.Primary,
+                modifier = Modifier.fillMaxWidth()
+            )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextSecondary)
+                Text("Cancel", color = DesignSystem.Colors.TextSecondary)
             }
         },
-        containerColor = BgCard
+        containerColor = DesignSystem.Colors.BgCard
     )
 }

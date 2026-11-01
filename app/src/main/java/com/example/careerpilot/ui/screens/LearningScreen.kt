@@ -2,7 +2,7 @@ package com.example.careerpilot.ui.screens
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -21,42 +23,50 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.careerpilot.data.model.LearningResource
-import com.example.careerpilot.ui.components.CompanyLogoBadge
-import com.example.careerpilot.ui.components.EmptyStateCard
-import com.example.careerpilot.ui.components.GlassCard
-import com.example.careerpilot.ui.components.SectionHeader
-import com.example.careerpilot.ui.components.StatusBadge
-import com.example.careerpilot.ui.theme.*
+import com.example.careerpilot.ui.components.*
+import com.example.careerpilot.ui.theme.DesignSystem
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LearningScreen(
     viewModel: CareerViewModel,
     modifier: Modifier = Modifier
 ) {
     val resources by viewModel.learningResources.collectAsState()
+    val profile by viewModel.userProfile.collectAsState()
+
+    var selectedFilter by remember { mutableStateOf("ALL") }
+    var activeStudyResource by remember { mutableStateOf<LearningResource?>(null) }
+
     val context = LocalContext.current
 
-    var selectedFilter by remember { mutableStateOf("ALL") } // "ALL", "IN_PROGRESS", "COMPLETED", "NOT_STARTED"
-    var activeStudyResource by remember { mutableStateOf<LearningResource?>(null) }
+    val totalCount = resources.size
+    val inProgressCount = resources.count { it.status == "IN_PROGRESS" }
+    val completedCount = resources.count { it.status == "COMPLETED" || it.isCompleted }
+    val totalMinutesLogged = resources.sumOf { it.studyMinutesSpent }
+    val overallPercent = if (totalCount > 0) (completedCount * 100) / totalCount else 0
 
     val filteredResources = remember(resources, selectedFilter) {
         when (selectedFilter) {
+            "ALL" -> resources
             "IN_PROGRESS" -> resources.filter { it.status == "IN_PROGRESS" }
             "COMPLETED" -> resources.filter { it.status == "COMPLETED" || it.isCompleted }
-            "NOT_STARTED" -> resources.filter { it.status == "NOT_STARTED" && !it.isCompleted }
+            "NOT_STARTED" -> resources.filter { it.status == "NOT_STARTED" }
             "Architecture" -> resources.filter { it.category.equals("Architecture", ignoreCase = true) }
             "Mobile" -> resources.filter { it.category.equals("Mobile", ignoreCase = true) }
             "Databases" -> resources.filter { it.category.equals("Databases", ignoreCase = true) }
@@ -65,39 +75,36 @@ fun LearningScreen(
         }
     }
 
-    val totalCount = resources.size
-    val inProgressCount = resources.count { it.status == "IN_PROGRESS" }
-    val completedCount = resources.count { it.status == "COMPLETED" || it.isCompleted }
-    val totalMinutesLogged = resources.sumOf { it.studyMinutesSpent }
-    val overallPercent = if (totalCount > 0) (completedCount * 100) / totalCount else 0
-
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = DesignSystem.Spacing.ContentHorizontal),
+        contentPadding = PaddingValues(vertical = DesignSystem.Spacing.ContentTop),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Section)
     ) {
+        // Header
         item {
             Column {
                 Text(
                     text = "Curated Learning Catalog",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = DesignSystem.Colors.TextPrimary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                 Text(
                     text = "Structured competency pathways with tracked progress and verified mastery",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    color = DesignSystem.Colors.TextSecondary
                 )
             }
         }
 
         // Overview Metric Card
         item {
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
+            CareerCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -109,12 +116,12 @@ fun LearningScreen(
                                 text = "Learning Mastery",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = DesignSystem.Colors.TextPrimary
                             )
                             Text(
                                 text = "$completedCount completed • $inProgressCount in progress • $totalMinutesLogged mins logged",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
+                                color = DesignSystem.Colors.TextSecondary
                             )
                         }
                         StatusBadge(
@@ -123,28 +130,25 @@ fun LearningScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
 
-                    LinearProgressIndicator(
-                        progress = { overallPercent / 100f },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        color = AccentCyan,
-                        trackColor = BgMuted,
+                    CareerProgressBar(
+                        progress = overallPercent / 100f,
+                        color = DesignSystem.Colors.Primary,
+                        trackColor = DesignSystem.Colors.BgSurface,
+                        height = 8.dp
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        MetricSmallItem(label = "Total Modules", value = "$totalCount")
-                        MetricSmallItem(label = "In Progress", value = "$inProgressCount", color = AccentAmber)
-                        MetricSmallItem(label = "Completed", value = "$completedCount", color = SuccessGreen)
-                        MetricSmallItem(label = "Study Time", value = "${totalMinutesLogged}m", color = PrimaryBlue)
+                        MetricCard(label = "Total Modules", value = "$totalCount", detail = "Modules", accentColor = DesignSystem.Colors.Primary)
+                        MetricCard(label = "In Progress", value = "$inProgressCount", detail = "Active", accentColor = DesignSystem.Colors.Warning)
+                        MetricCard(label = "Completed", value = "$completedCount", detail = "Finished", accentColor = DesignSystem.Colors.Success)
+                        MetricCard(label = "Study Time", value = "$totalMinutesLogged", detail = "Minutes", accentColor = DesignSystem.Colors.Primary)
                     }
                 }
             }
@@ -153,11 +157,11 @@ fun LearningScreen(
         // Filter Chips
         item {
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 val filters = listOf(
-                    "ALL" to "All (${resources.size})",
+                    "ALL" to "All ($totalCount)",
                     "IN_PROGRESS" to "In Progress ($inProgressCount)",
                     "COMPLETED" to "Completed ($completedCount)",
                     "NOT_STARTED" to "Not Started (${totalCount - inProgressCount - completedCount})",
@@ -167,29 +171,18 @@ fun LearningScreen(
                     "AI & ML" to "AI & ML"
                 )
                 items(filters) { (key, label) ->
-                    FilterChip(
+                    CareerChip(
+                        text = label,
                         selected = selectedFilter == key,
                         onClick = { selectedFilter = key },
-                        label = { Text(label, fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = PrimaryBlue.copy(alpha = 0.25f),
-                            selectedLabelColor = AccentCyan,
-                            containerColor = BgCard,
-                            labelColor = TextSecondary
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedFilter == key,
-                            borderColor = if (selectedFilter == key) PrimaryBlue else BorderSubtle,
-                            selectedBorderColor = AccentCyan
-                        )
+                        modifier = Modifier
                     )
                 }
             }
         }
 
         // Learning Resource List
-        if (resources.isEmpty()) {
+        if (filteredResources.isEmpty()) {
             item {
                 EmptyStateCard(
                     icon = Icons.Default.MenuBook,
@@ -199,23 +192,12 @@ fun LearningScreen(
                     onActionClick = { viewModel.initializeDefaultDataIfEmpty() }
                 )
             }
-        } else if (filteredResources.isEmpty()) {
-            item {
-                EmptyStateCard(
-                    icon = Icons.Default.FilterList,
-                    title = "No Modules in '$selectedFilter'",
-                    description = "There are no learning modules currently matching this filter status.",
-                    actionLabel = "Show All Modules",
-                    onActionClick = { selectedFilter = "ALL" }
-                )
-            }
         } else {
             items(filteredResources, key = { it.id }) { resource ->
                 LearningResourceFunctionalCard(
                     resource = resource,
                     onStart = {
                         viewModel.startLearningResource(resource.id)
-                        // Open external link
                         try {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(resource.url))
                             context.startActivity(intent)
@@ -266,22 +248,34 @@ fun LearningScreen(
 }
 
 @Composable
-private fun MetricSmallItem(
+private fun MetricCard(
     label: String,
     value: String,
-    color: androidx.compose.ui.graphics.Color = TextPrimary
+    detail: String,
+    accentColor: Color
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(DesignSystem.Sizing.IconSm)
+                .clip(CircleShape)
+                .background(accentColor.copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
+            // Decorative dot - minimal
+        }
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = accentColor
         )
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = TextMuted
+            color = DesignSystem.Colors.TextMuted
         )
     }
 }
@@ -298,12 +292,12 @@ private fun LearningResourceFunctionalCard(
     val isInProgress = resource.status == "IN_PROGRESS" && !isCompleted
 
     val borderColor = when {
-        isCompleted -> SuccessGreen.copy(alpha = 0.5f)
-        isInProgress -> AccentCyan.copy(alpha = 0.5f)
-        else -> BorderSubtle
+        isCompleted -> DesignSystem.Colors.Success.copy(alpha = 0.5f)
+        isInProgress -> DesignSystem.Colors.Primary.copy(alpha = 0.5f)
+        else -> DesignSystem.Colors.BorderSubtle
     }
 
-    GlassCard(
+    CareerCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("learning_card_${resource.id}"),
@@ -317,7 +311,7 @@ private fun LearningResourceFunctionalCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     StatusBadge(text = resource.category, statusType = "primary")
@@ -337,17 +331,17 @@ private fun LearningResourceFunctionalCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
 
             // Title
             Text(
                 text = resource.title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = DesignSystem.Colors.TextPrimary
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
 
             // Provider Offering & Company Logo & Duration
             Row(
@@ -357,7 +351,7 @@ private fun LearningResourceFunctionalCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1),
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
                     CompanyLogoBadge(company = resource.provider, size = 22.dp)
@@ -365,35 +359,35 @@ private fun LearningResourceFunctionalCard(
                         text = "Offered by ${resource.provider}",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = AccentCyan,
+                        color = DesignSystem.Colors.PrimaryLight,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space0)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Schedule,
                         contentDescription = null,
-                        tint = TextMuted,
-                        modifier = Modifier.size(14.dp)
+                        tint = DesignSystem.Colors.TextMuted,
+                        modifier = Modifier.size(DesignSystem.Sizing.IconSm)
                     )
                     Text(
                         text = "${resource.estimatedMinutes} min",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary
+                        color = DesignSystem.Colors.TextSecondary
                     )
                 }
             }
 
             if (resource.contentSummary.isNotBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                 Text(
                     text = resource.contentSummary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
+                    color = DesignSystem.Colors.TextSecondary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -401,7 +395,7 @@ private fun LearningResourceFunctionalCard(
 
             // Progress Bar if started or completed
             if (isInProgress || isCompleted) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
                 Column {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -411,114 +405,73 @@ private fun LearningResourceFunctionalCard(
                             text = if (isCompleted) "Verified Mastery (100%)" else "Progress: ${resource.progressPercent}%",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (isCompleted) SuccessGreen else AccentCyan
+                            color = if (isCompleted) DesignSystem.Colors.Success else DesignSystem.Colors.PrimaryLight
                         )
                         Text(
                             text = "${resource.studyMinutesSpent}m logged",
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted
+                            color = DesignSystem.Colors.TextMuted
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LinearProgressIndicator(
-                        progress = { resource.progressPercent / 100f },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        color = if (isCompleted) SuccessGreen else AccentCyan,
-                        trackColor = BgMuted
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space0))
+                    CareerProgressBar(
+                        progress = resource.progressPercent / 100f,
+                        color = if (isCompleted) DesignSystem.Colors.Success else DesignSystem.Colors.Primary,
+                        trackColor = DesignSystem.Colors.BgSurface,
+                        height = 6.dp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
 
             // Action Buttons based on actual functional state
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 when {
                     isCompleted -> {
-                        Button(
+                        CareerButton(
+                            text = "Review Material",
                             onClick = onOpenStudyDialog,
-                            colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen.copy(alpha = 0.2f)),
-                            shape = RoundedCornerShape(8.dp),
+                            variant = CareerButton.ButtonVariant.Secondary,
+                            icon = Icons.Default.Verified,
                             modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Verified,
-                                contentDescription = null,
-                                tint = SuccessGreen,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Review Material", color = SuccessGreen, fontSize = 13.sp)
-                        }
-
-                        OutlinedButton(
+                        )
+                        CareerButton(
+                            text = "Open",
                             onClick = onOpenExternalLink,
-                            shape = RoundedCornerShape(8.dp),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(BorderSubtle)),
-                            modifier = Modifier.size(40.dp),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.OpenInNew,
-                                contentDescription = "Open URL",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                            variant = CareerButton.ButtonVariant.Outline,
+                            icon = Icons.Default.OpenInNew,
+                            modifier = Modifier.defaultMinSize(minHeight = DesignSystem.Sizing.ButtonHeightSm)
+                        )
                     }
                     isInProgress -> {
-                        Button(
+                        CareerButton(
+                            text = "Continue & Verify",
                             onClick = onOpenStudyDialog,
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                            shape = RoundedCornerShape(8.dp),
+                            variant = CareerButton.ButtonVariant.Primary,
+                            icon = Icons.Default.PlayArrow,
                             modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Continue & Verify", fontSize = 13.sp)
-                        }
-
-                        OutlinedButton(
+                        )
+                        CareerButton(
+                            text = "Open",
                             onClick = onOpenExternalLink,
-                            shape = RoundedCornerShape(8.dp),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(BorderSubtle)),
-                            modifier = Modifier.size(40.dp),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.OpenInNew,
-                                contentDescription = "Open URL",
-                                tint = AccentCyan,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                            variant = CareerButton.ButtonVariant.Outline,
+                            icon = Icons.Default.OpenInNew,
+                            modifier = Modifier.defaultMinSize(minHeight = DesignSystem.Sizing.ButtonHeightSm)
+                        )
                     }
                     else -> {
-                        Button(
+                        CareerButton(
+                            text = "Start Learning Resource",
                             onClick = onStart,
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                            shape = RoundedCornerShape(8.dp),
+                            variant = CareerButton.ButtonVariant.Primary,
+                            icon = Icons.Default.PlayArrow,
                             modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Start Learning Resource", fontSize = 13.sp)
-                        }
+                        )
                     }
                 }
             }
@@ -527,7 +480,7 @@ private fun LearningResourceFunctionalCard(
 }
 
 @Composable
-fun LearningStudyDialog(
+private fun LearningStudyDialog(
     resource: LearningResource,
     onDismiss: () -> Unit,
     onUpdateProgress: (additionalMinutes: Int, newProgressPercent: Int, notes: String) -> Unit,
@@ -557,14 +510,14 @@ fun LearningStudyDialog(
             modifier = Modifier
                 .fillMaxWidth(0.94f)
                 .fillMaxHeight(0.88f)
-                .clip(RoundedCornerShape(16.dp)),
-            color = BgSurface,
-            border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle)
+                .clip(RoundedCornerShape(DesignSystem.Shape.RadiusLg)),
+            color = DesignSystem.Colors.BgSurface,
+            border = androidx.compose.foundation.BorderStroke(DesignSystem.Sizing.CardBorderWidth, DesignSystem.Colors.BorderDefault)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(20.dp)
+                    .padding(DesignSystem.Spacing.Space5)
             ) {
                 // Modal Header
                 Row(
@@ -574,141 +527,129 @@ fun LearningStudyDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             StatusBadge(text = resource.category, statusType = "primary")
                             StatusBadge(text = resource.resourceType, statusType = "neutral")
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                         Text(
                             text = resource.title,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary,
+                            color = DesignSystem.Colors.TextPrimary,
                             maxLines = 2
                         )
                     }
 
                     IconButton(onClick = onDismiss) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = TextSecondary)
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = DesignSystem.Colors.TextMuted)
                     }
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 12.dp), color = BorderSubtle)
+                CareerDivider(modifier = Modifier.padding(vertical = DesignSystem.Spacing.Space2))
 
                 // Scrollable Content
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)
                 ) {
                     // Resource Details Card
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CareerCard(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Item)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = "Offered By:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text(text = "Offered By:", style = MaterialTheme.typography.bodySmall, color = DesignSystem.Colors.TextSecondary)
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
                                 ) {
                                     CompanyLogoBadge(company = resource.provider, size = 20.dp)
-                                    Text(text = resource.provider, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = AccentCyan)
+                                    Text(text = resource.provider, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = DesignSystem.Colors.PrimaryLight)
                                 }
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(text = "Skill Tags:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                Text(text = resource.skillTags, style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                                Text(text = "Skill Tags:", style = MaterialTheme.typography.bodySmall, color = DesignSystem.Colors.TextSecondary)
+                                Text(text = resource.skillTags, style = MaterialTheme.typography.bodySmall, color = DesignSystem.Colors.TextPrimary)
                             }
 
                             if (resource.contentSummary.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                                 Text(
                                     text = resource.contentSummary,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary
+                                    color = DesignSystem.Colors.TextSecondary
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Button(
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
+                            CareerButton(
+                                text = "Open Full Learning Material Online",
                                 onClick = onOpenLink,
-                                colors = ButtonDefaults.buttonColors(containerColor = BgCard),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, AccentCyan.copy(alpha = 0.5f)),
-                                shape = RoundedCornerShape(8.dp),
+                                variant = CareerButton.ButtonVariant.Secondary,
+                                icon = Icons.Default.OpenInNew,
                                 modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.OpenInNew,
-                                    contentDescription = null,
-                                    tint = AccentCyan,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Open Full Learning Material Online", color = AccentCyan, fontSize = 13.sp)
-                            }
+                            )
                         }
                     }
 
                     // Study Time Logging & Progress Slider
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CareerCard(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)) {
                             Text(
                                 text = "Track Reading & Study Time",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = DesignSystem.Colors.TextPrimary
                             )
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
                             ) {
-                                Button(
+                                CareerButton(
+                                    text = "+15m Logged",
                                     onClick = {
                                         additionalTimeLogged += 15
                                         currentProgress = minOf(95, currentProgress + 15)
                                         onUpdateProgress(15, currentProgress, studyNotes)
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = BgMuted),
-                                    shape = RoundedCornerShape(8.dp),
+                                    variant = CareerButton.ButtonVariant.Secondary,
+                                    icon = Icons.Default.Timer,
                                     modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = AccentAmber, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("+15m Logged", fontSize = 12.sp, color = TextPrimary)
-                                }
-
-                                Button(
+                                )
+                                CareerButton(
+                                    text = "+30m Logged",
                                     onClick = {
                                         additionalTimeLogged += 30
                                         currentProgress = minOf(95, currentProgress + 30)
                                         onUpdateProgress(30, currentProgress, studyNotes)
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = BgMuted),
-                                    shape = RoundedCornerShape(8.dp),
+                                    variant = CareerButton.ButtonVariant.Secondary,
+                                    icon = Icons.Default.Timer,
                                     modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("+30m Logged", fontSize = 12.sp, color = TextPrimary)
-                                }
+                                )
                             }
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(text = "Study Progress", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                                Text(text = "$currentProgress% (${resource.studyMinutesSpent + additionalTimeLogged}m total logged)", style = MaterialTheme.typography.labelSmall, color = AccentCyan)
+                                Text(text = "Study Progress", style = MaterialTheme.typography.labelSmall, color = DesignSystem.Colors.TextSecondary)
+                                Text(text = "$currentProgress% (${resource.studyMinutesSpent + additionalTimeLogged}m total logged)", style = MaterialTheme.typography.labelSmall, color = DesignSystem.Colors.PrimaryLight)
                             }
 
                             Slider(
@@ -719,20 +660,21 @@ fun LearningStudyDialog(
                                 },
                                 valueRange = 0f..95f,
                                 colors = SliderDefaults.colors(
-                                    thumbColor = AccentCyan,
-                                    activeTrackColor = AccentCyan,
-                                    inactiveTrackColor = BgMuted
+                                    thumbColor = DesignSystem.Colors.Primary,
+                                    activeTrackColor = DesignSystem.Colors.Primary,
+                                    inactiveTrackColor = DesignSystem.Colors.BgSurface
                                 )
                             )
                         }
                     }
 
                     // Comprehension Verification Quiz (Strict Requirement for Completion)
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        borderColor = if (quizSuccess) SuccessGreen.copy(alpha = 0.6f) else if (quizError) DangerRed.copy(alpha = 0.6f) else BorderSubtle
+                    CareerCard(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        borderColor = if (quizSuccess) DesignSystem.Colors.Success.copy(alpha = 0.6f) else if (quizError) DesignSystem.Colors.Danger.copy(alpha = 0.6f) else DesignSystem.Colors.BorderDefault
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -742,7 +684,7 @@ fun LearningStudyDialog(
                                     text = "Comprehension Verification",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = DesignSystem.Colors.TextPrimary
                                 )
                                 if (quizSuccess) {
                                     StatusBadge(text = "VERIFIED", statusType = "success")
@@ -755,7 +697,7 @@ fun LearningStudyDialog(
                                 text = if (resource.quizQuestion.isNotBlank()) resource.quizQuestion else "Confirm core architecture principle for this topic:",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
+                                color = DesignSystem.Colors.TextPrimary
                             )
 
                             // Quiz options
@@ -764,23 +706,23 @@ fun LearningStudyDialog(
                                 val isCorrectOption = index == resource.quizCorrectIndex
 
                                 val optionBorderColor = when {
-                                    quizSuccess && isCorrectOption -> SuccessGreen
-                                    quizError && isSelected -> DangerRed
-                                    isSelected -> AccentCyan
-                                    else -> BorderSubtle
+                                    quizSuccess && isCorrectOption -> DesignSystem.Colors.Success
+                                    quizError && isSelected -> DesignSystem.Colors.Danger
+                                    isSelected -> DesignSystem.Colors.Primary
+                                    else -> DesignSystem.Colors.BorderDefault
                                 }
 
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isSelected) PrimaryBlue.copy(alpha = 0.15f) else BgCard)
-                                        .border(1.dp, optionBorderColor, RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(DesignSystem.Shape.RadiusMd))
+                                        .background(if (isSelected) DesignSystem.Colors.PrimaryContainer else DesignSystem.Colors.BgCard)
+                                        .border(DesignSystem.Sizing.CardBorderWidth, optionBorderColor, RoundedCornerShape(DesignSystem.Shape.RadiusMd))
                                         .clickable(enabled = !quizSuccess) {
                                             selectedOption = index
                                             quizError = false
                                         }
-                                        .padding(12.dp),
+                                        .padding(DesignSystem.Spacing.Space3),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     RadioButton(
@@ -791,13 +733,13 @@ fun LearningStudyDialog(
                                                 quizError = false
                                             }
                                         },
-                                        colors = RadioButtonDefaults.colors(selectedColor = AccentCyan)
+                                        colors = RadioButtonDefaults.colors(selectedColor = DesignSystem.Colors.Primary)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(DesignSystem.Spacing.Space1))
                                     Text(
                                         text = optionText,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = TextPrimary
+                                        color = DesignSystem.Colors.TextPrimary
                                     )
                                 }
                             }
@@ -805,13 +747,13 @@ fun LearningStudyDialog(
                             if (quizError) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
                                 ) {
-                                    Icon(imageVector = Icons.Default.ErrorOutline, contentDescription = null, tint = DangerRed, modifier = Modifier.size(16.dp))
+                                    Icon(imageVector = Icons.Default.ErrorOutline, contentDescription = null, tint = DesignSystem.Colors.Danger, modifier = Modifier.size(DesignSystem.Sizing.IconMd))
                                     Text(
                                         text = "Incorrect answer. Please review the material concept and try again.",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = DangerRed
+                                        color = DesignSystem.Colors.Danger
                                     )
                                 }
                             }
@@ -819,20 +761,21 @@ fun LearningStudyDialog(
                             if (quizSuccess) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
                                 ) {
-                                    Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(16.dp))
+                                    Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = DesignSystem.Colors.Success, modifier = Modifier.size(DesignSystem.Sizing.IconMd))
                                     Text(
                                         text = "Comprehension verified! +${resource.estimatedMinutes} XP competency recorded.",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = SuccessGreen
+                                        color = DesignSystem.Colors.Success
                                     )
                                 }
                             }
 
                             if (!quizSuccess) {
-                                Button(
+                                CareerButton(
+                                    text = "Verify & Complete Module",
                                     onClick = {
                                         selectedOption?.let { idx ->
                                             onVerifyCompletion(idx, studyNotes) { success ->
@@ -848,41 +791,34 @@ fun LearningStudyDialog(
                                         }
                                     },
                                     enabled = selectedOption != null,
-                                    colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
-                                    shape = RoundedCornerShape(8.dp),
+                                    variant = CareerButton.ButtonVariant.Success,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .defaultMinSize(minHeight = 44.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text("Verify & Complete Module", fontWeight = FontWeight.Bold)
-                                    }
-                                }
+                                        .defaultMinSize(minHeight = DesignSystem.Sizing.TouchTargetMin)
+                                )
                             }
                         }
                     }
 
                     // Personal Notes
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CareerCard(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Item)) {
                             Text(
                                 text = "Personal Study Notes & Key Takeaways",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = DesignSystem.Colors.TextPrimary
                             )
-                            OutlinedTextField(
+                            CareerTextField(
                                 value = studyNotes,
                                 onValueChange = {
                                     studyNotes = it
                                     onUpdateProgress(0, currentProgress, studyNotes)
                                 },
-                                placeholder = { Text("Record key technical concepts, interview talking points, or architectural trade-offs...") },
+                                placeholder = "Record key technical concepts, interview talking points, or architectural trade-offs...",
+                                singleLine = false,
                                 modifier = Modifier.fillMaxWidth(),
                                 minLines = 3,
                                 maxLines = 5
@@ -891,18 +827,15 @@ fun LearningStudyDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
 
                 // Footer
-                Button(
+                CareerButton(
+                    text = "Close Study Session",
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = BgCard),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                    shape = RoundedCornerShape(8.dp),
+                    variant = CareerButton.ButtonVariant.Ghost,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Close Study Session", color = TextSecondary)
-                }
+                )
             }
         }
     }

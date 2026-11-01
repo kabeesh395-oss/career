@@ -1,8 +1,6 @@
 package com.example.careerpilot.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -15,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -23,13 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import com.example.careerpilot.ui.animation.bouncyClickable
 import com.example.careerpilot.ui.components.SectionHeader
-import com.example.careerpilot.ui.theme.*
-import com.example.careerpilot.ui.theme.Dimens
+import com.example.careerpilot.ui.theme.DesignSystem
 
 private data class HubItem(
     val title: String,
@@ -46,69 +39,83 @@ fun HubScreen(
     modifier: Modifier = Modifier
 ) {
     val careerSection = listOf(
-        HubItem("Skill Matrix", "Target role competency benchmarks", Icons.Default.Assessment, "career", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
-        HubItem("Roadmap", "Quarterly career milestones", Icons.Default.Timeline, "roadmap", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f)),
-        HubItem("Market Intel", "Hiring & compensation trends", Icons.Default.TravelExplore, "market", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
-        HubItem("Audit Center", "Enterprise verification checks", Icons.Default.Shield, "audit", WarningAmberLight, WarningAmber.copy(alpha = 0.12f))
+        HubItem("Skill Matrix", "Target role calibration", Icons.Default.Psychology, "career", DesignSystem.Colors.PrimaryLight, DesignSystem.Colors.PrimaryContainer),
+        HubItem("Roadmap", "Phased milestones", Icons.Default.Map, "roadmap", DesignSystem.Colors.Success, DesignSystem.Colors.SuccessContainer),
+        HubItem("Resume", "ATS keyword scan", Icons.Default.Description, "resume", DesignSystem.Colors.Warning, DesignSystem.Colors.WarningContainer),
+        HubItem("Interview", "Mock sessions", Icons.Default.RecordVoiceOver, "interview", DesignSystem.Colors.AccentCyan, DesignSystem.Colors.AccentCyan.copy(alpha = 0.15f))
     )
 
     val practiceSection = listOf(
-        HubItem("Code Sandbox", "Live syntax & algorithm lab", Icons.Default.Terminal, "sandbox", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
-        HubItem("Skill Sprints", "Time-boxed learning challenges", Icons.Default.EmojiEvents, "sprints", WarningAmberLight, WarningAmber.copy(alpha = 0.12f)),
-        HubItem("Peer Mocks", "Collaborative mock sessions", Icons.Default.People, "peers", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
-        HubItem("Negotiator", "Salary & equity tactics", Icons.Default.MonetizationOn, "negotiator", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f))
+        HubItem("Projects", "Portfolio tracker", Icons.Default.Folder, "projects", DesignSystem.Colors.AccentPurple, DesignSystem.Colors.AccentPurple.copy(alpha = 0.15f)),
+        HubItem("Learning", "Skill tracks", Icons.Default.School, "learning", DesignSystem.Colors.Success, DesignSystem.Colors.SuccessContainer),
+        HubItem("Integrations", "GitHub sync", Icons.Default.Code, "integrations", DesignSystem.Colors.Danger, DesignSystem.Colors.DangerContainer),
+        HubItem("Market", "Opportunities", Icons.Default.TravelExplore, "market", DesignSystem.Colors.PrimaryLight, DesignSystem.Colors.PrimaryContainer)
     )
 
     val portfolioSection = listOf(
-        HubItem("Opportunities", "Curated positions & tiers", Icons.Default.Stars, "opportunities", WarningAmberLight, WarningAmber.copy(alpha = 0.12f)),
-        HubItem("Projects", "Portfolio code artifacts", Icons.Default.Code, "projects", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
-        HubItem("Learning", "Certifications & pathways", Icons.Default.MenuBook, "learning", AccentPurple, AccentPurple.copy(alpha = 0.12f)),
-        HubItem("Applications", "CRM pipeline & stages", Icons.Default.WorkOutline, "applications", AccentCyanLight, AccentCyan.copy(alpha = 0.12f)),
-        HubItem("Export", "PDF & JSON reports", Icons.Default.FileDownload, "export", TextSecondary, BgMuted)
+        HubItem("Analytics", "Career insights", Icons.Default.BarChart, "analytics", DesignSystem.Colors.AccentCyan, DesignSystem.Colors.AccentCyan.copy(alpha = 0.15f)),
+        HubItem("Peer Mock", "Practice partners", Icons.Default.Groups, "peers", DesignSystem.Colors.AccentPurple, DesignSystem.Colors.AccentPurple.copy(alpha = 0.15f)),
+        HubItem("Sprints", "Focused drills", Icons.Default.Timer, "sprints", DesignSystem.Colors.Warning, DesignSystem.Colors.WarningContainer),
+        HubItem("Negotiator", "Salary coaching", Icons.Default.AttachMoney, "negotiator", DesignSystem.Colors.Success, DesignSystem.Colors.SuccessContainer)
     )
 
     val settingsSection = listOf(
-        HubItem("Profile", "Target preferences & background", Icons.Default.Person, "profile", PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.12f)),
-        HubItem("Integrations", "Sync GitHub, LinkedIn, Cloud", Icons.Default.Sync, "integrations", SuccessGreenLight, SuccessGreen.copy(alpha = 0.12f))
+        HubItem("Profile", "Account & preferences", Icons.Default.Person, "profile", DesignSystem.Colors.TextMuted, DesignSystem.Colors.BgMuted),
+        HubItem("Export", "Data portability", Icons.Default.Download, "export", DesignSystem.Colors.TextMuted, DesignSystem.Colors.BgMuted),
+        HubItem("Sandbox", "Code playground", Icons.Default.DeveloperMode, "sandbox", DesignSystem.Colors.PrimaryLight, DesignSystem.Colors.PrimaryContainer),
+        HubItem("Opportunities", "Job board", Icons.Default.WorkOutline, "opportunities", DesignSystem.Colors.AccentCyan, DesignSystem.Colors.AccentCyan.copy(alpha = 0.15f))
     )
 
     LazyColumn(
         modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = Dimens.ContentHorizontalPadding),
-        contentPadding = PaddingValues(
-            top = Dimens.ContentTopPadding,
-            bottom = Dimens.ContentBottomPadding
-        ),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXl)
+            .fillMaxWidth()
+            .padding(
+                horizontal = DesignSystem.Spacing.ContentHorizontal,
+                vertical = DesignSystem.Spacing.ContentVertical
+            ),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Section)
     ) {
+        // Hero
         item {
-            SectionHeader(title = "Career Analysis")
-        }
-        item {
-            HubGrid(items = careerSection, onNavigate = onNavigate)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
+                Text(
+                    text = "CareerPilot",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = DesignSystem.Colors.TextPrimary,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                Text(
+                    text = "Your career, systematized",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = DesignSystem.Colors.TextSecondary,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
-        item {
-            SectionHeader(title = "Practice & Prep")
-        }
-        item {
-            HubGrid(items = practiceSection, onNavigate = onNavigate)
-        }
+        // Career section
+        item { SectionHeader(title = "Career Intelligence") }
+        item { HubGrid(items = careerSection, onNavigate = onNavigate) }
 
-        item {
-            SectionHeader(title = "Portfolio")
-        }
-        item {
-            HubGrid(items = portfolioSection, onNavigate = onNavigate)
-        }
+        // Practice section
+        item { SectionHeader(title = "Practice & Build") }
+        item { HubGrid(items = practiceSection, onNavigate = onNavigate) }
 
-        item {
-            SectionHeader(title = "Settings")
-        }
-        item {
-            HubGrid(items = settingsSection, onNavigate = onNavigate)
-        }
+        // Portfolio section
+        item { SectionHeader(title = "Portfolio") }
+        item { HubGrid(items = portfolioSection, onNavigate = onNavigate) }
+
+        // Settings section
+        item { SectionHeader(title = "Settings") }
+        item { HubGrid(items = settingsSection, onNavigate = onNavigate) }
+
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space8))
     }
 }
 
@@ -117,35 +124,17 @@ private fun HubGrid(
     items: List<HubItem>,
     onNavigate: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)) {
-        var i = 0
-        while (i < items.size) {
-            if (i == items.size - 1) {
-                // Balanced trailing item spans full width
-                HubGridItem(
-                    item = items[i],
-                    onClick = { onNavigate(items[i].route) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                i++
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
-                ) {
-                    HubGridItem(
-                        item = items[i],
-                        onClick = { onNavigate(items[i].route) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    HubGridItem(
-                        item = items[i + 1],
-                        onClick = { onNavigate(items[i + 1].route) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                i += 2
-            }
+    LazyVerticalGrid(
+        cells = GridCells.Fixed(2),
+        contentPadding = PaddingValues(0.dp),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.ItemSpacing),
+        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.ItemSpacing)
+    ) {
+        items(items) { item ->
+            HubGridItem(
+                item = item,
+                onClick = { onNavigate(item.route) }
+            )
         }
     }
 }
@@ -156,49 +145,57 @@ private fun HubGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(12.dp)
-    Column(
+    val shape = RoundedCornerShape(DesignSystem.Shape.RadiusLg)
+    Box(
         modifier = modifier
+            .fillMaxWidth()
             .clip(shape)
-            .background(BgSurface)
-            .border(1.dp, BorderSubtle, shape)
-            .clickable(onClick = onClick)
-            .padding(12.dp)
-            .testTag("hub_item_${item.route}")
+            .background(DesignSystem.Colors.BgCard)
+            .border(DesignSystem.Sizing.CardBorderWidth, DesignSystem.Colors.BorderDefault, shape)
+            .bouncyClickable(onClick = onClick)
+            .padding(DesignSystem.Spacing.Space3)
+            .testTag("hub_item_${item.route}"),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(item.iconBg),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)
         ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = item.title,
-                tint = item.iconTint,
-                modifier = Modifier.size(Dimens.IconMd)
+            Box(
+                modifier = Modifier
+                    .size(DesignSystem.Sizing.AvatarLg)
+                    .clip(RoundedCornerShape(DesignSystem.Shape.RadiusMd))
+                    .background(item.iconBg),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.title,
+                    tint = item.iconTint,
+                    modifier = Modifier.size(DesignSystem.Sizing.IconLg)
+                )
+            )
+            Text(
+                text = item.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = DesignSystem.Colors.TextPrimary,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = item.description,
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 11.sp,
+                color = DesignSystem.Colors.TextMuted,
+                maxLines = 2,
+                minLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                lineHeight = 15.sp,
+                textAlign = TextAlign.Center
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            text = item.title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimary,
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = item.description,
-            style = MaterialTheme.typography.bodySmall,
-            fontSize = 11.sp,
-            color = TextSecondary,
-            maxLines = 2,
-            minLines = 2,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            lineHeight = 15.sp
-        )
     }
 }

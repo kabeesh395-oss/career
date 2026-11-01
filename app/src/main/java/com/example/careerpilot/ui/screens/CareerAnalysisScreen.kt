@@ -21,12 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.SkillGap
 import com.example.careerpilot.data.model.UserSkill
-import com.example.careerpilot.data.repository.BenchmarkCatalog
-import com.example.careerpilot.ui.components.CircularScoreGauge
-import com.example.careerpilot.ui.components.GlassCard
-import com.example.careerpilot.ui.components.SectionHeader
-import com.example.careerpilot.ui.components.StatusBadge
-import com.example.careerpilot.ui.theme.*
+import com.example.careerpilot.ui.components.*
+import com.example.careerpilot.ui.theme.DesignSystem
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 @Composable
@@ -40,70 +36,81 @@ fun CareerAnalysisScreen(
     val isAnalyzing by viewModel.isAnalyzing.collectAsState()
 
     var showAddSkillDialog by remember { mutableStateOf(false) }
-    var selectedRole by remember(profile?.targetRole) {
-        mutableStateOf(profile?.targetRole ?: "Full Stack Engineer")
-    }
+    var selectedRole by remember { mutableStateOf(profile?.targetRole ?: "Full Stack Engineer") }
 
-    val rolesList = BenchmarkCatalog.ROLE_BENCHMARKS.keys.toList()
+    val rolesList = listOf(
+        "Full Stack Engineer", "Frontend Engineer", "Backend Engineer",
+        "DevOps Engineer", "Cloud Architect", "Data Engineer",
+        "Machine Learning Engineer", "Security Engineer", "Mobile Engineer"
+    )
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = DesignSystem.Spacing.ContentHorizontal),
+        contentPadding = PaddingValues(
+            top = DesignSystem.Spacing.ContentTop,
+            bottom = DesignSystem.Spacing.ContentBottom
+        ),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Section)
     ) {
-        // Title & Role Selection
+        // Header
         item {
             Column {
                 Text(
-                    text = "Career & Skill Analysis",
+                    text = "Career Analysis",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = DesignSystem.Colors.TextPrimary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                 Text(
                     text = "Benchmark technical proficiencies against top-tier expectations",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    color = DesignSystem.Colors.TextSecondary
                 )
             }
         }
 
         // Readiness Score Card
         item {
-            GlassCard(
+            CareerCardHighlight(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("career_readiness_card"),
-                borderColor = PrimaryBlueGlow.copy(alpha = 0.5f)
+                onClick = { /* skill matrix navigation */ }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space3)
                 ) {
                     CircularScoreGauge(
                         score = profile?.readinessScore ?: 0,
-                        size = 110.dp,
-                        strokeWidth = 9.dp,
+                        size = 96.dp,
+                        strokeWidth = 7.dp,
                         label = "READINESS"
                     )
                     Column(modifier = Modifier.weight(1f)) {
-                        StatusBadge(text = "ROLE TARGET", statusType = "primary")
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "ROLE TARGET",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DesignSystem.Colors.TextSecondary,
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                         Text(
                             text = profile?.targetRole ?: "Full Stack Engineer",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = DesignSystem.Colors.TextPrimary
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                         Text(
                             text = "Based on ${skills.size} acquired skills and ${skillGaps.size} benchmark criteria.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
+                            color = DesignSystem.Colors.TextSecondary
                         )
                     }
                 }
@@ -112,14 +119,16 @@ fun CareerAnalysisScreen(
 
         // Target Role Switcher & Recalibrate
         item {
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
+            CareerCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
                     text = "Benchmark Target Role",
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
+                    color = DesignSystem.Colors.TextPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
 
                 var expanded by remember { mutableStateOf(false) }
 
@@ -127,12 +136,12 @@ fun CareerAnalysisScreen(
                     OutlinedButton(
                         onClick = { expanded = true },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(DesignSystem.Shape.RadiusMd),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = BgSurface,
-                            contentColor = TextPrimary
+                            containerColor = DesignSystem.Colors.BgSurface,
+                            contentColor = DesignSystem.Colors.TextPrimary
                         ),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(BorderSubtle))
+                        border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(DesignSystem.Colors.BorderDefault))
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -147,11 +156,11 @@ fun CareerAnalysisScreen(
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
-                        modifier = Modifier.background(BgCard)
+                        modifier = Modifier.background(DesignSystem.Colors.BgCard)
                     ) {
                         rolesList.forEach { role ->
                             DropdownMenuItem(
-                                text = { Text(role, color = TextPrimary) },
+                                text = { Text(role, color = DesignSystem.Colors.TextPrimary) },
                                 onClick = {
                                     selectedRole = role
                                     expanded = false
@@ -161,30 +170,18 @@ fun CareerAnalysisScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
-                Button(
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+                CareerButton(
+                    text = if (isAnalyzing) "Calibrating Readiness…" else "Recalibrate Skill Readiness",
                     onClick = { viewModel.runCareerAnalysis(selectedRole) },
                     enabled = !isAnalyzing,
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                    shape = RoundedCornerShape(10.dp),
+                    variant = CareerButton.ButtonVariant.Primary,
+                    loading = isAnalyzing,
+                    icon = Icons.Default.Refresh,
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("recalibrate_button")
-                ) {
-                    if (isAnalyzing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = TextPrimary,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Calibrating Readiness…")
-                    } else {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Recalibrate Skill Readiness")
-                    }
-                }
+                )
             }
         }
 
@@ -198,13 +195,13 @@ fun CareerAnalysisScreen(
 
         if (skillGaps.isEmpty()) {
             item {
-                GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "No skill gap data recorded. Click 'Recalibrate' to evaluate.",
-                        color = TextMuted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                EmptyStateCard(
+                    icon = Icons.Default.Assessment,
+                    title = "No Skill Gap Data",
+                    description = "Click 'Recalibrate' to evaluate your skill profile against role benchmarks.",
+                    actionLabel = "Recalibrate",
+                    onActionClick = { viewModel.runCareerAnalysis(selectedRole) }
+                )
             }
         } else {
             items(skillGaps) { gap ->
@@ -243,13 +240,13 @@ fun CareerAnalysisScreen(
 
 @Composable
 private fun SkillGapItem(gap: SkillGap) {
-    GlassCard(
-        modifier = Modifier.fillMaxWidth(),
-        borderColor = when (gap.priority) {
-            "high" -> DangerRed.copy(alpha = 0.3f)
-            "medium" -> WarningAmber.copy(alpha = 0.3f)
-            else -> BorderSubtle
-        }
+    val priorityColor = when (gap.priority) {
+        "high" -> DesignSystem.Colors.Danger
+        "medium" -> DesignSystem.Colors.Warning
+        else -> DesignSystem.Colors.TextMuted
+    }
+    CareerCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -261,18 +258,18 @@ private fun SkillGapItem(gap: SkillGap) {
                     text = gap.skillName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = DesignSystem.Colors.TextPrimary
                 )
                 Text(
                     text = gap.category,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted
+                    color = DesignSystem.Colors.TextMuted
                 )
             }
             StatusBadge(text = gap.priority, statusType = gap.priority)
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
 
         // Level Bars
         Row(
@@ -283,38 +280,38 @@ private fun SkillGapItem(gap: SkillGap) {
             Text(
                 text = "Current: Level ${gap.currentLevel}/5",
                 style = MaterialTheme.typography.labelSmall,
-                color = AccentCyan
+                color = DesignSystem.Colors.PrimaryLight
             )
             Text(
                 text = "Required: Level ${gap.requiredLevel}/5",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary
+                color = DesignSystem.Colors.TextSecondary
             )
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
 
         // Visual bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(BgMuted)
+                .height(DesignSystem.Sizing.DividerThickness * 3)
+                .clip(RoundedCornerShape(DesignSystem.Shape.RadiusXs))
+                .background(DesignSystem.Colors.BgSurface)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(gap.currentLevel.toFloat() / 5f)
-                    .background(PrimaryBlue)
+                    .background(priorityColor)
             )
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
         Text(
             text = gap.recommendation,
             style = MaterialTheme.typography.bodySmall,
-            color = TextSecondary,
+            color = DesignSystem.Colors.TextSecondary,
             lineHeight = 16.sp
         )
     }
@@ -325,9 +322,8 @@ private fun AcquiredSkillItem(
     skill: UserSkill,
     onDelete: () -> Unit
 ) {
-    GlassCard(
-        modifier = Modifier.fillMaxWidth(),
-        backgroundColor = BgCard.copy(alpha = 0.7f)
+    CareerCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -335,34 +331,34 @@ private fun AcquiredSkillItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)) {
                     Text(
                         text = skill.skillName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
+                        color = DesignSystem.Colors.TextPrimary
                     )
                     if (skill.verified) {
                         Icon(
                             Icons.Default.CheckCircle,
                             contentDescription = "Verified",
-                            tint = SuccessGreen,
-                            modifier = Modifier.size(16.dp)
+                            tint = DesignSystem.Colors.Success,
+                            modifier = Modifier.size(DesignSystem.Sizing.IconMd)
                         )
                     }
                 }
                 Text(
                     text = "${skill.category} · Proficiency: ${skill.proficiencyLevel}/5",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted
+                    color = DesignSystem.Colors.TextMuted
                 )
             }
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.DeleteOutline,
                     contentDescription = "Delete",
-                    tint = TextMuted,
-                    modifier = Modifier.size(18.dp)
+                    tint = DesignSystem.Colors.TextMuted,
+                    modifier = Modifier.size(DesignSystem.Sizing.IconMd)
                 )
             }
         }
@@ -382,46 +378,48 @@ private fun AddSkillDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add / Update Skill", color = TextPrimary, fontWeight = FontWeight.Bold) },
+        title = { Text("Add / Update Skill", color = DesignSystem.Colors.TextPrimary, fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space3)) {
+                CareerTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Skill Name") },
+                    label = "Skill Name",
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = BorderSubtle
-                    ),
+                    isError = false,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Text("Proficiency Level: $level / 5", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                Text(
+                    text = "Proficiency Level: $level / 5",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = DesignSystem.Colors.TextSecondary
+                )
                 Slider(
                     value = level.toFloat(),
                     onValueChange = { level = it.toInt() },
                     valueRange = 1f..5f,
                     steps = 3,
-                    colors = SliderDefaults.colors(thumbColor = PrimaryBlue, activeTrackColor = PrimaryBlue)
+                    colors = SliderDefaults.colors(
+                        thumbColor = DesignSystem.Colors.Primary,
+                        activeTrackColor = DesignSystem.Colors.Primary
+                    )
                 )
             }
         },
         confirmButton = {
-            Button(
+            CareerButton(
+                text = "Save",
                 onClick = { if (name.isNotBlank()) onConfirm(name.trim(), category, level) },
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
-            ) {
-                Text("Save")
-            }
+                variant = CareerButton.ButtonVariant.Primary,
+                modifier = Modifier.fillMaxWidth()
+            )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextSecondary)
+                Text("Cancel", color = DesignSystem.Colors.TextSecondary)
             }
         },
-        containerColor = BgCard
+        containerColor = DesignSystem.Colors.BgCard
     )
 }

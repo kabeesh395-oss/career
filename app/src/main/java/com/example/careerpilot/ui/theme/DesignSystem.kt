@@ -1,172 +1,146 @@
 package com.example.careerpilot.ui.theme
 
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Typography
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
- * CareerPilot Unified Design System
- *
- * Central source of truth for design tokens across the application:
- * - [Colors]: Semantic and brand color palette
- * - [Spacing]: Consistent 4/8dp spatial grid scale and layout metrics
- * - [Shapes]: Corner radii and Shape definitions
- * - [TypographyTokens]: Standardized type scale hierarchy
- * - [Components]: Sizing, icons, buttons, cards, and interactive component variants
+ * DesignSystem - Single access point for all design tokens
+ * Usage: DesignSystem.Colors.Primary, DesignSystem.Typography.bodyLarge, DesignSystem.Spacing.Space4
  */
 object DesignSystem {
 
-    // ── COLORS TOKEN PALETTE ──────────────────────────────────────────
     object Colors {
-        // Core Canvas & Surfaces
-        val Background: Color @Composable get() = BgBase
-        val Surface: Color @Composable get() = BgSurface
-        val SurfaceElevated: Color @Composable get() = BgSurfaceElevated
-        val Card: Color @Composable get() = BgCard
-        val CardHover: Color @Composable get() = BgCardHover
-        val Muted: Color @Composable get() = BgMuted
-
-        // Primary Brand
-        val Primary: Color = PrimaryBlue
-        val PrimaryLight: Color = PrimaryBlueLighter
-        val PrimaryContainer: Color @Composable get() = BgCard
-
-        // Accent Palette
-        val Cyan: Color = AccentCyan
-        val CyanLight: Color = AccentCyanLight
-        val Purple: Color = PrimaryBlue
-        val Indigo: Color = AccentIndigo
-
-        // Status Feedback
-        val Success: Color = SuccessGreen
-        val SuccessLight: Color = SuccessGreenLight
-        val Warning: Color = WarningAmber
-        val WarningLight: Color = WarningAmberLight
-        val Error: Color = DangerRed
-        val ErrorLight: Color = DangerRedLight
-
-        // Semantic Text
-        val TextPrimary: Color @Composable get() = com.example.careerpilot.ui.theme.TextPrimary
-        val TextSecondary: Color @Composable get() = com.example.careerpilot.ui.theme.TextSecondary
-        val TextMuted: Color @Composable get() = com.example.careerpilot.ui.theme.TextMuted
-
-        // Borders & Dividers
-        val BorderSubtle: Color @Composable get() = com.example.careerpilot.ui.theme.BorderSubtle
-        val BorderMedium: Color @Composable get() = com.example.careerpilot.ui.theme.BorderMedium
-        val BorderHighlight: Color @Composable get() = com.example.careerpilot.ui.theme.BorderHighlight
-    }
-
-    // ── SPACING & METRICS TOKEN SCALE ────────────────────────────────
-    object Spacing {
-        val xxs: Dp = 2.dp
-        val xs: Dp = 4.dp
-        val sm: Dp = 8.dp
-        val md: Dp = 12.dp
-        val lg: Dp = 16.dp
-        val xl: Dp = 20.dp
-        val xxl: Dp = 24.dp
-        val xxxl: Dp = 32.dp
-        val huge: Dp = 48.dp
-
-        // Canonical Screen Layout Tokens
-        val screenHorizontal: Dp = 16.dp
-        val screenTop: Dp = 16.dp
-        val screenBottom: Dp = 96.dp
-        val sectionSpacing: Dp = 16.dp
-        val itemSpacing: Dp = 12.dp
-        val cardPadding: Dp = 16.dp
-    }
-
-    // ── SHAPES & CORNER RADII ─────────────────────────────────────────
-    object Shapes {
-        val radiusXs: Dp = 4.dp
-        val radiusSm: Dp = 8.dp
-        val radiusMd: Dp = 12.dp
-        val radiusLg: Dp = 16.dp
-        val radiusXl: Dp = 20.dp
-        val radiusPill: Dp = 10.dp
-
-        val shapeXs: Shape = RoundedCornerShape(radiusXs)
-        val shapeSm: Shape = RoundedCornerShape(radiusSm)
-        val shapeMd: Shape = RoundedCornerShape(radiusMd)
-        val shapeLg: Shape = RoundedCornerShape(radiusLg)
-        val shapeXl: Shape = RoundedCornerShape(radiusXl)
-        val shapePill: Shape = RoundedCornerShape(radiusPill)
-        val shapeCircle: Shape = CircleShape
-    }
-
-    // ── TYPOGRAPHY TOKENS ─────────────────────────────────────────────
-    object TypographyTokens {
-        val headlineLarge: TextStyle get() = Typography.headlineLarge
-        val headlineMedium: TextStyle get() = Typography.headlineMedium
-        val headlineSmall: TextStyle get() = Typography.headlineSmall
-
-        val titleLarge: TextStyle get() = Typography.titleLarge
-        val titleMedium: TextStyle get() = Typography.titleMedium
-        val titleSmall: TextStyle get() = Typography.titleSmall
-
-        val bodyLarge: TextStyle get() = Typography.bodyLarge
-        val bodyMedium: TextStyle get() = Typography.bodyMedium
-        val bodySmall: TextStyle get() = Typography.bodySmall
-
-        val labelLarge: TextStyle get() = Typography.labelLarge
-        val labelMedium: TextStyle get() = Typography.labelMedium
-        val labelSmall: TextStyle get() = Typography.labelSmall
-
-        // Standalone Font Size & Line Height Tokens
-        val fontXxs: TextUnit = 9.sp
-        val fontXs: TextUnit = 10.sp
-        val fontSm: TextUnit = 11.sp
-        val fontMd: TextUnit = 13.sp
-        val fontBase: TextUnit = 14.sp
-        val fontLg: TextUnit = 16.sp
-        val fontXl: TextUnit = 18.sp
-        val font2xl: TextUnit = 20.sp
-        val font3xl: TextUnit = 24.sp
-        val font4xl: TextUnit = 28.sp
-    }
-
-    // ── COMPONENT VARIANTS & SPECIFICATIONS ───────────────────────────
-    object Components {
-        // Touch & Target Metrics
-        val touchTargetMin: Dp = 48.dp
-        val buttonHeight: Dp = 48.dp
-        val buttonHeightSmall: Dp = 36.dp
-
-        // Icons
-        val iconXs: Dp = 14.dp
-        val iconSm: Dp = 16.dp
-        val iconMd: Dp = 20.dp
-        val iconLg: Dp = 24.dp
-        val iconXl: Dp = 32.dp
-
-        // Avatars & Badges
-        val avatarSm: Dp = 32.dp
-        val avatarMd: Dp = 40.dp
-        val avatarLg: Dp = 56.dp
-        val badgePaddingHorizontal: Dp = 8.dp
-        val badgePaddingVertical: Dp = 4.dp
-        val badgeRadius: Dp = 6.dp
-
-        // Gauge / Circle Metric Sizes
-        val gaugeSizeSm: Dp = 54.dp
-        val gaugeSizeMd: Dp = 72.dp
-        val gaugeSizeLg: Dp = 96.dp
-        val gaugeSizeXl: Dp = 100.dp
-        val gaugeStrokeSm: Dp = 5.dp
-        val gaugeStrokeMd: Dp = 8.dp
+        // Backgrounds
+        val BgBase: Color = com.example.careerpilot.ui.theme.BgBase
+        val BgSurface: Color = com.example.careerpilot.ui.theme.BgSurface
+        val BgCard: Color = com.example.careerpilot.ui.theme.BgCard
+        val BgCardHover: Color = com.example.careerpilot.ui.theme.BgCardHover
+        val BgMuted: Color = com.example.careerpilot.ui.theme.BgMuted
 
         // Borders
-        val borderThin: Dp = 1.dp
-        val borderMedium: Dp = 1.5.dp
-        val borderThick: Dp = 2.dp
+        val BorderSubtle: Color = com.example.careerpilot.ui.theme.BorderSubtle
+        val BorderDefault: Color = com.example.careerpilot.ui.theme.BorderDefault
+        val BorderStrong: Color = com.example.careerpilot.ui.theme.BorderStrong
+
+        // Text
+        val TextPrimary: Color = com.example.careerpilot.ui.theme.TextPrimary
+        val TextSecondary: Color = com.example.careerpilot.ui.theme.TextSecondary
+        val TextMuted: Color = com.example.careerpilot.ui.theme.TextMuted
+        val TextInverse: Color = com.example.careerpilot.ui.theme.TextInverse
+
+        // Brand
+        val Primary: Color = com.example.careerpilot.ui.theme.Primary
+        val PrimaryHover: Color = com.example.careerpilot.ui.theme.PrimaryHover
+        val PrimaryLight: Color = com.example.careerpilot.ui.theme.PrimaryLight
+        val PrimaryContainer: Color = com.example.careerpilot.ui.theme.PrimaryContainer
+        val OnPrimary: Color = com.example.careerpilot.ui.theme.OnPrimary
+
+        // Status
+        val Success: Color = com.example.careerpilot.ui.theme.Success
+        val SuccessContainer: Color = com.example.careerpilot.ui.theme.SuccessContainer
+        val Warning: Color = com.example.careerpilot.ui.theme.Warning
+        val WarningContainer: Color = com.example.careerpilot.ui.theme.WarningContainer
+        val Danger: Color = com.example.careerpilot.ui.theme.Danger
+        val DangerContainer: Color = com.example.careerpilot.ui.theme.DangerContainer
+
+        // Glass
+        val GlassSurface: Color = com.example.careerpilot.ui.theme.GlassSurface
+        val GlassCard: Color = com.example.careerpilot.ui.theme.GlassCard
+        val GlassBorder: Color = com.example.careerpilot.ui.theme.GlassBorder
+        val GlassBorderStrong: Color = com.example.careerpilot.ui.theme.GlassBorderStrong
+
+        // Surface
+        val SurfaceVariant: Color = com.example.careerpilot.ui.theme.SurfaceVariant
+        val SurfaceElevated: Color = com.example.careerpilot.ui.theme.SurfaceElevated
+        val Overlay: Color = com.example.careerpilot.ui.theme.Overlay
     }
+
+    object Typography {
+        val displayLarge: TextStyle = com.example.careerpilot.ui.theme.Typography.displayLarge
+        val displayMedium: TextStyle = com.example.careerpilot.ui.theme.Typography.displayMedium
+        val displaySmall: TextStyle = com.example.careerpilot.ui.theme.Typography.displaySmall
+        val headlineLarge: TextStyle = com.example.careerpilot.ui.theme.Typography.headlineLarge
+        val headlineMedium: TextStyle = com.example.careerpilot.ui.theme.Typography.headlineMedium
+        val headlineSmall: TextStyle = com.example.careerpilot.ui.theme.Typography.headlineSmall
+        val titleLarge: TextStyle = com.example.careerpilot.ui.theme.Typography.titleLarge
+        val titleMedium: TextStyle = com.example.careerpilot.ui.theme.Typography.titleMedium
+        val titleSmall: TextStyle = com.example.careerpilot.ui.theme.Typography.titleSmall
+        val bodyLarge: TextStyle = com.example.careerpilot.ui.theme.Typography.bodyLarge
+        val bodyMedium: TextStyle = com.example.careerpilot.ui.theme.Typography.bodyMedium
+        val bodySmall: TextStyle = com.example.careerpilot.ui.theme.Typography.bodySmall
+        val labelLarge: TextStyle = com.example.careerpilot.ui.theme.Typography.labelLarge
+        val labelMedium: TextStyle = com.example.careerpilot.ui.theme.Typography.labelMedium
+        val labelSmall: TextStyle = com.example.careerpilot.ui.theme.Typography.labelSmall
+    }
+
+    object Spacing {
+        val Space0: Dp = com.example.careerpilot.ui.theme.Dimens.Space0
+        val Space1: Dp = com.example.careerpilot.ui.theme.Dimens.Space1
+        val Space2: Dp = com.example.careerpilot.ui.theme.Dimens.Space2
+        val Space3: Dp = com.example.careerpilot.ui.theme.Dimens.Space3
+        val Space4: Dp = com.example.careerpilot.ui.theme.Dimens.Space4
+        val Space5: Dp = com.example.careerpilot.ui.theme.Dimens.Space5
+        val Space6: Dp = com.example.careerpilot.ui.theme.Dimens.Space6
+        val Space8: Dp = com.example.careerpilot.ui.theme.Dimens.Space8
+        val Space10: Dp = com.example.careerpilot.ui.theme.Dimens.Space10
+        val Space12: Dp = com.example.careerpilot.ui.theme.Dimens.Space12
+        val Space16: Dp = com.example.careerpilot.ui.theme.Dimens.Space16
+
+        val ContentHorizontal: Dp = com.example.careerpilot.ui.theme.Dimens.ContentHorizontalPadding
+        val ContentVertical: Dp = com.example.careerpilot.ui.theme.Dimens.ContentVerticalPadding
+        val ContentTop: Dp = com.example.careerpilot.ui.theme.Dimens.ContentTopPadding
+        val ContentBottom: Dp = com.example.careerpilot.ui.theme.Dimens.ContentBottomPadding
+        val Section: Dp = com.example.careerpilot.ui.theme.Dimens.SectionSpacing
+        val Item: Dp = com.example.careerpilot.ui.theme.Dimens.ItemSpacing
+        val Group: Dp = com.example.careerpilot.ui.theme.Dimens.GroupSpacing
+        val Inline: Dp = com.example.careerpilot.ui.theme.Dimens.InlineSpacing
+    }
+
+    object Shape {
+        val RadiusNone: Dp = com.example.careerpilot.ui.theme.Dimens.RadiusNone
+        val RadiusXs: Dp = com.example.careerpilot.ui.theme.Dimens.RadiusXs
+        val RadiusSm: Dp = com.example.careerpilot.ui.theme.Dimens.RadiusSm
+        val RadiusMd: Dp = com.example.careerpilot.ui.theme.Dimens.RadiusMd
+        val RadiusLg: Dp = com.example.careerpilot.ui.theme.Dimens.RadiusLg
+        val RadiusXl: Dp = com.example.careerpilot.ui.theme.Dimens.RadiusXl
+        val RadiusFull: Dp = com.example.careerpilot.ui.theme.Dimens.RadiusFull
+        val Button: Dp = com.example.careerpilot.ui.theme.Dimens.ButtonRadius
+    }
+
+    object Sizing {
+        val ButtonHeight: Dp = com.example.careerpilot.ui.theme.Dimens.ButtonHeight
+        val ButtonHeightSm: Dp = com.example.careerpilot.ui.theme.Dimens.ButtonHeightSm
+        val ButtonHeightLg: Dp = com.example.careerpilot.ui.theme.Dimens.ButtonHeightLg
+        val InputHeight: Dp = com.example.careerpilot.ui.theme.Dimens.InputHeight
+        val InputHeightSm: Dp = com.example.careerpilot.ui.theme.Dimens.InputHeightSm
+        val IconXs: Dp = com.example.careerpilot.ui.theme.Dimens.IconXs
+        val IconSm: Dp = com.example.careerpilot.ui.theme.Dimens.IconSm
+        val IconMd: Dp = com.example.careerpilot.ui.theme.Dimens.IconMd
+        val IconLg: Dp = com.example.careerpilot.ui.theme.Dimens.IconLg
+        val IconXl: Dp = com.example.careerpilot.ui.theme.Dimens.IconXl
+        val TouchTargetMin: Dp = com.example.careerpilot.ui.theme.Dimens.TouchTargetMin
+        val AvatarXs: Dp = com.example.careerpilot.ui.theme.Dimens.AvatarXs
+        val AvatarSm: Dp = com.example.careerpilot.ui.theme.Dimens.AvatarSm
+        val AvatarMd: Dp = com.example.careerpilot.ui.theme.Dimens.AvatarMd
+        val AvatarLg: Dp = com.example.careerpilot.ui.theme.Dimens.AvatarLg
+        val AvatarXl: Dp = com.example.careerpilot.ui.theme.Dimens.AvatarXl
+        val CardPadding: Dp = com.example.careerpilot.ui.theme.Dimens.CardPadding
+        val CardPaddingSm: Dp = com.example.careerpilot.ui.theme.Dimens.CardPaddingSm
+        val CardBorderWidth: Dp = com.example.careerpilot.ui.theme.Dimens.CardBorderWidth
+        val BadgePaddingHorizontal: Dp = com.example.careerpilot.ui.theme.Dimens.BadgePaddingHorizontal
+        val BadgePaddingVertical: Dp = com.example.careerpilot.ui.theme.Dimens.BadgePaddingVertical
+        val BadgeRadius: Dp = com.example.careerpilot.ui.theme.Dimens.BadgeRadius
+        val DividerThickness: Dp = com.example.careerpilot.ui.theme.Dimens.DividerThickness
+        val ElevationLow: Dp = com.example.careerpilot.ui.theme.Dimens.ElevationLow
+        val ElevationMedium: Dp = com.example.careerpilot.ui.theme.Dimens.ElevationMedium
+        val ElevationHigh: Dp = com.example.careerpilot.ui.theme.Dimens.ElevationHigh
+    }
+
+    // Token aliases for quick access
+    val Colors = Colors
+    val Typography = Typography
+    val Spacing = Spacing
+    val Shape = Shape
+    val Sizing = Sizing
 }
