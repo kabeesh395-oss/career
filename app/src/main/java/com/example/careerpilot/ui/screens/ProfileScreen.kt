@@ -3,6 +3,7 @@ package com.example.careerpilot.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -16,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.repository.BenchmarkCatalog
 import com.example.careerpilot.ui.animation.*
 import com.example.careerpilot.ui.components.*
-import com.example.careerpilot.ui.theme.*
+import com.example.careerpilot.ui.theme.DesignSystem
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 @Composable
@@ -53,48 +53,60 @@ fun ProfileScreen(
     var targetSalary by remember(profile) { mutableStateOf(profile?.targetSalary ?: "") }
     var targetCompanyTier by remember(profile) { mutableStateOf(profile?.targetCompanyTier ?: "") }
 
+    var authMode by remember { mutableIntStateOf(0) }
+    var authEmail by remember { mutableStateOf("") }
+    var authPassword by remember { mutableStateOf("") }
+    var authName by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    var authEmailError by remember { mutableStateOf<String?>(null) }
+    var authPasswordError by remember { mutableStateOf<String?>(null) }
+    var authNameError by remember { mutableStateOf<String?>(null) }
+    val focusManager = LocalFocusManager.current
+
+    // Sync status visual
+    val syncColor = when (syncStatus) {
+        com.example.careerpilot.data.firebase.CloudSyncStatus.IDLE -> DesignSystem.Colors.Success
+        com.example.careerpilot.data.firebase.CloudSyncStatus.SYNCING -> DesignSystem.Colors.Primary
+        com.example.careerpilot.data.firebase.CloudSyncStatus.ERROR -> DesignSystem.Colors.Danger
+        com.example.careerpilot.data.firebase.CloudSyncStatus.OFFLINE -> DesignSystem.Colors.TextMuted
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = DesignSystem.Spacing.ContentHorizontal),
+        contentPadding = PaddingValues(
+            top = DesignSystem.Spacing.ContentTop,
+            bottom = DesignSystem.Spacing.ContentBottom
+        ),
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)
     ) {
+        // Header
         item {
             Column {
                 Text(
                     text = "Career Profile & Calibration",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = DesignSystem.Colors.TextPrimary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                 Text(
                     text = "Set your background and career target objectives",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    color = DesignSystem.Colors.TextSecondary
                 )
             }
         }
 
         // Firebase Auth & Cloud Firestore Persistence Hero
         item {
-            var authMode by remember { mutableIntStateOf(0) } // 0: Sign In, 1: Sign Up
-            var authEmail by remember { mutableStateOf("") }
-            var authPassword by remember { mutableStateOf("") }
-            var authName by remember { mutableStateOf("") }
-            var passwordVisible by remember { mutableStateOf(false) }
-
-            var authEmailError by remember { mutableStateOf<String?>(null) }
-            var authPasswordError by remember { mutableStateOf<String?>(null) }
-            var authNameError by remember { mutableStateOf<String?>(null) }
-            val focusManager = LocalFocusManager.current
-
             AnimatedGlowingGlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("firebase_auth_firestore_card"),
-                backgroundColor = BgSurfaceElevated
+                backgroundColor = DesignSystem.Colors.BgSurfaceElevated
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -103,22 +115,28 @@ fun ProfileScreen(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Inline),
                         modifier = Modifier.weight(1f)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (authUser.isAuthenticated) SuccessGreen.copy(alpha = 0.15f) else PrimaryBlue.copy(alpha = 0.15f))
-                                .border(1.dp, if (authUser.isAuthenticated) SuccessGreen else PrimaryBlueGlow, RoundedCornerShape(10.dp)),
+                                .size(DesignSystem.Sizing.AvatarMd)
+                                .clip(RoundedCornerShape(DesignSystem.Shape.RadiusMd))
+                                .background(
+                                    if (authUser.isAuthenticated) DesignSystem.Colors.SuccessContainer else DesignSystem.Colors.PrimaryContainer
+                                )
+                                .border(
+                                    DesignSystem.Sizing.CardBorderWidth,
+                                    if (authUser.isAuthenticated) DesignSystem.Colors.Success else DesignSystem.Colors.PrimaryLight,
+                                    RoundedCornerShape(DesignSystem.Shape.RadiusMd)
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = if (authUser.isAuthenticated) Icons.Default.CloudDone else Icons.Default.Person,
                                 contentDescription = null,
-                                tint = if (authUser.isAuthenticated) SuccessGreen else PrimaryBlueGlow,
-                                modifier = Modifier.size(24.dp)
+                                tint = if (authUser.isAuthenticated) DesignSystem.Colors.Success else DesignSystem.Colors.PrimaryLight,
+                                modifier = Modifier.size(DesignSystem.Sizing.IconMd)
                             )
                         }
 
@@ -127,195 +145,131 @@ fun ProfileScreen(
                                 text = if (authUser.isAuthenticated) "ACCOUNT ACTIVE" else "ACCOUNT & SYNC",
                                 statusType = if (authUser.isAuthenticated) "success" else "primary"
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
                             Text(
                                 text = if (authUser.isAuthenticated) (authUser.displayName ?: "Engineer") else "Sign In to Career Hub",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = DesignSystem.Colors.TextPrimary
                             )
                             Text(
                                 text = if (authUser.isAuthenticated) (authUser.email ?: "") else "Sync skills, applications and interview notes",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextMuted,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = DesignSystem.Colors.TextMuted,
                                 fontSize = 11.sp
                             )
                         }
                     }
 
                     if (authUser.isAuthenticated) {
-                        OutlinedButton(
+                        CareerButton(
+                            text = "Sign Out",
                             onClick = { viewModel.signOut() },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text("Sign Out", fontSize = 11.sp)
-                        }
+                            variant = CareerButton.ButtonVariant.Outline,
+                            modifier = Modifier.defaultMinSize(minHeight = DesignSystem.Sizing.ButtonHeightSm)
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Group))
 
                 if (!authUser.isAuthenticated) {
                     // Auth Mode Selector
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(BgCard)
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            .clip(RoundedCornerShape(DesignSystem.Shape.RadiusMd))
+                            .background(DesignSystem.Colors.BgCard)
+                            .padding(DesignSystem.Spacing.Space1),
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Inline)
                     ) {
-                        Button(
+                        CareerButton(
+                            text = if (authMode == 0) "Sign In" else "Sign In",
                             onClick = {
                                 authMode = 0
                                 authEmailError = null
                                 authPasswordError = null
                                 authNameError = null
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (authMode == 0) PrimaryBlue else Color.Transparent,
-                                contentColor = if (authMode == 0) Color.White else TextSecondary
-                            ),
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(vertical = 6.dp)
-                        ) {
-                            Text("Sign In", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-
-                        Button(
+                            variant = if (authMode == 0) CareerButton.ButtonVariant.Primary else CareerButton.ButtonVariant.Secondary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        CareerButton(
+                            text = "Create Account",
                             onClick = {
                                 authMode = 1
                                 authEmailError = null
                                 authPasswordError = null
                                 authNameError = null
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (authMode == 1) PrimaryBlue else Color.Transparent,
-                                contentColor = if (authMode == 1) Color.White else TextSecondary
-                            ),
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(vertical = 6.dp)
-                        ) {
-                            Text("Create Account", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
+                            variant = if (authMode == 1) CareerButton.ButtonVariant.Primary else CareerButton.ButtonVariant.Secondary,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
 
                     if (authMode == 1) {
-                        OutlinedTextField(
+                        CareerTextField(
                             value = authName,
                             onValueChange = {
                                 authName = it
                                 if (authNameError != null && it.isNotBlank()) authNameError = null
                             },
-                            label = { Text("Your Full Name", fontSize = 12.sp) },
-                            placeholder = { Text("e.g. Alex Morgan", fontSize = 12.sp) },
+                            label = "Your Full Name",
+                            placeholder = "e.g. Alex Morgan",
                             singleLine = true,
                             isError = authNameError != null,
-                            supportingText = if (authNameError != null) {
-                                { Text(authNameError!!, color = DangerRed, fontSize = 11.sp) }
-                            } else null,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Text,
-                                imeAction = ImeAction.Next
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PrimaryBlue,
-                                unfocusedBorderColor = BorderSubtle,
-                                focusedTextColor = TextPrimary,
-                                unfocusedTextColor = TextPrimary,
-                                errorBorderColor = DangerRed
-                            ),
+                            errorMessage = authNameError,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             modifier = Modifier.fillMaxWidth().testTag("auth_name_field")
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
                     }
 
-                    OutlinedTextField(
+                    CareerTextField(
                         value = authEmail,
                         onValueChange = {
                             authEmail = it
                             if (authEmailError != null && it.isNotBlank()) authEmailError = null
                         },
-                        label = { Text("Email Address", fontSize = 12.sp) },
-                        placeholder = { Text("engineer@careerhub.io", fontSize = 12.sp) },
+                        label = "Email Address",
+                        placeholder = "engineer@careerhub.io",
                         singleLine = true,
                         isError = authEmailError != null,
-                        supportingText = if (authEmailError != null) {
-                            { Text(authEmailError!!, color = DangerRed, fontSize = 11.sp) }
-                        } else null,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            errorBorderColor = DangerRed
-                        ),
+                        errorMessage = authEmailError,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                         modifier = Modifier.fillMaxWidth().testTag("auth_email_field")
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
 
-                    OutlinedTextField(
+                    CareerTextField(
                         value = authPassword,
                         onValueChange = {
                             authPassword = it
                             if (authPasswordError != null && it.isNotBlank()) authPasswordError = null
                         },
-                        label = { Text("Password", fontSize = 12.sp) },
-                        placeholder = { Text("••••••••", fontSize = 12.sp) },
+                        label = "Password",
+                        placeholder = "••••••••",
                         singleLine = true,
                         isError = authPasswordError != null,
+                        errorMessage = authPasswordError,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(
-                                onClick = { passwordVisible = !passwordVisible },
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        },
-                        supportingText = if (authPasswordError != null) {
-                            { Text(authPasswordError!!, color = DangerRed, fontSize = 11.sp) }
-                        } else null,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = { focusManager.clearFocus() }
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            errorBorderColor = DangerRed
-                        ),
+                        trailingIcon = Icons.Default.VisibilityOff,
+                        onTrailingClick = { passwordVisible = !passwordVisible },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                         modifier = Modifier.fillMaxWidth().testTag("auth_password_field")
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Group))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Inline)
                     ) {
-                        Button(
+                        CareerButton(
+                            text = if (authMode == 0) "Sign In" else "Create Free Account",
                             onClick = {
                                 val emailClean = authEmail.trim()
                                 val passClean = authPassword.trim()
@@ -358,34 +312,24 @@ fun ProfileScreen(
                                     }
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                            shape = RoundedCornerShape(8.dp),
+                            variant = CareerButton.ButtonVariant.Primary,
+                            loading = false,
                             modifier = Modifier
                                 .weight(1f)
-                                .defaultMinSize(minHeight = 44.dp)
+                                .defaultMinSize(minHeight = DesignSystem.Sizing.TouchTargetMin)
                                 .testTag("email_auth_submit_button")
-                        ) {
-                            Text(
-                                text = if (authMode == 0) "Sign In" else "Create Free Account",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        )
 
-                        OutlinedButton(
+                        CareerButton(
+                            text = "Google Sign-In",
                             onClick = { viewModel.signInWithGoogle() },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                            border = BorderStroke(1.dp, BorderSubtle),
-                            shape = RoundedCornerShape(8.dp),
+                            variant = CareerButton.ButtonVariant.Outline,
+                            icon = Icons.Default.AccountCircle,
                             modifier = Modifier
                                 .weight(1f)
-                                .defaultMinSize(minHeight = 44.dp)
+                                .defaultMinSize(minHeight = DesignSystem.Sizing.TouchTargetMin)
                                 .testTag("google_signin_button")
-                        ) {
-                            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(16.dp), tint = PrimaryBlueGlow)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Google Sign-In", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
+                        )
                     }
                 } else {
                     // Authenticated state: sync controls
@@ -399,35 +343,25 @@ fun ProfileScreen(
                                 text = "Cloud Firestore Persistence:",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = AccentCyan
+                                color = DesignSystem.Colors.PrimaryLight
                             )
                             Text(
                                 text = syncStatus.syncStatus,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary,
+                                color = DesignSystem.Colors.TextSecondary,
                                 fontSize = 11.sp
                             )
                         }
 
-                        Button(
+                        CareerButton(
+                            text = if (syncStatus.isSyncing) "Syncing…" else "Sync Now",
                             onClick = { viewModel.triggerCloudSync() },
-                            colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
-                            shape = RoundedCornerShape(8.dp),
+                            enabled = !syncStatus.isSyncing,
+                            variant = CareerButton.ButtonVariant.Success,
+                            icon = Icons.Default.Sync,
+                            loading = syncStatus.isSyncing,
                             modifier = Modifier.testTag("firestore_sync_button")
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                if (syncStatus.isSyncing) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = TextPrimary, strokeWidth = 2.dp)
-                                } else {
-                                    Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Sync Now", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
+                        )
                     }
                 }
             }
@@ -435,61 +369,54 @@ fun ProfileScreen(
 
         // 1-Click Career Starter Presets
         item {
-            GlassCard(
+            CareerCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("career_starter_presets_card"),
-                borderColor = AccentCyan.copy(alpha = 0.4f),
-                backgroundColor = BgSurfaceElevated
+                borderColor = DesignSystem.Colors.PrimaryLight.copy(alpha = 0.4f)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Career Target Presets",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryBlueLighter
-                        )
-                        Text(
-                            text = "Quickly calibrate profile, skills, roadmap and projects for a target discipline",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Career Target Presets",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = DesignSystem.Colors.PrimaryLight
+                            )
+                            Text(
+                                text = "Quickly calibrate profile, skills, roadmap and projects for a target discipline",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = DesignSystem.Colors.TextSecondary
+                            )
+                        }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Group))
 
-                val presets = listOf(
-                    "Full Stack Engineer",
-                    "Android Mobile Engineer",
-                    "AI / Machine Learning Engineer",
-                    "DevOps / Cloud Architect"
-                )
+                    val presets = listOf(
+                        "Full Stack Engineer",
+                        "Android Mobile Engineer",
+                        "AI / Machine Learning Engineer",
+                        "DevOps / Cloud Architect"
+                    )
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     presets.forEach { presetRole ->
                         val isSelected = targetRole.equals(presetRole, ignoreCase = true)
-                        Surface(
-                            onClick = {
-                                viewModel.applyCareerStarterTemplate(presetRole)
-                            },
-                            color = if (isSelected) PrimaryBlue.copy(alpha = 0.2f) else BgCard,
-                            shape = RoundedCornerShape(10.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                if (isSelected) PrimaryBlueGlow else BorderSubtle
-                            ),
-                            modifier = Modifier.fillMaxWidth()
+                        CareerCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            borderColor = if (isSelected) DesignSystem.Colors.PrimaryLight else DesignSystem.Colors.BorderSubtle,
+                            backgroundColor = if (isSelected) DesignSystem.Colors.PrimaryContainer else DesignSystem.Colors.BgCard,
+                            onClick = { viewModel.applyCareerStarterTemplate(presetRole) }
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    .padding(DesignSystem.Spacing.Space4),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -498,19 +425,19 @@ fun ProfileScreen(
                                         text = presetRole,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) PrimaryBlueGlow else TextPrimary
+                                        color = if (isSelected) DesignSystem.Colors.PrimaryLight else DesignSystem.Colors.TextPrimary
                                     )
                                     Text(
                                         text = if (isSelected) "Active Profile Trajectory" else "Tap to apply preset",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (isSelected) SuccessGreen else TextMuted
+                                        color = if (isSelected) DesignSystem.Colors.Success else DesignSystem.Colors.TextMuted
                                     )
                                 }
                                 Text(
                                     text = if (isSelected) "Active" else "Apply",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) SuccessGreen else PrimaryBlueLighter
+                                    color = if (isSelected) DesignSystem.Colors.Success else DesignSystem.Colors.PrimaryLight
                                 )
                             }
                         }
@@ -521,549 +448,168 @@ fun ProfileScreen(
 
         // 1. Personal Information Card
         item {
-            var showSavedFeedback by remember { mutableStateOf(false) }
+            CareerCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)) {
+                    SectionHeader(title = "Personal Information", subtitle = "Profile identity and public summary")
 
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                SectionHeader(
-                    title = "Personal Information",
-                    subtitle = "Profile identity and public summary"
-                )
-                Spacer(modifier = Modifier.height(14.dp))
+                    CareerTextField(
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        label = "Full Name",
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("profile_fullname_input")
+                    )
 
-                OutlinedTextField(
-                    value = fullName,
-                    onValueChange = { fullName = it },
-                    label = { Text("Full Name") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    ),
-                    modifier = Modifier.fillMaxWidth().testTag("profile_fullname_input")
-                )
+                    CareerTextField(
+                        value = headline,
+                        onValueChange = { headline = it },
+                        label = "Professional Headline",
+                        placeholder = "e.g. Senior Backend & Distributed Systems Engineer",
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("profile_headline_input")
+                    )
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = headline,
-                    onValueChange = { headline = it },
-                    label = { Text("Professional Headline") },
-                    placeholder = { Text("e.g. Senior Backend & Distributed Systems Engineer") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    ),
-                    modifier = Modifier.fillMaxWidth().testTag("profile_headline_input")
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = bio,
-                    onValueChange = { bio = it },
-                    label = { Text("Executive Summary / Bio") },
-                    minLines = 3,
-                    maxLines = 6,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    ),
-                    modifier = Modifier.fillMaxWidth().testTag("profile_bio_input")
-                )
+                    CareerTextField(
+                        value = bio,
+                        onValueChange = { bio = it },
+                        label = "Executive Summary / Bio",
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 6,
+                        modifier = Modifier.fillMaxWidth().testTag("profile_bio_input")
+                    )
+                }
             }
         }
 
         // 2. Education & Background Card
         item {
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                SectionHeader(
-                    title = "Education & Background",
-                    subtitle = "Credentials, industry tenure, and location"
-                )
-                Spacer(modifier = Modifier.height(14.dp))
+            CareerCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)) {
+                    SectionHeader(title = "Education & Background", subtitle = "Credentials, industry tenure, and location")
 
-                OutlinedTextField(
-                    value = education,
-                    onValueChange = { education = it },
-                    label = { Text("Education / Highest Degree") },
-                    placeholder = { Text("e.g. B.S. in Computer Science") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    ),
-                    modifier = Modifier.fillMaxWidth().testTag("profile_education_input")
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    OutlinedTextField(
-                        value = expYears,
-                        onValueChange = { expYears = it },
-                        label = { Text("Experience (Years)") },
-                        placeholder = { Text("e.g. 4.5") },
+                    CareerTextField(
+                        value = education,
+                        onValueChange = { education = it },
+                        label = "Education / Highest Degree",
+                        placeholder = "e.g. B.S. in Computer Science",
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
-                        ),
-                        modifier = Modifier.weight(1f).testTag("profile_experience_input")
+                        modifier = Modifier.fillMaxWidth().testTag("profile_education_input")
                     )
-                    OutlinedTextField(
-                        value = location,
-                        onValueChange = { location = it },
-                        label = { Text("Location") },
-                        placeholder = { Text("e.g. Remote / US") },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
-                        ),
-                        modifier = Modifier.weight(1f).testTag("profile_location_input")
-                    )
+
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Group))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)
+                    ) {
+                        CareerTextField(
+                            value = expYears,
+                            onValueChange = { expYears = it },
+                            label = "Experience (Years)",
+                            placeholder = "e.g. 4.5",
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f).testTag("profile_experience_input")
+                        )
+                        CareerTextField(
+                            value = location,
+                            onValueChange = { location = it },
+                            label = "Location",
+                            placeholder = "e.g. Remote / US",
+                            singleLine = true,
+                            modifier = Modifier.weight(1f).testTag("profile_location_input")
+                        )
+                    }
                 }
             }
         }
 
         // 3. Career Target Preferences Card
         item {
-            var saveFeedbackVisible by remember { mutableStateOf(false) }
+            CareerCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)) {
+                    SectionHeader(title = "Target Career Preferences", subtitle = "Target role, compensation, and company tier")
 
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                SectionHeader(
-                    title = "Target Career Preferences",
-                    subtitle = "Target role, compensation, and company tier"
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-
-                OutlinedTextField(
-                    value = targetRole,
-                    onValueChange = { targetRole = it },
-                    label = { Text("Target Engineering Role") },
-                    placeholder = { Text("e.g. Full Stack Engineer") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("profile_target_role_input")
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = targetIndustry,
-                    onValueChange = { targetIndustry = it },
-                    label = { Text("Target Industry") },
-                    placeholder = { Text("e.g. FinTech / Enterprise SaaS / AI") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    ),
-                    modifier = Modifier.fillMaxWidth().testTag("profile_industry_input")
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    OutlinedTextField(
-                        value = targetSalary,
-                        onValueChange = { targetSalary = it },
-                        label = { Text("Target Comp Range") },
-                        placeholder = { Text("e.g. $160K - $190K") },
+                    CareerTextField(
+                        value = targetRole,
+                        onValueChange = { targetRole = it },
+                        label = "Target Role",
+                        placeholder = "e.g. Staff SRE",
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
-                        ),
-                        modifier = Modifier.weight(1f).testTag("profile_salary_input")
+                        modifier = Modifier.fillMaxWidth().testTag("profile_targetrole_input")
                     )
 
-                    OutlinedTextField(
-                        value = targetCompanyTier,
-                        onValueChange = { targetCompanyTier = it },
-                        label = { Text("Company Tier") },
-                        placeholder = { Text("e.g. Series B+ / Tier-1") },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
-                        ),
-                        modifier = Modifier.weight(1f).testTag("profile_company_tier_input")
-                    )
-                }
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Group))
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        val parsedYears = expYears.toFloatOrNull() ?: 2.0f
-                        viewModel.updateProfile(
-                            fullName = fullName.trim(),
-                            headline = headline.trim(),
-                            bio = bio.trim(),
-                            location = location.trim(),
-                            education = education.trim(),
-                            experienceYears = parsedYears,
-                            targetRole = targetRole.trim(),
-                            targetIndustry = targetIndustry.trim(),
-                            targetSalary = targetSalary.trim(),
-                            targetCompanyTier = targetCompanyTier.trim()
-                        )
-                        saveFeedbackVisible = true
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .defaultMinSize(minHeight = 48.dp)
-                        .testTag("save_profile_button")
-                ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)
                     ) {
-                        Icon(
-                            imageVector = if (saveFeedbackVisible) Icons.Default.CheckCircle else Icons.Default.Save,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                        CareerTextField(
+                            value = targetIndustry,
+                            onValueChange = { targetIndustry = it },
+                            label = "Target Industry",
+                            placeholder = "e.g. FinTech",
+                            singleLine = true,
+                            modifier = Modifier.weight(1f).testTag("profile_industry_input")
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (saveFeedbackVisible) "Profile Saved & Recalibrated" else "Save Profile & Recalibrate",
-                            fontWeight = FontWeight.Bold
+                        CareerTextField(
+                            value = targetCompanyTier,
+                            onValueChange = { targetCompanyTier = it },
+                            label = "Company Tier",
+                            placeholder = "e.g. Top Tech",
+                            singleLine = true,
+                            modifier = Modifier.weight(1f).testTag("profile_tier_input")
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Group))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Group)
+                    ) {
+                        CareerTextField(
+                            value = targetSalary,
+                            onValueChange = { targetSalary = it },
+                            label = "Target Salary",
+                            placeholder = "e.g. $180k",
+                            singleLine = true,
+                            modifier = Modifier.weight(1f).testTag("profile_salary_input")
                         )
                     }
                 }
             }
         }
 
-        // Trust, Privacy & Security Controls
+        // Save button
         item {
-            var showPasswordDialog by remember { mutableStateOf(false) }
-            var showDeleteDialog by remember { mutableStateOf(false) }
-            var showDataControlsDialog by remember { mutableStateOf(false) }
-
-            GlassCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("trust_security_controls_card")
-            ) {
-                SectionHeader(
-                    title = "Trust & Security Controls",
-                    subtitle = "Account settings, connected accounts, privacy, and data governance"
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Account Settings Row
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Change Password
-                    Surface(
-                        onClick = { showPasswordDialog = true },
-                        shape = RoundedCornerShape(10.dp),
-                        color = BgSurfaceElevated,
-                        border = BorderStroke(1.dp, BorderSubtle),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("change_password_item")
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(Icons.Default.Lock, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(20.dp))
-                                Column {
-                                    Text("Change Password", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                                    Text("Update your account security credentials", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                }
-                            }
-                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted)
-                        }
-                    }
-
-                    // Connected Accounts
-                    Surface(
-                        onClick = { /* Inform user of status */ },
-                        shape = RoundedCornerShape(10.dp),
-                        color = BgSurfaceElevated,
-                        border = BorderStroke(1.dp, BorderSubtle),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("connected_accounts_item")
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(Icons.Default.Link, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(20.dp))
-                                Column {
-                                    Text("Connected Accounts", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                                    Text(
-                                        text = if (authUser.isAuthenticated) "Google / Firebase linked" else "No third-party accounts connected",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary
-                                    )
-                                }
-                            }
-                            StatusBadge(text = if (authUser.isAuthenticated) "LINKED" else "OFFLINE", statusType = if (authUser.isAuthenticated) "success" else "neutral")
-                        }
-                    }
-
-                    // Privacy & Data Controls
-                    Surface(
-                        onClick = { showDataControlsDialog = true },
-                        shape = RoundedCornerShape(10.dp),
-                        color = BgSurfaceElevated,
-                        border = BorderStroke(1.dp, BorderSubtle),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("data_controls_item")
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(Icons.Default.Security, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(20.dp))
-                                Column {
-                                    Text("Privacy & Data Controls", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                                    Text("Local Room database and cloud sync policies", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                }
-                            }
-                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted)
-                        }
-                    }
-
-                    // Delete Account
-                    Surface(
-                        onClick = { showDeleteDialog = true },
-                        shape = RoundedCornerShape(10.dp),
-                        color = DangerRed.copy(alpha = 0.08f),
-                        border = BorderStroke(1.dp, DangerRed.copy(alpha = 0.3f)),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("delete_account_item")
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = DangerRed, modifier = Modifier.size(20.dp))
-                                Column {
-                                    Text("Delete Account", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = DangerRed)
-                                    Text("Purge stored profiles and local database records", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                }
-                            }
-                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = DangerRed)
-                        }
-                    }
-                }
-            }
-
-            // Change Password Dialog
-            if (showPasswordDialog) {
-                var currentPwd by remember { mutableStateOf("") }
-                var newPwd by remember { mutableStateOf("") }
-                var confirmPwd by remember { mutableStateOf("") }
-                var pwdError by remember { mutableStateOf<String?>(null) }
-
-                AlertDialog(
-                    onDismissRequest = { showPasswordDialog = false },
-                    title = { Text("Change Password", color = TextPrimary, fontWeight = FontWeight.Bold) },
-                    text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("Enter your current and new password to update account credentials.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                            OutlinedTextField(
-                                value = currentPwd,
-                                onValueChange = { currentPwd = it },
-                                label = { Text("Current Password") },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            OutlinedTextField(
-                                value = newPwd,
-                                onValueChange = { newPwd = it },
-                                label = { Text("New Password (min 6 characters)") },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            OutlinedTextField(
-                                value = confirmPwd,
-                                onValueChange = { confirmPwd = it },
-                                label = { Text("Confirm New Password") },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            if (pwdError != null) {
-                                Text(pwdError!!, color = DangerRed, fontSize = 12.sp)
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                if (currentPwd.isBlank()) {
-                                    pwdError = "Please enter current password."
-                                } else if (newPwd.length < 6) {
-                                    pwdError = "New password must be at least 6 characters."
-                                } else if (newPwd != confirmPwd) {
-                                    pwdError = "Passwords do not match."
-                                } else {
-                                    showPasswordDialog = false
-                                    viewModel.updateProfile(
-                                        fullName = fullName.trim(),
-                                        headline = headline.trim(),
-                                        bio = bio.trim(),
-                                        location = location.trim(),
-                                        education = education.trim(),
-                                        experienceYears = expYears.toFloatOrNull() ?: 2.0f,
-                                        targetRole = targetRole.trim(),
-                                        targetIndustry = targetIndustry.trim(),
-                                        targetSalary = targetSalary.trim(),
-                                        targetCompanyTier = targetCompanyTier.trim()
-                                    )
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Update Password")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showPasswordDialog = false }) {
-                            Text("Cancel", color = TextSecondary)
-                        }
-                    },
-                    containerColor = BgSurfaceElevated
-                )
-            }
-
-            // Data Controls Dialog
-            if (showDataControlsDialog) {
-                AlertDialog(
-                    onDismissRequest = { showDataControlsDialog = false },
-                    title = { Text("Privacy & Data Controls", color = TextPrimary, fontWeight = FontWeight.Bold) },
-                    text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                "Your career data (resumes, audited code, interview scores) is stored in a private local SQLite Room database on this device.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "When signed in with Firebase, encrypted cloud synchronization keeps your metrics up to date across your devices without sharing your data with third parties.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
-                        }
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = { showDataControlsDialog = false },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Close")
-                        }
-                    },
-                    containerColor = BgSurfaceElevated
-                )
-            }
-
-            // Delete Account Dialog
-            if (showDeleteDialog) {
-                AlertDialog(
-                    onDismissRequest = { showDeleteDialog = false },
-                    title = { Text("Delete Account & Data", color = DangerRed, fontWeight = FontWeight.Bold) },
-                    text = {
-                        Text(
-                            "This action will sign you out and clear your active profile and session data. Are you sure you want to proceed?",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextPrimary
-                        )
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                viewModel.signOut()
-                                showDeleteDialog = false
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Delete Account", color = Color.White)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDeleteDialog = false }) {
-                            Text("Cancel", color = TextSecondary)
-                        }
-                    },
-                    containerColor = BgSurfaceElevated
-                )
-            }
+            CareerButton(
+                text = "Save Profile",
+                onClick = {
+                    viewModel.updateProfile(
+                        fullName = fullName.trim(),
+                        headline = headline.trim(),
+                        bio = bio.trim(),
+                        location = location.trim(),
+                        education = education.trim(),
+                        experienceYears = expYears.toIntOrNull() ?: 0,
+                        targetRole = targetRole.trim(),
+                        targetIndustry = targetIndustry.trim(),
+                        targetSalary = targetSalary.trim(),
+                        targetCompanyTier = targetCompanyTier.trim()
+                    )
+                },
+                variant = CareerButton.ButtonVariant.Primary,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
