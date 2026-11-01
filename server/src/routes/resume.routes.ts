@@ -3,7 +3,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { getDatabase } from '../db/database.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
-import { uploadResume } from '../middleware/upload.js';
+import { uploadResume, validateResumeFile } from '../middleware/upload.js';
 import { extractTextFromResume, parseResumeContent, analyzeJobDescription } from '../services/resume.service.js';
 import { AIService } from '../services/ai.service.js';
 import { AnalyticsService } from '../services/analytics.service.js';
@@ -40,6 +40,7 @@ router.get('/', (req: AuthenticatedRequest, res: Response, next) => {
 
 // POST /api/resume/upload
 router.post('/upload', uploadResume.single('resume'), async (req: AuthenticatedRequest, res: Response, next) => {
+  let retainedFile = false;
   try {
     const userId = req.user!.id;
     const file = req.file;
@@ -50,9 +51,17 @@ router.post('/upload', uploadResume.single('resume'), async (req: AuthenticatedR
       });
     }
 
+    await validateResumeFile(file);
+
     const db = getDatabase();
     const profile = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(userId) as any;
-    const targetRole = req.body.targetRole || profile?.target_role || 'Full Stack Engineer';
+    const requestedTargetRole = typeof req.body.targetRole === 'string' ? req.body.targetRole.trim() : '';
+    if (requestedTargetRole.length > 200) {
+      return res.status(422).json({
+        error: { code: 'INVALID_INPUT', message: 'Target role must be 200 characters or fewer.' }
+      });
+    }
+    const targetRole = requestedTargetRole || profile?.target_role || 'Full Stack Engineer';
 
     // 1. Text extraction
     let extractedText = '';
@@ -125,6 +134,7 @@ router.post('/upload', uploadResume.single('resume'), async (req: AuthenticatedR
     });
 
     saveResumeTx();
+    retainedFile = true;
 
     AnalyticsService.trackEvent(userId, 'resume_uploaded_and_analyzed', {
       resumeId,
@@ -155,6 +165,17 @@ router.post('/upload', uploadResume.single('resume'), async (req: AuthenticatedR
     });
   } catch (err) {
     next(err);
+  } finally {
+    const file = req.file;
+    if (file && !retainedFile) {
+      try {
+        fs.unlinkSync(file.path);
+      } catch (cleanupError: any) {
+        if (cleanupError?.code !== 'ENOENT') {
+          console.error('[Resume] Failed to clean up rejected upload.');
+        }
+      }
+    }
   }
 });
 

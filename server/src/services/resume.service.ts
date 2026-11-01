@@ -4,6 +4,8 @@ import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import { getDatabase } from '../db/database.js';
 
+const MAX_EXTRACTED_TEXT_LENGTH = 200_000;
+
 export interface ExtractedResumeData {
   rawText: string;
   extractedSkills: string[];
@@ -51,6 +53,10 @@ export async function extractTextFromResume(filePath: string, mimeType: string):
   const trimmed = extractedText.trim();
   if (!trimmed) {
     throw new Error('The uploaded resume document contains no readable text.');
+  }
+
+  if (trimmed.length > MAX_EXTRACTED_TEXT_LENGTH) {
+    throw new Error(`The uploaded resume exceeds the ${MAX_EXTRACTED_TEXT_LENGTH.toLocaleString()} character text limit.`);
   }
 
   return trimmed;
@@ -282,4 +288,3 @@ export function analyzeJobDescription(
     summary
   };
 }
-

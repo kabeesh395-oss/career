@@ -1,4 +1,0 @@
-Alice Rivera
-Full Stack Engineer
-Experience in TypeScript, React, Node.js, PostgreSQL, Docker
-Reduced database query latency by 40% using Redis indexing.

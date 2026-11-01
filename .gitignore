@@ -29,6 +29,7 @@ client/android/.gradle/
 *.db-shm
 *.db-wal
 *.db-journal
+server/uploads/
 
 # OS files
 .DS_Store

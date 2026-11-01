@@ -8,7 +8,7 @@ router.use(authenticate);
 
 const TrackEventSchema = z.object({
   eventName: z.string().min(1, 'Event name is required'),
-  eventData: z.record(z.any()).optional(),
+  eventData: z.record(z.string(), z.any()).optional(),
   idempotencyKey: z.string().optional()
 });
 

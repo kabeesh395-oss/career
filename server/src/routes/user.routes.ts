@@ -1,8 +1,13 @@
 import { Router, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import { getDatabase } from '../db/database.js';
 
 const router = Router();
+const __filename = fileURLToPath(import.meta.url);
+const UPLOAD_DIR = path.resolve(path.dirname(__filename), '../../uploads/resumes');
 
 // Delete User Account & All Associated Data (GDPR / Privacy Compliance)
 router.delete('/delete', authenticate, (req: AuthenticatedRequest, res: Response) => {
@@ -14,6 +19,8 @@ router.delete('/delete', authenticate, (req: AuthenticatedRequest, res: Response
   const db = getDatabase();
 
   try {
+    const resumeFiles = db.prepare('SELECT file_path FROM resumes WHERE user_id = ?').all(userId) as Array<{ file_path: string }>;
+
     const deleteTransaction = db.transaction((uid: string) => {
       // Cascading deletion
       db.prepare('DELETE FROM resume_analysis WHERE user_id = ?').run(uid);
@@ -42,6 +49,21 @@ router.delete('/delete', authenticate, (req: AuthenticatedRequest, res: Response
       return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User account not found.' } });
     }
 
+    for (const resume of resumeFiles) {
+      const filePath = path.resolve(resume.file_path);
+      if (path.dirname(filePath) !== UPLOAD_DIR) {
+        console.error(`[Privacy] Refusing to delete resume outside upload directory for user ${userId}.`);
+        continue;
+      }
+      try {
+        fs.unlinkSync(filePath);
+      } catch (fileError: any) {
+        if (fileError?.code !== 'ENOENT') {
+          console.error(`[Privacy] Failed to delete resume file for user ${userId}.`);
+        }
+      }
+    }
+
     console.log(`[Privacy] User ${userId} and all associated data permanently erased.`);
     return res.json({
       success: true,
@@ -50,7 +72,8 @@ router.delete('/delete', authenticate, (req: AuthenticatedRequest, res: Response
       timestamp: new Date().toISOString()
     });
   } catch (err: any) {
-    return res.status(500).json({ error: { code: 'DELETION_FAILED', message: err.message } });
+    console.error('[Privacy] Account deletion failed:', err);
+    return res.status(500).json({ error: { code: 'DELETION_FAILED', message: 'Unable to delete the account at this time.' } });
   }
 });
 
