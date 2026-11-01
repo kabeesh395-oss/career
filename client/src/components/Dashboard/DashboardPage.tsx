@@ -20,7 +20,26 @@ interface ReadinessSnapshot {
   overallScore: number;
   overallConfidence: number;
   scoreVersion: string;
+  pillars: Record<string, {
+    score: number;
+    confidence: number;
+    evidence: string[];
+    gaps: string[];
+    nextActions: string[];
+  }>;
 }
+
+const pillarLabels: Record<string, string> = {
+  technical_skills: 'Technical skills',
+  resume_ats: 'Resume & ATS',
+  projects_github: 'Projects & GitHub',
+  aptitude: 'Aptitude',
+  communication: 'Communication',
+  interview: 'Interview',
+  profile: 'Profile quality',
+  job_alignment: 'Job alignment',
+  learning_consistency: 'Learning consistency'
+};
 
 interface RoadmapItem {
   id: string;
@@ -108,6 +127,9 @@ export default function DashboardPage({ onNavigate }: Props) {
 
   const readiness = readinessSnapshot?.overallScore ?? analytics?.readinessScore ?? 0;
   const readinessConfidence = readinessSnapshot ? Math.round(readinessSnapshot.overallConfidence * 100) : 0;
+  const observedPillars = readinessSnapshot
+    ? Object.values(readinessSnapshot.pillars).filter(pillar => pillar.confidence > 0).length
+    : 0;
 
   // Calculate live roadmap stats
   const totalTasks = roadmapData?.items?.length || analytics?.tasks?.total || 0;
@@ -263,7 +285,7 @@ export default function DashboardPage({ onNavigate }: Props) {
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 12, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="badge badge-primary" style={{ fontSize: 10, letterSpacing: '0.04em' }}>
                 RECOMMENDED FOCUS
@@ -276,16 +298,20 @@ export default function DashboardPage({ onNavigate }: Props) {
               Estimated: ~{nextAction.estimatedMinutes} min
             </span>
           </div>
-          <h2 style={{ fontSize: 19, fontWeight: 700, color: '#f8fafc', marginBottom: 6 }}>
-            {nextAction.title}
-          </h2>
-          <p style={{ color: '#cbd5e1', fontSize: 13.5, lineHeight: 1.6, marginBottom: 6 }}>
-            {nextAction.whyItMatters}
-          </p>
-          <p style={{ color: '#64748b', fontSize: 12, marginBottom: 14 }}>
-            Evidence: {nextAction.evidence}
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="readiness-action-layout">
+            <div>
+              <h2 style={{ fontSize: 19, fontWeight: 700, color: '#f8fafc', marginBottom: 6 }}>
+                {nextAction.title}
+              </h2>
+              <p style={{ color: '#cbd5e1', fontSize: 13.5, lineHeight: 1.6, marginBottom: 8 }}>
+                {nextAction.whyItMatters}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <span className="readiness-meta-chip">Impact: {nextAction.priority === 'urgent' ? 'High' : 'Meaningful'}</span>
+                <span className="readiness-meta-chip">Evidence: {nextAction.evidence}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               className="btn-primary"
               onClick={() => {
@@ -297,8 +323,43 @@ export default function DashboardPage({ onNavigate }: Props) {
             >
               {nextAction.ctaText} <ArrowRight size={14} />
             </button>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Nine-pillar readiness overview */}
+      {readinessSnapshot && (
+        <section className="glass-card readiness-overview-card" aria-labelledby="readiness-pillars-title" data-testid="readiness-pillars">
+          <div className="readiness-section-heading">
+            <div>
+              <span className="section-eyebrow">READINESS MAP</span>
+              <h2 id="readiness-pillars-title">Your career readiness, by pillar</h2>
+              <p>Build confidence by adding evidence, not by chasing an arbitrary score.</p>
+            </div>
+            <div className="readiness-coverage-badge">
+              <strong>{observedPillars}/9</strong>
+              <span>pillars with evidence</span>
+            </div>
+          </div>
+          <div className="readiness-pillar-grid">
+            {Object.entries(readinessSnapshot.pillars).map(([key, pillar]) => (
+              <div className="readiness-pillar-card" key={key}>
+                <div className="readiness-pillar-topline">
+                  <span>{pillarLabels[key] || key.replace(/_/g, ' ')}</span>
+                  <strong>{pillar.confidence > 0 ? `${pillar.score}%` : '—'}</strong>
+                </div>
+                <div className="readiness-progress-track" aria-label={`${pillarLabels[key] || key} score`}>
+                  <div className="readiness-progress-fill" style={{ width: `${pillar.confidence > 0 ? pillar.score : 0}%` }} />
+                </div>
+                <div className="readiness-pillar-footline">
+                  <span>{pillar.confidence > 0 ? `${Math.round(pillar.confidence * 100)}% confidence` : 'Needs evidence'}</span>
+                  <span>{pillar.evidence.length} {pillar.evidence.length === 1 ? 'signal' : 'signals'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Visual Roadmap Progress Summary Tracker */}
