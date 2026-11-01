@@ -108,11 +108,10 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: 'server/package.json'
+          cache-dependency-path: 'server/package-lock.json'
 
       - name: "Install Server Dependencies (TASK-002: Bypasses client/)"
-        run: |
-          npm install
+        run: npm ci
 
       - name: Compile Backend TypeScript
         run: |
@@ -152,6 +151,14 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
+
       - name: Setup Gradle Cache
         uses: gradle/actions/setup-gradle@v4
 
@@ -168,3 +175,34 @@ jobs:
           name: android-unit-test-results
           path: app/build/reports/tests/testDebugUnitTest
           retention-days: 14
+
+  # Client verification for the Vite/TypeScript web application
+  client-verification:
+    name: "Client Build & Tests"
+    runs-on: ubuntu-latest
+    needs: [security-gate]
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'client/package-lock.json'
+
+      - name: Install Client Dependencies
+        run: npm ci
+
+      - name: Build Client
+        run: npm run build
+
+      - name: Run Client Tests
+        run: npm test -- --run
