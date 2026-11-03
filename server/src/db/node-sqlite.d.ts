@@ -1,5 +1,5 @@
 declare module 'node:sqlite' {
-  export class Database {
+  export class DatabaseSync {
     constructor(filename: string | Buffer);
     exec(sql: string): void;
     prepare(sql: string): Statement;

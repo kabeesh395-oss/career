@@ -1,4 +1,4 @@
-import { Database } from 'node:sqlite';
+import { DatabaseSync } from 'node:sqlite';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,7 +8,16 @@ const __dirname = path.dirname(__filename);
 
 const DB_PATH = path.resolve(__dirname, '../../careerpilot.db');
 
-export interface CareerDatabase extends Database {
+export interface CareerStatement {
+  run(...params: unknown[]): { changes: number; lastInsertRowid: number };
+  get(...params: unknown[]): unknown;
+  all(...params: unknown[]): unknown[];
+}
+
+export interface CareerDatabase {
+  prepare(sql: string): CareerStatement;
+  exec(sql: string): void;
+  close(): void;
   transaction<T, A extends any[]>(fn: (...args: A) => T): (...args: A) => T;
 }
 
@@ -20,7 +29,7 @@ export function initDatabase(): CareerDatabase {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
-  db = new Database(DB_PATH) as CareerDatabase;
+  db = new DatabaseSync(DB_PATH) as CareerDatabase;
 
   // node:sqlite does not provide db.transaction; add a BEGIN/COMMIT/ROLLBACK shim
   db.transaction = <T, A extends any[]>(fn: (...args: A) => T): ((...args: A) => T) => {
