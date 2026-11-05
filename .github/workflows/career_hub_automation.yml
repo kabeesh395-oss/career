@@ -152,14 +152,19 @@ jobs:
           java-version: '21'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK components
         shell: bash
         run: |
           set -euo pipefail
+          command -v sdkmanager
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Verify Android SDK components
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/platforms/android-35"
+          test -x "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools/35.0.0/aapt"
 
       - name: Setup Gradle Cache
         uses: gradle/actions/setup-gradle@v4
