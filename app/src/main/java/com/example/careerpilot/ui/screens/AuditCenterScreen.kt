@@ -38,8 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.careerpilot.data.model.AuditIssue
 import com.example.careerpilot.data.model.AuditScoreSummary
-import com.example.careerpilot.ui.components.*
-import com.example.careerpilot.ui.theme.DesignSystem
+import com.example.careerpilot.ui.components.CompanyLogoBadge
+import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -93,8 +93,8 @@ fun AuditCenterScreen(
         modifier = Modifier
             .fillMaxSize()
             .testTag("audit_center_screen"),
-        contentPadding = PaddingValues(DesignSystem.Spacing.Space4),
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space4)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header: Title & Action
         item {
@@ -108,24 +108,41 @@ fun AuditCenterScreen(
                         text = "Demerits & Red Flag Audit",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = DesignSystem.Colors.TextPrimary
+                        color = TextPrimary
                     )
                     Text(
                         text = "Deterministic evidence & hiring gap verification for ${userProfile?.targetRole ?: "Full Stack Engineer"}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = DesignSystem.Colors.TextSecondary
+                        color = TextSecondary
                     )
                 }
 
-                CareerButton(
-                    text = if (isAnalyzing) "Recalibrating…" else "Recalibrate",
+                FilledTonalButton(
                     onClick = { viewModel.recalibrateAudit() },
                     enabled = !isAnalyzing,
-                    variant = CareerButton.ButtonVariant.Secondary,
-                    loading = isAnalyzing,
-                    icon = Icons.Default.Refresh,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = BgSurfaceElevated,
+                        contentColor = PrimaryBlueGlow
+                    ),
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.testTag("recalibrate_audit_button")
-                )
+                ) {
+                    if (isAnalyzing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = PrimaryBlueGlow
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Recalibrate",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Recalibrate", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
             }
         }
 
@@ -158,18 +175,47 @@ fun AuditCenterScreen(
 
             // Search Bar
             item {
-                CareerTextField(
+                OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("audit_search_field"),
-                    placeholder = "Search red flags, evidence, or technologies...",
-                    leadingIcon = Icons.Default.Search,
-                    trailingIcon = Icons.Default.Clear,
-                    onTrailingClick = { searchQuery = "" },
+                    placeholder = {
+                        Text(
+                            "Search red flags, evidence, or technologies...",
+                            color = TextMuted,
+                            fontSize = 13.sp
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = TextMuted
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear search",
+                                    tint = TextMuted
+                                )
+                            }
+                        }
+                    },
                     singleLine = true,
-                    isError = false,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = BgSurface,
+                        unfocusedContainerColor = BgSurface,
+                        focusedBorderColor = PrimaryBlueGlow,
+                        unfocusedBorderColor = BorderSubtle,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() })
                 )
@@ -189,15 +235,27 @@ fun AuditCenterScreen(
                 )
 
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Item),
-                    contentPadding = PaddingValues(horizontal = DesignSystem.Spacing.Space1)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 2.dp)
                 ) {
                     items(categories) { (catKey, catLabel) ->
                         val isSelected = selectedCategoryFilter == catKey
-                        CareerChip(
-                            text = catLabel,
+                        FilterChip(
                             selected = isSelected,
                             onClick = { selectedCategoryFilter = catKey },
+                            label = { Text(catLabel, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = PrimaryBlue.copy(alpha = 0.25f),
+                                selectedLabelColor = PrimaryBlueGlow,
+                                containerColor = BgSurface,
+                                labelColor = TextSecondary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) PrimaryBlueGlow else BorderSubtle
+                            ),
+                            shape = RoundedCornerShape(20.dp),
                             modifier = Modifier.testTag("category_chip_$catKey")
                         )
                     }

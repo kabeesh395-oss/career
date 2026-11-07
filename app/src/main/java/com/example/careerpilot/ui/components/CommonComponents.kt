@@ -1,7 +1,6 @@
 package com.example.careerpilot.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -28,12 +28,147 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.ui.animation.*
-import com.example.careerpilot.ui.theme.DesignSystem
+import com.example.careerpilot.ui.theme.*
+import com.example.careerpilot.ui.theme.Dimens
+
+// ── Cards ─────────────────────────────────────────────────────────
+
+/**
+ * Standard CareerPilot card surface with crisp border and responsive interaction.
+ */
+@Composable
+fun CareerCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+    borderColor: Color = BorderSubtle,
+    backgroundColor: Color = BgCard,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val cardModifier = modifier
+        .clip(shape)
+        .background(backgroundColor)
+        .border(Dimens.CardBorderWidth, borderColor, shape)
+        .then(if (onClick != null) Modifier.subtleClickable(onClick = onClick) else Modifier)
+        .padding(Dimens.CardPadding)
+
+    Column(
+        modifier = cardModifier,
+        content = content
+    )
+}
+
+/**
+ * Highlighted card for primary actions or key insights.
+ */
+@Composable
+fun CareerCardHighlight(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+    borderColor: Color = PrimaryBlue.copy(alpha = 0.5f),
+    backgroundColor: Color = BgCard,
+    accentGlow: Color? = null,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    CareerCard(
+        modifier = modifier,
+        shape = shape,
+        borderColor = borderColor,
+        backgroundColor = backgroundColor,
+        onClick = onClick,
+        content = content
+    )
+}
+
+/**
+ * Clean surface card (formerly GlassCard, now clean professional dark surface).
+ */
+@Composable
+fun GlassCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+    borderColor: Color = BorderSubtle,
+    backgroundColor: Color = BgCard,
+    glowColor: Color? = null,
+    enableSheen: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    CareerCard(
+        modifier = modifier,
+        shape = shape,
+        borderColor = borderColor,
+        backgroundColor = backgroundColor,
+        onClick = onClick,
+        content = content
+    )
+}
+
+@Composable
+fun GradientGlassCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+    startColor: Color = BgCard,
+    endColor: Color = BgCard,
+    borderColor: Color = BorderSubtle,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    CareerCard(
+        modifier = modifier,
+        shape = shape,
+        borderColor = borderColor,
+        backgroundColor = BgCard,
+        onClick = onClick,
+        content = content
+    )
+}
+
+@Composable
+fun AnimatedGlowingGlassCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+    backgroundColor: Color = BgCard,
+    accentColor: Color = PrimaryBlue,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    CareerCard(
+        modifier = modifier,
+        shape = shape,
+        borderColor = BorderMedium,
+        backgroundColor = backgroundColor,
+        onClick = onClick,
+        content = content
+    )
+}
+
+@Composable
+fun MotionGlassCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+    baseColor: Color = BgCard,
+    borderColor: Color = BorderSubtle,
+    glowColor: Color? = null,
+    sheenDurationMillis: Int = 0,
+    onClick: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    CareerCard(
+        modifier = modifier,
+        shape = shape,
+        borderColor = borderColor,
+        backgroundColor = baseColor,
+        onClick = onClick,
+        content = content
+    )
+}
 
 // ── Metrics ───────────────────────────────────────────────────────
 
 /**
- * Compact metric display card - simplified, clean
+ * Compact metric display card.
  */
 @Composable
 fun MetricCard(
@@ -45,8 +180,7 @@ fun MetricCard(
     onClick: (() -> Unit)? = null
 ) {
     CareerCard(
-        modifier = modifier
-            .testTag("metric_${label.lowercase().replace(' ', '_')}"),
+        modifier = modifier.testTag("metric_${label.lowercase().replace(' ', '_')}"),
         onClick = onClick
     ) {
         Row(
@@ -57,7 +191,7 @@ fun MetricCard(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = DesignSystem.Colors.TextSecondary,
+                color = TextSecondary,
                 fontWeight = FontWeight.Medium
             )
             Box(
@@ -67,18 +201,18 @@ fun MetricCard(
                     .background(accentColor)
             )
         }
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
+        Spacer(modifier = Modifier.height(Dimens.SpaceSm))
         Text(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
-            color = DesignSystem.Colors.TextPrimary,
+            color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+        Spacer(modifier = Modifier.height(Dimens.SpaceXs))
         Text(
             text = detail,
             style = MaterialTheme.typography.labelSmall,
-            color = DesignSystem.Colors.TextMuted,
+            color = TextMuted,
             maxLines = 1
         )
     }
@@ -86,45 +220,60 @@ fun MetricCard(
 
 // ── Badges ────────────────────────────────────────────────────────
 
-/**
- * Semantic status badge with automatic color mapping.
- * Use CareerBadge directly for more control.
- */
 @Composable
 fun StatusBadge(
     text: String,
     statusType: String = "neutral",
     modifier: Modifier = Modifier
 ) {
-    val variant = when (statusType.lowercase()) {
-        "urgent", "danger", "high", "critical" -> CareerBadge.BadgeVariant.Danger
-        "medium", "warning", "in_progress" -> CareerBadge.BadgeVariant.Warning
-        "success", "completed", "verified", "low", "resolved" -> CareerBadge.BadgeVariant.Success
-        "primary", "active" -> CareerBadge.BadgeVariant.Primary
-        else -> CareerBadge.BadgeVariant.Neutral
+    val (bgColor, txtColor, bdColor) = when (statusType.lowercase()) {
+        "urgent", "danger", "high", "critical" -> Triple(
+            DangerRed.copy(alpha = 0.12f), DangerRedLight, DangerRed.copy(alpha = 0.35f)
+        )
+        "medium", "warning", "in_progress" -> Triple(
+            WarningAmber.copy(alpha = 0.12f), WarningAmberLight, WarningAmber.copy(alpha = 0.35f)
+        )
+        "success", "completed", "verified", "low", "resolved" -> Triple(
+            SuccessGreen.copy(alpha = 0.12f), SuccessGreenLight, SuccessGreen.copy(alpha = 0.35f)
+        )
+        "primary", "active" -> Triple(
+            PrimaryBlue.copy(alpha = 0.12f), PrimaryBlueLighter, PrimaryBlue.copy(alpha = 0.35f)
+        )
+        else -> Triple(BgMuted, TextSecondary, BorderSubtle)
     }
-    CareerBadge(text = text, modifier = modifier, variant = variant)
+
+    val shape = RoundedCornerShape(Dimens.BadgeRadius)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(bgColor)
+            .border(1.dp, bdColor, shape)
+            .padding(horizontal = Dimens.BadgePaddingHorizontal, vertical = Dimens.BadgePaddingVertical),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text.uppercase(),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = txtColor,
+            letterSpacing = 0.5.sp
+        )
+    }
 }
 
-/**
- * Custom color badge for non-semantic colors.
- */
 @Composable
 fun StatusBadge(
     text: String,
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(DesignSystem.Shape.RadiusXs)
+    val shape = RoundedCornerShape(Dimens.BadgeRadius)
     Box(
         modifier = modifier
             .clip(shape)
             .background(color.copy(alpha = 0.12f))
-            .border(DesignSystem.Sizing.CardBorderWidth, color.copy(alpha = 0.35f), shape)
-            .padding(
-                horizontal = DesignSystem.Sizing.BadgePaddingHorizontal,
-                vertical = DesignSystem.Sizing.BadgePaddingVertical
-            ),
+            .border(1.dp, color.copy(alpha = 0.35f), shape)
+            .padding(horizontal = Dimens.BadgePaddingHorizontal, vertical = Dimens.BadgePaddingVertical),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -137,30 +286,24 @@ fun StatusBadge(
     }
 }
 
-/**
- * Pulsing live indicator badge.
- */
 @Composable
 fun PulsingLiveBadge(
     text: String,
-    color: Color = DesignSystem.Colors.Primary,
+    color: Color = PrimaryBlue,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(DesignSystem.Shape.RadiusXs)
+    val shape = RoundedCornerShape(Dimens.BadgeRadius)
     Box(
         modifier = modifier
             .clip(shape)
             .background(color.copy(alpha = 0.12f))
-            .border(DesignSystem.Sizing.CardBorderWidth, color.copy(alpha = 0.35f), shape)
-            .padding(
-                horizontal = DesignSystem.Sizing.BadgePaddingHorizontal,
-                vertical = DesignSystem.Sizing.BadgePaddingVertical
-            ),
+            .border(1.dp, color.copy(alpha = 0.35f), shape)
+            .padding(horizontal = Dimens.BadgePaddingHorizontal, vertical = Dimens.BadgePaddingVertical),
         contentAlignment = Alignment.Center
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -187,7 +330,7 @@ fun CircularScoreGauge(
     size: Dp = 96.dp,
     strokeWidth: Dp = 6.dp,
     label: String = "SCORE",
-    primaryColor: Color = DesignSystem.Colors.Primary,
+    primaryColor: Color = PrimaryBlue,
     modifier: Modifier = Modifier
 ) {
     val animatedProgress by animateFloatAsState(
@@ -196,8 +339,8 @@ fun CircularScoreGauge(
         label = "scoreProgress"
     )
 
-    val discColor = DesignSystem.Colors.BgSurface.copy(alpha = 0.5f)
-    val trackColor = DesignSystem.Colors.BorderSubtle
+    val discColor = BgSurface.copy(alpha = 0.5f)
+    val trackColor = BorderSubtle
 
     Box(
         contentAlignment = Alignment.Center,
@@ -235,12 +378,12 @@ fun CircularScoreGauge(
                 text = "$score%",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = DesignSystem.Colors.TextPrimary
+                color = TextPrimary
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = DesignSystem.Colors.TextSecondary,
+                color = TextSecondary,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.5.sp
@@ -253,7 +396,7 @@ fun CircularScoreGauge(
 fun BulletSeparator(
     modifier: Modifier = Modifier,
     size: Dp = 3.5.dp,
-    color: Color = DesignSystem.Colors.TextMuted
+    color: Color = TextMuted
 ) {
     Box(
         modifier = modifier
@@ -283,14 +426,14 @@ fun SectionHeader(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = DesignSystem.Colors.TextPrimary
+                color = TextPrimary
             )
             if (subtitle != null) {
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                Spacer(modifier = Modifier.height(Dimens.SpaceXxs))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = DesignSystem.Colors.TextSecondary
+                    color = TextSecondary
                 )
             }
         }
@@ -298,12 +441,12 @@ fun SectionHeader(
             val cleanText = actionText.replace("→", "").replace(">", "").replace("⚡", "").trim()
             TextButton(
                 onClick = onActionClick,
-                colors = ButtonDefaults.textButtonColors(contentColor = DesignSystem.Colors.PrimaryLight),
-                contentPadding = PaddingValues(horizontal = DesignSystem.Spacing.Space2, vertical = DesignSystem.Spacing.Space1)
+                colors = ButtonDefaults.textButtonColors(contentColor = PrimaryBlueLighter),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
                         text = cleanText,
@@ -313,7 +456,7 @@ fun SectionHeader(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
-                        modifier = Modifier.size(DesignSystem.Sizing.IconSm)
+                        modifier = Modifier.size(14.dp)
                     )
                 }
             }
@@ -343,125 +486,69 @@ fun EmptyStateCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = DesignSystem.Spacing.Space8, horizontal = DesignSystem.Spacing.Space3),
+            .padding(vertical = Dimens.SpaceXl, horizontal = Dimens.SpaceMd),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Box(
             modifier = Modifier
-                .size(DesignSystem.Sizing.AvatarLg)
-                .clip(RoundedCornerShape(DesignSystem.Shape.RadiusMd))
-                .background(DesignSystem.Colors.BgSurface)
-                .border(DesignSystem.Sizing.CardBorderWidth, DesignSystem.Colors.BorderSubtle, RoundedCornerShape(DesignSystem.Shape.RadiusMd)),
+                .size(48.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(BgSurfaceElevated)
+                .border(1.dp, BorderSubtle, RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = DesignSystem.Colors.PrimaryLight,
-                modifier = Modifier.size(DesignSystem.Sizing.IconLg)
+                tint = PrimaryBlueLighter,
+                modifier = Modifier.size(24.dp)
             )
         }
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+        Spacer(modifier = Modifier.height(Dimens.SpaceMd))
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = DesignSystem.Colors.TextPrimary,
+            color = TextPrimary,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+        Spacer(modifier = Modifier.height(Dimens.SpaceXs))
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
-            color = DesignSystem.Colors.TextSecondary,
+            color = TextSecondary,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = DesignSystem.Spacing.Space4)
+            modifier = Modifier.padding(horizontal = Dimens.SpaceLg)
         )
         if (actionLabel != null && onActionClick != null) {
-            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space4))
+            Spacer(modifier = Modifier.height(Dimens.SpaceLg))
             Row(
-                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CareerButton(
-                    text = actionLabel,
+                Button(
                     onClick = onActionClick,
-                    variant = CareerButton.ButtonVariant.Primary
-                )
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                    shape = RoundedCornerShape(Dimens.RadiusSm),
+                    contentPadding = PaddingValues(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceSm),
+                    modifier = Modifier.defaultMinSize(minHeight = Dimens.ButtonHeight)
+                ) {
+                    Text(text = actionLabel, fontWeight = FontWeight.SemiBold)
+                }
                 if (secondaryActionLabel != null && onSecondaryActionClick != null) {
-                    CareerButton(
-                        text = secondaryActionLabel,
+                    OutlinedButton(
                         onClick = onSecondaryActionClick,
-                        variant = CareerButton.ButtonVariant.Outline
-                    )
+                        shape = RoundedCornerShape(Dimens.RadiusSm),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BorderMedium),
+                        contentPadding = PaddingValues(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceSm),
+                        modifier = Modifier.defaultMinSize(minHeight = Dimens.ButtonHeight)
+                    ) {
+                        Text(text = secondaryActionLabel, fontWeight = FontWeight.Normal)
+                    }
                 }
             }
         }
-    }
-}
-
-// ── Company Logo Badge (Backward-compatible wrapper) ──────────────
-
-@Composable
-fun CompanyLogoBadge(
-    companyName: String,
-    modifier: Modifier = Modifier,
-    size: Dp = 32.dp
-) {
-    Box(
-        modifier = modifier.size(size),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = companyName.substring(0, minOf(2, companyName.length)).uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = DesignSystem.Colors.TextPrimary
-        )
-    }
-}
-
-// ── GlassCard (Backward-compatible wrapper) ───────────────────────
-
-@Composable
-fun GlassCard(
-    modifier: Modifier = Modifier,
-    borderColor: Color = DesignSystem.Colors.BorderDefault,
-    backgroundColor: Color = DesignSystem.Colors.BgCard,
-    content: @Composable () -> Unit
-) {
-    val shape = RoundedCornerShape(DesignSystem.Shape.RadiusLg)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(backgroundColor)
-            .border(DesignSystem.Sizing.CardBorderWidth, borderColor, shape)
-            .padding(DesignSystem.Spacing.Space4)
-    ) {
-        content()
-    }
-}
-
-// ── AnimatedGlowingGlassCard (Backward-compatible wrapper) ────────
-
-@Composable
-fun AnimatedGlowingGlassCard(
-    modifier: Modifier = Modifier,
-    backgroundColor: Color = DesignSystem.Colors.BgCard,
-    borderColor: Color = DesignSystem.Colors.BorderDefault,
-    content: @Composable () -> Unit
-) {
-    val shape = RoundedCornerShape(DesignSystem.Shape.RadiusLg)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(backgroundColor)
-            .border(DesignSystem.Sizing.CardBorderWidth, borderColor, shape)
-            .padding(DesignSystem.Spacing.Space4)
-    ) {
-        content()
     }
 }

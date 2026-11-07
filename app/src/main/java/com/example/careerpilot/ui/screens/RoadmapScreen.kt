@@ -8,7 +8,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.AltRoute
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -16,15 +19,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.data.model.RoadmapItem
 import com.example.careerpilot.ui.components.EmptyStateCard
+import com.example.careerpilot.ui.components.GlassCard
 import com.example.careerpilot.ui.components.SectionHeader
 import com.example.careerpilot.ui.components.StatusBadge
-import com.example.careerpilot.ui.theme.DesignSystem
+import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 
 @Composable
@@ -37,40 +42,36 @@ fun RoadmapScreen(
     val items by viewModel.roadmapItems.collectAsState()
     val isAnalyzing by viewModel.isAnalyzing.collectAsState()
 
-    // Group items by phase
-    val phases = items.groupBy { it.phaseTitle }
+    val phases = items.groupBy { "Phase ${it.phaseNumber}: ${it.phaseTitle}" }
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = DesignSystem.Spacing.ContentHorizontal),
-        contentPadding = PaddingValues(
-            top = DesignSystem.Spacing.ContentTop,
-            bottom = DesignSystem.Spacing.ContentBottom
-        ),
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Section)
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Header
+        // Title & Summary
         item {
             Column {
                 Text(
-                    text = "Personalized Roadmap",
+                    text = "Personalized 3-Phase Roadmap",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = DesignSystem.Colors.TextPrimary
+                    color = TextPrimary
                 )
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = roadmap?.title ?: "Milestone execution trajectory",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = DesignSystem.Colors.PrimaryLight
+                    color = AccentCyan
                 )
             }
         }
 
         // Progress Card
         item {
-            CareerCard(
+            GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("roadmap_progress_card")
@@ -84,47 +85,58 @@ fun RoadmapScreen(
                         text = "Overall Roadmap Velocity",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = DesignSystem.Colors.TextPrimary
+                        color = TextPrimary
                     )
                     Text(
                         text = "${roadmap?.completedTasks ?: 0} / ${roadmap?.totalTasks ?: 0} Tasks (${roadmap?.progressPercent?.toInt() ?: 0}%)",
                         style = MaterialTheme.typography.labelLarge,
-                        color = DesignSystem.Colors.PrimaryLight
+                        color = PrimaryBlueGlow
                     )
                 }
 
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(DesignSystem.Sizing.DividerThickness * 4)
-                        .clip(RoundedCornerShape(DesignSystem.Shape.RadiusXs))
-                        .background(DesignSystem.Colors.BgSurface)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(BgMuted)
                 ) {
                     val progress = (roadmap?.progressPercent ?: 0f) / 100f
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
                             .fillMaxWidth(progress.coerceIn(0f, 1f))
-                            .background(DesignSystem.Colors.Primary)
+                            .background(PrimaryBlue)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
-
-                CareerButton(
-                    text = if (isAnalyzing) "Generating Roadmap..." else "Generate Roadmap from Skill Gaps",
+                Spacer(modifier = Modifier.height(14.dp))
+                Button(
                     onClick = {
                         val role = profile?.targetRole ?: "Full Stack Engineer"
                         viewModel.generateRoadmap(role)
                     },
                     enabled = !isAnalyzing,
-                    variant = CareerButton.ButtonVariant.Primary,
-                    loading = isAnalyzing,
-                    icon = Icons.Default.Autorenew,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth()
-                )
+                ) {
+                    if (isAnalyzing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = TextPrimary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Generating Roadmap...")
+                    } else {
+                        Icon(Icons.Default.Autorenew, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Generate Roadmap from Skill Gaps")
+                    }
+                }
             }
         }
 
@@ -167,27 +179,29 @@ private fun RoadmapTaskCard(
     item: RoadmapItem,
     onToggle: () -> Unit
 ) {
-    val borderColor = if (item.isCompleted) DesignSystem.Colors.Success.copy(alpha = 0.4f) else DesignSystem.Colors.BorderDefault
+    val borderColor = if (item.isCompleted) SuccessGreen.copy(alpha = 0.4f) else BorderSubtle
 
-    CareerCard(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onToggle() },
+        borderColor = borderColor,
+        backgroundColor = if (item.isCompleted) BgCard.copy(alpha = 0.5f) else BgCard
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             IconButton(
                 onClick = onToggle,
-                modifier = Modifier.size(DesignSystem.Sizing.AvatarMd)
+                modifier = Modifier.size(24.dp)
             ) {
                 Icon(
                     imageVector = if (item.isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                     contentDescription = if (item.isCompleted) "Completed" else "Pending",
-                    tint = if (item.isCompleted) DesignSystem.Colors.Success else DesignSystem.Colors.TextMuted,
-                    modifier = Modifier.size(DesignSystem.Sizing.IconMd)
+                    tint = if (item.isCompleted) SuccessGreen else TextMuted,
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
@@ -201,22 +215,22 @@ private fun RoadmapTaskCard(
                         text = item.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (item.isCompleted) DesignSystem.Colors.TextSecondary else DesignSystem.Colors.TextPrimary
+                        color = if (item.isCompleted) TextSecondary else TextPrimary
                     )
                     StatusBadge(text = "${item.estimatedHours}h", statusType = if (item.isCompleted) "completed" else "primary")
                 }
 
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = item.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = DesignSystem.Colors.TextSecondary,
+                    color = TextSecondary,
                     lineHeight = 16.sp
                 )
 
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     StatusBadge(text = item.category, statusType = "neutral")
@@ -224,7 +238,7 @@ private fun RoadmapTaskCard(
                         Text(
                             text = "Completed",
                             style = MaterialTheme.typography.labelSmall,
-                            color = DesignSystem.Colors.Success
+                            color = SuccessGreen
                         )
                     }
                 }

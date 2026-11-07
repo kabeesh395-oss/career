@@ -27,7 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.careerpilot.ui.components.*
+import com.example.careerpilot.ui.theme.*
 import com.example.careerpilot.ui.theme.DesignSystem
+import com.example.careerpilot.ui.theme.Dimens
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -67,59 +69,57 @@ fun DashboardScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = DesignSystem.Spacing.ContentHorizontal),
+            .padding(horizontal = DesignSystem.Spacing.screenHorizontal),
         contentPadding = PaddingValues(
-            top = DesignSystem.Spacing.ContentTop,
-            bottom = DesignSystem.Spacing.ContentBottom
+            top = DesignSystem.Spacing.screenTop,
+            bottom = DesignSystem.Spacing.screenBottom
         ),
-        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Section)
+        verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sectionSpacing)
     ) {
         // User Greeting Header
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = DesignSystem.Spacing.Space1),
+                    .padding(vertical = DesignSystem.Spacing.xs),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Workspace",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = DesignSystem.TypographyTokens.bodySmall,
                         color = DesignSystem.Colors.TextSecondary
                     )
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
                     Text(
                         text = profile?.fullName?.split(" ")?.firstOrNull() ?: "Engineer",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = DesignSystem.TypographyTokens.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = DesignSystem.Colors.TextPrimary
                     )
                 }
 
                 Surface(
-                    color = DesignSystem.Colors.PrimaryContainer,
-                    shape = RoundedCornerShape(DesignSystem.Shape.RadiusSm)
+                    color = DesignSystem.Colors.Primary.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, DesignSystem.Colors.Primary.copy(alpha = 0.35f))
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2),
-                        modifier = Modifier.padding(
-                            horizontal = DesignSystem.Spacing.Space3,
-                            vertical = DesignSystem.Spacing.Space1
-                        )
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.WorkOutline,
                             contentDescription = null,
-                            tint = DesignSystem.Colors.Primary,
-                            modifier = Modifier.size(DesignSystem.Sizing.IconSm)
+                            tint = DesignSystem.Colors.PrimaryLight,
+                            modifier = Modifier.size(14.dp)
                         )
                         Text(
                             text = profile?.targetRole ?: "Full Stack Engineer",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = DesignSystem.Colors.Primary,
+                            style = DesignSystem.TypographyTokens.labelSmall,
+                            color = DesignSystem.Colors.PrimaryLight,
                             maxLines = 1
                         )
                     }
@@ -142,30 +142,30 @@ fun DashboardScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "CAREER READINESS INDEX",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = DesignSystem.TypographyTokens.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = DesignSystem.Colors.TextSecondary,
                                 letterSpacing = 1.sp
                             )
-                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                             Text(
                                 text = "${profile!!.readinessScore}% Match Readiness",
-                                style = MaterialTheme.typography.headlineSmall,
+                                style = DesignSystem.TypographyTokens.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = DesignSystem.Colors.TextPrimary
                             )
-                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                             Text(
                                 text = "Calibrated against verified skills, project audits, and target role benchmarks.",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = DesignSystem.TypographyTokens.bodySmall,
                                 color = DesignSystem.Colors.TextSecondary
                             )
 
-                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                             // Strictly real verified sub-metrics
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 if (latestResumeAudit != null) {
@@ -181,7 +181,7 @@ fun DashboardScreen(
                         }
 
                         Box(
-                            modifier = Modifier.padding(start = DesignSystem.Spacing.Space4),
+                            modifier = Modifier.padding(start = DesignSystem.Spacing.md),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularScoreGauge(
@@ -194,7 +194,7 @@ fun DashboardScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -203,11 +203,11 @@ fun DashboardScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
                                 text = "View Skill Matrix & Rubric",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = DesignSystem.TypographyTokens.labelSmall,
                                 color = DesignSystem.Colors.PrimaryLight,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -215,7 +215,7 @@ fun DashboardScreen(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = null,
                                 tint = DesignSystem.Colors.PrimaryLight,
-                                modifier = Modifier.size(DesignSystem.Sizing.IconSm)
+                                modifier = Modifier.size(12.dp)
                             )
                         }
                     }
@@ -224,73 +224,78 @@ fun DashboardScreen(
                 // Honest, useful empty state for un-evaluated user
                 CareerCard(
                     modifier = Modifier.fillMaxWidth(),
-                    borderColor = DesignSystem.Colors.BorderDefault
+                    borderColor = BorderMedium
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = DesignSystem.Spacing.Space1)
+                            .padding(vertical = DesignSystem.Spacing.xs)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
-                                    .clip(RoundedCornerShape(DesignSystem.Shape.RadiusSm))
-                                    .background(DesignSystem.Colors.PrimaryContainer),
+                                    .clip(RoundedCornerShape(DesignSystem.Shapes.radiusSm))
+                                    .background(DesignSystem.Colors.Primary.copy(alpha = 0.12f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Assessment,
                                     contentDescription = null,
-                                    tint = DesignSystem.Colors.Primary,
-                                    modifier = Modifier.size(DesignSystem.Sizing.IconMd)
+                                    tint = DesignSystem.Colors.PrimaryLight,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                             Column {
                                 Text(
                                     text = "Career Readiness Not Evaluated",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = DesignSystem.TypographyTokens.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = DesignSystem.Colors.TextPrimary
                                 )
                                 Text(
                                     text = "Target: ${profile?.targetRole ?: "Full Stack Engineer"}",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = DesignSystem.TypographyTokens.labelSmall,
                                     color = DesignSystem.Colors.TextSecondary
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
 
                         Text(
                             text = "Complete your career assessment or upload your resume to calibrate your readiness index against role rubrics.",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = DesignSystem.TypographyTokens.bodySmall,
                             color = DesignSystem.Colors.TextSecondary,
                             lineHeight = 18.sp
                         )
 
-                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2),
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            CareerButton(
-                                text = "Run Assessment",
+                            Button(
                                 onClick = { onNavigate("career") },
-                                variant = CareerButton.ButtonVariant.Primary,
+                                colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                                shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
                                 modifier = Modifier.weight(1f)
-                            )
-                            CareerButton(
-                                text = "Audit Resume",
+                            ) {
+                                Text("Run Assessment", fontWeight = FontWeight.SemiBold)
+                            }
+                            OutlinedButton(
                                 onClick = { onNavigate("resume") },
-                                variant = CareerButton.ButtonVariant.Outline,
+                                shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = DesignSystem.Colors.TextPrimary),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, DesignSystem.Colors.BorderMedium),
                                 modifier = Modifier.weight(1f)
-                            )
+                            ) {
+                                Text("Audit Resume")
+                            }
                         }
                     }
                 }
@@ -305,8 +310,8 @@ fun DashboardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("dashboard_audit_banner"),
-                borderColor = if (auditSummary.criticalCount > 0) DesignSystem.Colors.Danger.copy(alpha = 0.45f) else DesignSystem.Colors.BorderSubtle,
-                backgroundColor = if (auditSummary.criticalCount > 0) DesignSystem.Colors.DangerContainer else DesignSystem.Colors.BgCard,
+                borderColor = if (auditSummary.criticalCount > 0) DesignSystem.Colors.Error.copy(alpha = 0.45f) else DesignSystem.Colors.BorderSubtle,
+                backgroundColor = if (auditSummary.criticalCount > 0) Color(0xFF1E1424) else DesignSystem.Colors.Card,
                 onClick = { onNavigate("audit") }
             ) {
                 Row(
@@ -317,52 +322,53 @@ fun DashboardScreen(
                     Row(
                         modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space3)
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.md)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(DesignSystem.Sizing.AvatarMd)
-                                .clip(RoundedCornerShape(DesignSystem.Shape.RadiusSm))
+                                .size(DesignSystem.Components.avatarMd)
+                                .clip(RoundedCornerShape(DesignSystem.Shapes.radiusSm))
                                 .background(
-                                    if (auditSummary.criticalCount > 0) DesignSystem.Colors.DangerContainer else DesignSystem.Colors.PrimaryContainer
+                                    if (auditSummary.criticalCount > 0) DesignSystem.Colors.Error.copy(alpha = 0.12f)
+                                    else DesignSystem.Colors.Primary.copy(alpha = 0.12f)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = if (auditSummary.criticalCount > 0) Icons.Default.GppMaybe else Icons.Default.VerifiedUser,
                                 contentDescription = null,
-                                tint = if (auditSummary.criticalCount > 0) DesignSystem.Colors.Danger else DesignSystem.Colors.Primary,
-                                modifier = Modifier.size(DesignSystem.Sizing.IconLg)
+                                tint = if (auditSummary.criticalCount > 0) DesignSystem.Colors.ErrorLight else DesignSystem.Colors.PrimaryLight,
+                                modifier = Modifier.size(DesignSystem.Components.iconLg)
                             )
                         }
 
                         Column {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)
+                                horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                             ) {
                                 Text(
                                     text = "Audit Center",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = DesignSystem.TypographyTokens.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = DesignSystem.Colors.TextPrimary
                                 )
                                 if (isEvaluated && auditSummary.totalDemerits < 0) {
                                     Surface(
-                                        color = DesignSystem.Colors.DangerContainer,
-                                        shape = RoundedCornerShape(DesignSystem.Shape.RadiusXs)
+                                        color = DesignSystem.Colors.Error.copy(alpha = 0.12f),
+                                        shape = RoundedCornerShape(DesignSystem.Shapes.radiusXs)
                                     ) {
                                         Text(
                                             text = "${auditSummary.totalDemerits} pts",
-                                            color = DesignSystem.Colors.Danger,
-                                            style = MaterialTheme.typography.labelSmall,
+                                            color = DesignSystem.Colors.ErrorLight,
+                                            style = DesignSystem.TypographyTokens.labelSmall,
                                             fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = DesignSystem.Spacing.Space2, vertical = DesignSystem.Spacing.Space0)
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                         )
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
                             Text(
                                 text = if (!isEvaluated) {
                                     "No audit run yet: Check for resume and skill gaps"
@@ -373,7 +379,7 @@ fun DashboardScreen(
                                 } else {
                                     "No critical risks detected"
                                 },
-                                style = MaterialTheme.typography.bodySmall,
+                                style = DesignSystem.TypographyTokens.bodySmall,
                                 color = DesignSystem.Colors.TextSecondary
                             )
                         }
@@ -382,8 +388,8 @@ fun DashboardScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Audit Center",
-                        tint = DesignSystem.Colors.TextMuted,
-                        modifier = Modifier.size(DesignSystem.Sizing.IconMd)
+                        tint = DesignSystem.Colors.TextSecondary,
+                        modifier = Modifier.size(DesignSystem.Components.iconMd)
                     )
                 }
             }
@@ -404,49 +410,57 @@ fun DashboardScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                         ) {
                             StatusBadge(text = "RECOMMENDED ACTION", statusType = "primary")
                             StatusBadge(text = nextAction!!.priority, statusType = nextAction!!.priority)
                         }
                         Text(
                             text = "~${nextAction!!.estimatedMinutes} min",
-                            style = MaterialTheme.typography.labelSmall,
+                            style = DesignSystem.TypographyTokens.labelSmall,
                             color = DesignSystem.Colors.TextMuted
                         )
                     }
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                     Text(
                         text = nextAction!!.title,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = DesignSystem.TypographyTokens.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = DesignSystem.Colors.TextPrimary
                     )
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                     Text(
                         text = nextAction!!.whyItMatters,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = DesignSystem.TypographyTokens.bodyMedium,
                         color = DesignSystem.Colors.TextSecondary,
                         lineHeight = 20.sp
                     )
 
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                     Text(
                         text = "Evidence: ${nextAction!!.evidence}",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = DesignSystem.TypographyTokens.bodySmall,
                         color = DesignSystem.Colors.TextMuted
                     )
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space4))
-                    CareerButton(
-                        text = nextAction!!.ctaText,
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.lg))
+                    Button(
                         onClick = { onNavigate(nextAction!!.targetRoute) },
-                        variant = CareerButton.ButtonVariant.Primary,
-                        icon = Icons.AutoMirrored.Filled.ArrowForward,
+                        colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                        shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(DesignSystem.Components.buttonHeight)
                             .testTag("nba_cta_button")
-                    )
+                    ) {
+                        Text(text = nextAction!!.ctaText, fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.width(DesignSystem.Spacing.sm))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(DesignSystem.Components.iconSm)
+                        )
+                    }
                 }
             }
         }
@@ -466,20 +480,20 @@ fun DashboardScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2)
+                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm)
                         ) {
                             StatusBadge(text = "ROADMAP", statusType = "primary")
                             Text(
                                 text = roadmap?.title ?: "Milestone Progression",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = DesignSystem.TypographyTokens.labelSmall,
                                 color = DesignSystem.Colors.TextSecondary,
                                 maxLines = 1
                             )
                         }
-                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
                         Text(
                             text = "Milestone Progression",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = DesignSystem.TypographyTokens.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = DesignSystem.Colors.TextPrimary
                         )
@@ -487,15 +501,15 @@ fun DashboardScreen(
 
                     TextButton(
                         onClick = { onNavigate("roadmap") },
-                        contentPadding = PaddingValues(horizontal = DesignSystem.Spacing.Space2, vertical = DesignSystem.Spacing.Space1)
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space1)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
                                 text = "View All",
-                                style = MaterialTheme.typography.labelMedium,
+                                style = DesignSystem.TypographyTokens.labelMedium,
                                 color = DesignSystem.Colors.PrimaryLight,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -503,13 +517,13 @@ fun DashboardScreen(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = null,
                                 tint = DesignSystem.Colors.PrimaryLight,
-                                modifier = Modifier.size(DesignSystem.Sizing.IconSm)
+                                modifier = Modifier.size(14.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+                Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
 
                 if (totalRoadmapTasks > 0) {
                     Row(
@@ -519,52 +533,52 @@ fun DashboardScreen(
                     ) {
                         Text(
                             text = "$completedRoadmapTasks of $totalRoadmapTasks Completed",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = DesignSystem.TypographyTokens.bodySmall,
                             color = DesignSystem.Colors.TextSecondary
                         )
                         Text(
                             text = "$roadmapPercent%",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = DesignSystem.TypographyTokens.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = DesignSystem.Colors.PrimaryLight
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xs))
 
                     CareerProgressBar(
                         progress = animatedRoadmapProgress,
                         color = DesignSystem.Colors.Primary,
-                        trackColor = DesignSystem.Colors.BgSurface,
+                        trackColor = DesignSystem.Colors.Muted,
                         height = 6.dp
                     )
 
                     if (nextPendingRoadmapTask != null) {
-                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
                         Surface(
-                            color = DesignSystem.Colors.BgSurface,
-                            shape = RoundedCornerShape(DesignSystem.Shape.RadiusSm),
-                            border = androidx.compose.foundation.BorderStroke(DesignSystem.Sizing.CardBorderWidth, DesignSystem.Colors.BorderSubtle),
+                            color = DesignSystem.Colors.Surface,
+                            shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, DesignSystem.Colors.BorderSubtle),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(DesignSystem.Spacing.Space4),
+                                    .padding(DesignSystem.Spacing.md),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "UP NEXT: PHASE ${nextPendingRoadmapTask.phaseNumber}",
-                                        style = MaterialTheme.typography.labelSmall,
+                                        style = DesignSystem.TypographyTokens.labelSmall,
                                         color = DesignSystem.Colors.PrimaryLight,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                                    Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
                                     Text(
                                         text = nextPendingRoadmapTask.title,
-                                        style = MaterialTheme.typography.bodyMedium,
+                                        style = DesignSystem.TypographyTokens.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                         color = DesignSystem.Colors.TextPrimary,
                                         maxLines = 1
@@ -578,7 +592,7 @@ fun DashboardScreen(
                                         imageVector = Icons.Default.CheckCircle,
                                         contentDescription = "Mark completed",
                                         tint = DesignSystem.Colors.PrimaryLight,
-                                        modifier = Modifier.size(DesignSystem.Sizing.IconMd)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
                             }
@@ -589,19 +603,21 @@ fun DashboardScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = DesignSystem.Spacing.Space2)
+                            .padding(vertical = DesignSystem.Spacing.sm)
                     ) {
                         Text(
                             text = "No roadmap milestones generated yet.",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = DesignSystem.TypographyTokens.bodyMedium,
                             color = DesignSystem.Colors.TextSecondary
                         )
-                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space3))
-                        CareerButton(
-                            text = "Generate Roadmap",
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.md))
+                        Button(
                             onClick = { onNavigate("roadmap") },
-                            variant = CareerButton.ButtonVariant.Primary
-                        )
+                            colors = ButtonDefaults.buttonColors(containerColor = DesignSystem.Colors.Primary),
+                            shape = RoundedCornerShape(DesignSystem.Shapes.radiusSm)
+                        ) {
+                            Text("Generate Roadmap")
+                        }
                     }
                 }
             }
@@ -628,12 +644,12 @@ fun DashboardScreen(
                 Triple("Integrations", Icons.Default.Sync, "integrations"),
                 Triple("Export Center", Icons.Default.FileDownload, "export")
             )
-            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.ItemSpacing)) {
+            Column(verticalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)) {
                 val rows = (quickLinks.size + 1) / 2
                 for (row in 0 until rows) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.ItemSpacing)
+                        horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.itemSpacing)
                     ) {
                         for (col in 0 until 2) {
                             val index = row * 2 + col
@@ -668,7 +684,7 @@ fun DashboardScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = DesignSystem.Spacing.Space4),
+                            .padding(vertical = DesignSystem.Spacing.md),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
@@ -677,17 +693,17 @@ fun DashboardScreen(
                             tint = DesignSystem.Colors.TextMuted,
                             modifier = Modifier.size(32.dp)
                         )
-                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space2))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.sm))
                         Text(
                             text = "No activity recorded yet",
-                            style = MaterialTheme.typography.titleSmall,
+                            style = DesignSystem.TypographyTokens.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = DesignSystem.Colors.TextPrimary
                         )
-                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                        Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
                         Text(
                             text = "Actions, audits, and completions will be recorded here.",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = DesignSystem.TypographyTokens.bodySmall,
                             color = DesignSystem.Colors.TextSecondary,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
@@ -708,20 +724,20 @@ fun DashboardScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = event.eventName,
-                                style = MaterialTheme.typography.titleSmall,
+                                style = DesignSystem.TypographyTokens.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = DesignSystem.Colors.TextPrimary
                             )
-                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.Space1))
+                            Spacer(modifier = Modifier.height(DesignSystem.Spacing.xxs))
                             Text(
                                 text = event.detail,
-                                style = MaterialTheme.typography.bodySmall,
+                                style = DesignSystem.TypographyTokens.bodySmall,
                                 color = DesignSystem.Colors.TextSecondary
                             )
                         }
                         Text(
                             text = timeFormat.format(Date(event.timestamp)),
-                            style = MaterialTheme.typography.labelSmall,
+                            style = DesignSystem.TypographyTokens.labelSmall,
                             color = DesignSystem.Colors.TextMuted
                         )
                     }
@@ -738,43 +754,43 @@ private fun QuickLinkCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(DesignSystem.Shape.RadiusMd)
+    val shape = RoundedCornerShape(10.dp)
     Row(
         modifier = modifier
-            .defaultMinSize(minHeight = DesignSystem.Sizing.InputHeight)
+            .defaultMinSize(minHeight = 52.dp)
             .clip(shape)
-            .background(DesignSystem.Colors.BgCard)
-            .border(DesignSystem.Sizing.CardBorderWidth, DesignSystem.Colors.BorderSubtle, shape)
+            .background(BgCard)
+            .border(1.dp, BorderSubtle, shape)
             .clickable(onClick = onClick)
             .padding(
-                horizontal = DesignSystem.Spacing.Space3,
-                vertical = DesignSystem.Spacing.Space2
+                horizontal = DesignSystem.Spacing.md,
+                vertical = DesignSystem.Spacing.sm
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.Space2),
+            horizontalArrangement = Arrangement.spacedBy(DesignSystem.Spacing.sm),
             modifier = Modifier.weight(1f)
         ) {
             Box(
                 modifier = Modifier
-                    .size(DesignSystem.Sizing.AvatarSm)
-                    .clip(RoundedCornerShape(DesignSystem.Shape.RadiusSm))
-                    .background(DesignSystem.Colors.PrimaryContainer),
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(DesignSystem.Colors.Primary.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
-                    tint = DesignSystem.Colors.Primary,
-                    modifier = Modifier.size(DesignSystem.Sizing.IconMd)
+                    tint = DesignSystem.Colors.PrimaryLight,
+                    modifier = Modifier.size(18.dp)
                 )
             }
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelMedium,
+                style = DesignSystem.TypographyTokens.labelMedium,
                 color = DesignSystem.Colors.TextPrimary,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1
@@ -784,7 +800,7 @@ private fun QuickLinkCard(
             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
             contentDescription = null,
             tint = DesignSystem.Colors.TextMuted,
-            modifier = Modifier.size(DesignSystem.Sizing.IconSm)
+            modifier = Modifier.size(14.dp)
         )
     }
 }
