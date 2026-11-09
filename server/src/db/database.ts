@@ -2,11 +2,13 @@ import { DatabaseSync } from 'node:sqlite';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { config } from '../config/environment.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = path.resolve(__dirname, '../../careerpilot.db');
+const DEFAULT_DB_PATH = path.resolve(__dirname, '../../careerpilot.db');
+const DB_PATH = path.resolve(config.databasePath || DEFAULT_DB_PATH);
 
 export interface CareerStatement {
   run(...params: unknown[]): { changes: number; lastInsertRowid: number };
@@ -19,6 +21,13 @@ export interface CareerDatabase {
   exec(sql: string): void;
   close(): void;
   transaction<T, A extends any[]>(fn: (...args: A) => T): (...args: A) => T;
+}
+
+export interface DatabaseHealth {
+  path: string;
+  journalMode: string;
+  foreignKeysEnabled: boolean;
+  integrity: 'ok' | 'failed';
 }
 
 export let db: CareerDatabase;
@@ -50,7 +59,8 @@ export function initDatabase(): CareerDatabase {
     };
   };
 
-  // Enable WAL mode for high concurrent performance and Foreign Keys for relational integrity
+  // Enable WAL mode for high concurrent performance and Foreign Keys for relational integrity.
+  db.exec('PRAGMA busy_timeout = 5000');
   db.exec('PRAGMA journal_mode = WAL');
   db.exec('PRAGMA foreign_keys = ON');
   db.exec('PRAGMA synchronous = NORMAL');
@@ -60,15 +70,7 @@ export function initDatabase(): CareerDatabase {
   const schemaSql = fs.readFileSync(schemaPath, 'utf8');
   db.exec(schemaSql);
 
-  // Safe incremental migration for roadmap_items new fields
-  const newColumns = ['skill', 'why_it_matters', 'learning_objective', 'practice_suggestion', 'interview_relevance'];
-  for (const col of newColumns) {
-    try {
-      db.exec(`ALTER TABLE roadmap_items ADD COLUMN ${col} TEXT;`);
-    } catch {
-      // Column already exists
-    }
-  }
+  runMigrations();
 
   // Seed canonical master skills and verified learning resources
   seedCanonicalSkills();
@@ -83,6 +85,66 @@ export function getDatabase(): CareerDatabase {
     return initDatabase();
   }
   return db;
+}
+
+function runMigrations(): void {
+  const migrations = [
+    ['001_roadmap_item_detail_fields', [
+      'ALTER TABLE roadmap_items ADD COLUMN skill TEXT',
+      'ALTER TABLE roadmap_items ADD COLUMN why_it_matters TEXT',
+      'ALTER TABLE roadmap_items ADD COLUMN learning_objective TEXT',
+      'ALTER TABLE roadmap_items ADD COLUMN practice_suggestion TEXT',
+      'ALTER TABLE roadmap_items ADD COLUMN interview_relevance TEXT'
+    ]]
+  ] as const;
+
+  const applied = new Set(
+    (db.prepare('SELECT migration_id FROM schema_migrations').all() as Array<{ migration_id: string }>)
+      .map((row) => row.migration_id)
+  );
+
+  for (const [migrationId, statements] of migrations) {
+    if (applied.has(migrationId)) continue;
+
+    const applyMigration = db.transaction(() => {
+      for (const statement of statements) {
+        try {
+          db.exec(statement);
+        } catch (error) {
+          if (!String(error).toLowerCase().includes('duplicate column')) throw error;
+        }
+      }
+      db.prepare('INSERT INTO schema_migrations (migration_id) VALUES (?)').run(migrationId);
+    });
+    applyMigration();
+  }
+}
+
+export function getDatabasePath(): string {
+  return DB_PATH;
+}
+
+export function checkDatabaseHealth(): DatabaseHealth {
+  const database = getDatabase();
+  const journalMode = String((database.prepare('PRAGMA journal_mode').get() as { journal_mode: string }).journal_mode);
+  const foreignKeys = Number((database.prepare('PRAGMA foreign_keys').get() as { foreign_keys: number }).foreign_keys);
+  const integrityResult = String((database.prepare('PRAGMA integrity_check').get() as { integrity_check: string }).integrity_check);
+
+  return {
+    path: DB_PATH,
+    journalMode,
+    foreignKeysEnabled: foreignKeys === 1,
+    integrity: integrityResult === 'ok' ? 'ok' : 'failed'
+  };
+}
+
+export function backupDatabase(destinationPath: string): string {
+  const database = getDatabase();
+  const destination = path.resolve(destinationPath);
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  database.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+  fs.copyFileSync(DB_PATH, destination);
+  return destination;
 }
 
 function seedCanonicalSkills() {

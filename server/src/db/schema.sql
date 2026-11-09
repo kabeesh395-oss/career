@@ -1,6 +1,12 @@
 -- CareerPilot AI Normalized Database Schema (SQLite Production Grade)
 PRAGMA foreign_keys = ON;
 
+-- Applied schema migrations. Each migration is recorded atomically after success.
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    migration_id TEXT PRIMARY KEY,
+    applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,

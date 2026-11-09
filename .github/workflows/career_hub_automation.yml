@@ -117,6 +117,10 @@ jobs:
         run: |
           npm run build
 
+      - name: Verify Database Reliability
+        run: |
+          npm run test:database
+
       - name: Execute Security & Tenant Isolation Tests (TASK-003 / TASK-009)
         run: |
           npm run test:security
