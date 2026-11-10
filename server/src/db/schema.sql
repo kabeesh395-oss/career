@@ -315,6 +315,23 @@ CREATE TABLE IF NOT EXISTS readiness_snapshots (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Durable AI jobs. Payloads and results are JSON so workers can recover after restart.
+CREATE TABLE IF NOT EXISTS ai_jobs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    job_type TEXT NOT NULL CHECK (job_type IN ('ATS_ANALYSIS', 'ROADMAP_GEN', 'INTERVIEW_EVAL')),
+    status TEXT NOT NULL CHECK (status IN ('QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED', 'RETRYING')),
+    payload_json TEXT NOT NULL,
+    result_json TEXT,
+    error_message TEXT,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    max_attempts INTEGER NOT NULL DEFAULT 3,
+    idempotency_key TEXT UNIQUE,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Indexes for maximum query performance & integrity
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
@@ -333,3 +350,5 @@ CREATE INDEX IF NOT EXISTS idx_interview_answers_user ON interview_answers(user_
 CREATE INDEX IF NOT EXISTS idx_integrations_user ON integrations(user_id);
 CREATE INDEX IF NOT EXISTS idx_analytics_events_user ON analytics_events(user_id);
 CREATE INDEX IF NOT EXISTS idx_readiness_snapshots_user_created ON readiness_snapshots(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_jobs_status_updated ON ai_jobs(status, updated_at);
+CREATE INDEX IF NOT EXISTS idx_ai_jobs_user_created ON ai_jobs(user_id, created_at DESC);

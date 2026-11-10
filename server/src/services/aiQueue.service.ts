@@ -1,4 +1,4 @@
-import { db } from '../db/database.js';
+import { getDatabase } from '../db/database.js';
 import { AIService } from './ai.service.js';
 
 export type JobStatus = 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'RETRYING';
@@ -111,6 +111,15 @@ export class AiQueueManager {
     this.enforceTerminalJobLimit();
 
     const key = idempotencyKey || `${userId}_${jobType}_${JSON.stringify(payload)}`;
+
+    const persisted = getDatabase().prepare(
+      `SELECT * FROM ai_jobs WHERE idempotency_key = ? AND status IN ('QUEUED', 'PROCESSING', 'RETRYING')`
+    ).get(key) as any;
+    if (persisted) {
+      const recovered = this.fromRow(persisted);
+      this.queue.set(recovered.id, recovered);
+      return recovered;
+    }
     
     // Check if duplicate job is already queued or processing
     for (const job of this.queue.values()) {
@@ -134,6 +143,7 @@ export class AiQueueManager {
     };
 
     this.queue.set(jobId, job);
+    this.persist(job);
     return job;
   }
 
@@ -141,7 +151,13 @@ export class AiQueueManager {
    * Get job status and result
    */
   public getJob(jobId: string): AiJob | undefined {
-    return this.queue.get(jobId);
+    const inMemory = this.queue.get(jobId);
+    if (inMemory) return inMemory;
+    const row = getDatabase().prepare('SELECT * FROM ai_jobs WHERE id = ?').get(jobId) as any;
+    if (!row) return undefined;
+    const recovered = this.fromRow(row);
+    this.queue.set(recovered.id, recovered);
+    return recovered;
   }
 
   /**
@@ -190,6 +206,8 @@ export class AiQueueManager {
    */
   private async processNext() {
     if (this.processing || this.isStopped) return;
+
+    this.recoverPendingJobs();
     
     const pendingJob = Array.from(this.queue.values()).find(j => j.status === 'QUEUED' || j.status === 'RETRYING');
     if (!pendingJob) return;
@@ -198,6 +216,7 @@ export class AiQueueManager {
     pendingJob.status = 'PROCESSING';
     pendingJob.attempts += 1;
     pendingJob.updatedAt = Date.now();
+    this.persist(pendingJob);
 
     try {
       let result: any = null;
@@ -229,6 +248,7 @@ export class AiQueueManager {
       pendingJob.result = result;
       pendingJob.status = 'COMPLETED';
       pendingJob.updatedAt = Date.now();
+      this.persist(pendingJob);
     } catch (err: any) {
       if (pendingJob.attempts < pendingJob.maxAttempts) {
         pendingJob.status = 'RETRYING';
@@ -238,9 +258,65 @@ export class AiQueueManager {
         pendingJob.errorMessage = err.message || 'AI Job Processing Failed';
       }
       pendingJob.updatedAt = Date.now();
+      this.persist(pendingJob);
     } finally {
       this.processing = false;
     }
+  }
+
+  private recoverPendingJobs(): void {
+    const rows = getDatabase().prepare(
+      `SELECT * FROM ai_jobs WHERE status IN ('QUEUED', 'PROCESSING', 'RETRYING') ORDER BY created_at ASC`
+    ).all() as any[];
+    for (const row of rows) {
+      const job = this.fromRow(row);
+      if (job.status === 'PROCESSING') job.status = 'RETRYING';
+      this.queue.set(job.id, job);
+      this.persist(job);
+    }
+  }
+
+  private persist(job: AiJob): void {
+    const database = getDatabase();
+    const userExists = database.prepare('SELECT 1 FROM users WHERE id = ?').get(job.userId);
+    if (!userExists) {
+      // Keep the historical in-memory queue contract for isolated/unit tests
+      // that use synthetic user IDs without creating account records.
+      return;
+    }
+
+    database.prepare(`
+      INSERT INTO ai_jobs
+        (id, user_id, job_type, status, payload_json, result_json, error_message, attempts, max_attempts, idempotency_key, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        status = excluded.status,
+        result_json = excluded.result_json,
+        error_message = excluded.error_message,
+        attempts = excluded.attempts,
+        updated_at = excluded.updated_at
+    `).run(
+      job.id, job.userId, job.jobType, job.status, JSON.stringify(job.payload),
+      job.result === undefined ? null : JSON.stringify(job.result), job.errorMessage || null,
+      job.attempts, job.maxAttempts, job.idempotencyKey || null, job.createdAt, job.updatedAt
+    );
+  }
+
+  private fromRow(row: any): AiJob {
+    return {
+      id: row.id,
+      userId: row.user_id,
+      jobType: row.job_type,
+      status: row.status,
+      payload: JSON.parse(row.payload_json),
+      result: row.result_json ? JSON.parse(row.result_json) : undefined,
+      errorMessage: row.error_message || undefined,
+      attempts: row.attempts,
+      maxAttempts: row.max_attempts,
+      idempotencyKey: row.idempotency_key || undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
   }
 }
 
