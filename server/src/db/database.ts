@@ -30,6 +30,12 @@ export interface DatabaseHealth {
   integrity: 'ok' | 'failed';
 }
 
+export interface BackupVerification {
+  path: string;
+  integrity: 'ok' | 'failed';
+  schemaPresent: boolean;
+}
+
 export let db: CareerDatabase;
 
 export function initDatabase(): CareerDatabase {
@@ -145,6 +151,28 @@ export function backupDatabase(destinationPath: string): string {
   database.exec('PRAGMA wal_checkpoint(TRUNCATE)');
   fs.copyFileSync(DB_PATH, destination);
   return destination;
+}
+
+export function verifyDatabaseBackup(backupPath: string): BackupVerification {
+  const candidatePath = path.resolve(backupPath);
+  if (!fs.existsSync(candidatePath)) {
+    throw new Error('Database backup does not exist');
+  }
+
+  const candidate = new DatabaseSync(candidatePath) as CareerDatabase;
+  try {
+    const integrityResult = String((candidate.prepare('PRAGMA integrity_check').get() as { integrity_check: string }).integrity_check);
+    const schema = candidate.prepare(
+      "SELECT 1 as present FROM sqlite_master WHERE type = 'table' AND name = 'schema_migrations'"
+    ).get() as { present?: number } | undefined;
+    return {
+      path: candidatePath,
+      integrity: integrityResult === 'ok' ? 'ok' : 'failed',
+      schemaPresent: schema?.present === 1
+    };
+  } finally {
+    candidate.close();
+  }
 }
 
 function seedCanonicalSkills() {

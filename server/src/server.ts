@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-import { initDatabase, getDatabase } from './db/database.js';
+import { initDatabase, getDatabase, checkDatabaseHealth } from './db/database.js';
 import { errorHandler } from './middleware/error.js';
 import { apiLimiter, expensiveAiLimiter } from './middleware/rateLimit.js';
 import { validateAuthConfig } from './middleware/auth.js';
@@ -114,7 +114,7 @@ app.use((req, res, next) => {
 app.get(['/health', '/api/health', '/api/v1/health'], (req, res) => {
   res.json({
     status: 'healthy',
-    platform: 'CareerHub AI Production Backend',
+    platform: 'Career Hub Production Backend',
     database: 'SQLite (WAL Mode)',
     uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString()
@@ -123,19 +123,18 @@ app.get(['/health', '/api/health', '/api/v1/health'], (req, res) => {
 
 app.get(['/ready', '/api/ready', '/api/v1/ready'], (req, res) => {
   try {
-    const db = getDatabase();
-    const result = db.prepare('SELECT 1 as alive').get() as { alive: number };
-    if (result && result.alive === 1) {
+    const databaseHealth = checkDatabaseHealth();
+    if (databaseHealth.integrity === 'ok' && databaseHealth.foreignKeysEnabled && databaseHealth.journalMode.toLowerCase() === 'wal') {
       return res.json({
         status: 'ready',
         databaseConnected: true,
-        walMode: true,
+        databaseHealth,
         timestamp: new Date().toISOString()
       });
     }
+    return res.status(503).json({ status: 'not_ready', databaseConnected: false, databaseHealth });
+  } catch {
     return res.status(503).json({ status: 'not_ready', databaseConnected: false });
-  } catch (err: any) {
-    return res.status(503).json({ status: 'not_ready', error: err.message });
   }
 });
 

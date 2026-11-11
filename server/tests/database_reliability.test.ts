@@ -8,7 +8,7 @@ const databasePath = path.join(tempDir, 'career-hub.sqlite');
 const backupPath = path.join(tempDir, 'backup.sqlite');
 process.env.DATABASE_PATH = databasePath;
 
-const { initDatabase, checkDatabaseHealth, backupDatabase } = await import('../src/db/database.js');
+const { initDatabase, checkDatabaseHealth, backupDatabase, verifyDatabaseBackup } = await import('../src/db/database.js');
 
 const database = initDatabase();
 const health = checkDatabaseHealth();
@@ -26,6 +26,21 @@ const backup = backupDatabase(backupPath);
 assert.equal(backup, backupPath);
 assert.equal(fs.existsSync(backupPath), true);
 assert.ok(fs.statSync(backupPath).size > 0);
+assert.deepEqual(verifyDatabaseBackup(backupPath), {
+  path: backupPath,
+  integrity: 'ok',
+  schemaPresent: true
+});
+
+const readinessPlan = database.prepare(
+  'EXPLAIN QUERY PLAN SELECT * FROM readiness_snapshots WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+).all('user-test') as Array<{ detail?: string }>;
+assert.ok(readinessPlan.some((row) => row.detail?.includes('idx_readiness_snapshots_user_created')));
+
+const aiJobsPlan = database.prepare(
+  "EXPLAIN QUERY PLAN SELECT * FROM ai_jobs WHERE status IN ('QUEUED', 'RETRYING') ORDER BY created_at ASC"
+).all() as Array<{ detail?: string }>;
+assert.ok(aiJobsPlan.some((row) => row.detail?.includes('idx_ai_jobs_status_updated')));
 
 console.log('DATABASE RELIABILITY TEST PASSED: configured path, WAL, foreign keys, integrity, migration ledger, and backup verified.');
 
