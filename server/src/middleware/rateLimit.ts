@@ -23,3 +23,15 @@ export const expensiveAiLimiter = rateLimit({
     statusCode: 429
   }
 });
+
+// Authentication endpoints are intentionally stricter than general API traffic.
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many authentication attempts. Please try again later.',
+    statusCode: 429
+  }
+});

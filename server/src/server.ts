@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 
 import { initDatabase, getDatabase, checkDatabaseHealth } from './db/database.js';
 import { errorHandler } from './middleware/error.js';
-import { apiLimiter, expensiveAiLimiter } from './middleware/rateLimit.js';
+import { apiLimiter, expensiveAiLimiter, authLimiter } from './middleware/rateLimit.js';
 import { validateAuthConfig } from './middleware/auth.js';
 import { aiQueueManager } from './services/aiQueue.service.js';
 
@@ -73,6 +73,7 @@ app.use(cors({
 
 // Global Rate Limiting for standard API endpoints
 app.use('/api/', apiLimiter);
+app.use(['/api/auth', '/api/v1/auth'], authLimiter);
 
 // Strict Rate Limiting for computationally heavy AI and upload endpoints
 const expensiveAiEndpoints = [

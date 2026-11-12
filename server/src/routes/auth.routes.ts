@@ -10,13 +10,17 @@ const router = Router();
 
 const SignupSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(128, 'Password must be 128 characters or fewer')
+    .regex(/[A-Za-z]/, 'Password must contain a letter')
+    .regex(/[0-9]/, 'Password must contain a number'),
   fullName: z.string().min(2, 'Full name is required')
 });
 
 const LoginSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required')
+  password: z.string().min(1, 'Password is required').max(128, 'Password must be 128 characters or fewer')
 });
 
 // POST /api/auth/signup

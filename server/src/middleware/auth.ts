@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
 let ephemeralDevSecret: string | null = null;
+const JWT_ISSUER = 'career-hub-api';
+const JWT_AUDIENCE = 'career-hub-client';
 
 export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET?.trim();
@@ -45,7 +47,7 @@ export function generateToken(user: AuthenticatedUser): string {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
     getJwtSecret(),
-    { expiresIn: '7d' }
+    { expiresIn: '7d', algorithm: 'HS256', issuer: JWT_ISSUER, audience: JWT_AUDIENCE }
   );
 }
 
@@ -64,8 +66,12 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as AuthenticatedUser;
-    if (!decoded || !decoded.id) {
+    const decoded = jwt.verify(token, getJwtSecret(), {
+      algorithms: ['HS256'],
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE
+    }) as AuthenticatedUser;
+    if (!decoded || typeof decoded.id !== 'string' || typeof decoded.email !== 'string' || typeof decoded.role !== 'string') {
       return res.status(401).json({
         error: {
           code: 'INVALID_TOKEN',

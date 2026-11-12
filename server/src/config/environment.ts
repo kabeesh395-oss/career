@@ -17,7 +17,7 @@ function loadConfig(): AppConfig {
   const env = (process.env.NODE_ENV as AppConfig['env']) || 'development';
   const isProd = env === 'production';
 
-  const jwtSecret = process.env.JWT_SECRET || (isProd ? '' : 'careerpilot-production-secret-key-2026-secure-jwt');
+  const jwtSecret = process.env.JWT_SECRET?.trim() || '';
   const geminiApiKey = process.env.GEMINI_API_KEY || '';
 
   // Fail fast in production if critical secrets are missing
