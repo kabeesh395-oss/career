@@ -122,6 +122,7 @@ jobs:
           npm run test:database
           npm run test:ai-persistence
           npm run test:auth
+          npm run test:auth-revocation
 
       - name: Execute Security & Tenant Isolation Tests (TASK-003 / TASK-009)
         run: |

@@ -14,6 +14,7 @@
     "test:database": "tsx tests/database_reliability.test.ts",
     "test:ai-persistence": "tsx tests/ai_queue_persistence.test.ts",
     "test:auth": "tsx tests/auth_security.test.ts",
+    "test:auth-revocation": "tsx tests/auth_revocation.test.ts",
     "test:phase3": "tsx tests/ai_queue_and_v1_api.test.ts",
     "test:load": "tsx tests/production_load_and_chaos.test.ts",
     "test:qa": "tsx tests/runtime_qa_pass.test.ts"

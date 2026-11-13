@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { getDatabase } from '../db/database.js';
 
 let ephemeralDevSecret: string | null = null;
 const JWT_ISSUER = 'career-hub-api';
@@ -43,9 +44,9 @@ export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
 }
 
-export function generateToken(user: AuthenticatedUser): string {
+export function generateToken(user: AuthenticatedUser, tokenVersion = 0): string {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: user.id, email: user.email, role: user.role, ver: tokenVersion },
     getJwtSecret(),
     { expiresIn: '7d', algorithm: 'HS256', issuer: JWT_ISSUER, audience: JWT_AUDIENCE }
   );
@@ -80,10 +81,26 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
       });
     }
 
+    const currentUser = getDatabase().prepare('SELECT id, email, role, token_version FROM users WHERE id = ?').get(decoded.id) as {
+      id: string;
+      email: string;
+      role: string;
+      token_version?: number;
+    } | undefined;
+    const tokenVersion = Number((decoded as AuthenticatedUser & { ver?: number }).ver ?? 0);
+    if (!currentUser || tokenVersion !== Number(currentUser.token_version ?? 0)) {
+      return res.status(401).json({
+        error: {
+          code: 'SESSION_REVOKED',
+          message: 'Your session is no longer valid. Please log in again.'
+        }
+      });
+    }
+
     req.user = {
       id: decoded.id,
-      email: decoded.email,
-      role: decoded.role
+      email: currentUser.email,
+      role: currentUser.role
     };
 
     next();

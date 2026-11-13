@@ -118,7 +118,7 @@ router.post('/login', async (req, res, next) => {
     }
 
     const userPayload = { id: user.id, email: user.email, role: user.role };
-    const token = generateToken(userPayload);
+    const token = generateToken(userPayload, Number(user.token_version || 0));
 
     AnalyticsService.trackEvent(user.id, 'user_login', { email: user.email });
 
@@ -174,6 +174,18 @@ router.get('/me', authenticate, (req: AuthenticatedRequest, res: Response, next)
       },
       profile: profile || null
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/logout - revoke every token currently issued for this account
+router.post('/logout', authenticate, (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const db = getDatabase();
+    db.prepare('UPDATE users SET token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .run(req.user!.id);
+    return res.json({ success: true, message: 'Session revoked successfully.' });
   } catch (err) {
     next(err);
   }

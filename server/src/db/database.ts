@@ -101,6 +101,9 @@ function runMigrations(): void {
       'ALTER TABLE roadmap_items ADD COLUMN learning_objective TEXT',
       'ALTER TABLE roadmap_items ADD COLUMN practice_suggestion TEXT',
       'ALTER TABLE roadmap_items ADD COLUMN interview_relevance TEXT'
+    ]],
+    ['002_user_token_version', [
+      'ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0'
     ]]
   ] as const;
 
