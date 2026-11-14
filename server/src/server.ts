@@ -9,6 +9,7 @@ import { initDatabase, getDatabase, checkDatabaseHealth } from './db/database.js
 import { errorHandler } from './middleware/error.js';
 import { apiLimiter, expensiveAiLimiter, authLimiter } from './middleware/rateLimit.js';
 import { validateAuthConfig } from './middleware/auth.js';
+import { createCorsOriginCallback } from './config/cors.js';
 import { aiQueueManager } from './services/aiQueue.service.js';
 
 import authRoutes from './routes/auth.routes.js';
@@ -44,28 +45,9 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS Middleware - Configurable allowed origins
-const configuredOrigin = process.env.CORS_ORIGIN;
-const defaultAllowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:5173'
-];
-const allowedOrigins = configuredOrigin
-  ? (configuredOrigin === '*' ? ['*'] : configuredOrigin.split(',').map(o => o.trim()))
-  : defaultAllowedOrigins;
-
+// CORS Middleware - explicit origin allowlist when credentials are enabled
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow non-browser requests (mobile native Capacitor, server-to-server, curl)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes('*')) return callback(null, true);
-    if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS policy rejection: Origin ${origin} not allowed`));
-  },
+  origin: createCorsOriginCallback(process.env.CORS_ORIGIN, process.env.NODE_ENV),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id']
