@@ -164,14 +164,17 @@ for (const [pathPrefix, router] of routePairs) {
 // Centralized error handler
 app.use(errorHandler);
 
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`========================================================`);
-  console.log(`🚀 CareerHub AI Production Server Running on port ${PORT}`);
-  console.log(`🌐 Health check: http://localhost:${PORT}/api/v1/health`);
-  console.log(`🔒 Multi-tenant security, Helmet & Rate Limiter active`);
-  console.log(`========================================================`);
-});
+// Start the production listener only outside test imports. Tests can bind the
+// exported app to an ephemeral port without racing the default port.
+const server = process.env.NODE_ENV === 'test'
+  ? null
+  : app.listen(PORT, () => {
+    console.log(`========================================================`);
+    console.log(`🚀 Career Hub Production Backend Running on port ${PORT}`);
+    console.log(`🌐 Health check: http://localhost:${PORT}/api/v1/health`);
+    console.log(`🔒 Multi-tenant security, Helmet & Rate Limiter active`);
+    console.log(`========================================================`);
+  });
 
 // Graceful Shutdown
 function gracefulShutdown(signal: string) {
@@ -180,6 +183,9 @@ function gracefulShutdown(signal: string) {
     aiQueueManager.shutdown();
   } catch { /* empty */ }
 
+  if (!server) {
+    return;
+  }
   server.close(() => {
     try {
       const db = getDatabase();
