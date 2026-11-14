@@ -124,6 +124,7 @@ jobs:
           npm run test:auth
           npm run test:auth-revocation
           npm run test:auth-http
+          npm run test:cors
 
       - name: Execute Security & Tenant Isolation Tests (TASK-003 / TASK-009)
         run: |
