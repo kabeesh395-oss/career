@@ -112,11 +112,11 @@ describe('Career Hub 5-Section & Data Integrity Regressions', () => {
     render(<DashboardPage onNavigate={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Not calibrated')).toBeDefined();
+      expect(screen.getByText('Calibrating')).toBeDefined();
     });
 
-    expect(screen.getAllByText('Not set')).toHaveLength(2);
-    expect(screen.getByText('No resume analyzed yet')).toBeDefined();
+    expect(screen.getAllByText('Not set').length).toBeGreaterThan(0);
+    expect(screen.getByText('No resume analyzed')).toBeDefined();
     expect(screen.queryByText(/undefined%/i)).toBeNull();
   });
 

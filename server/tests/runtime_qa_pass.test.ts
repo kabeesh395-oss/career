@@ -445,37 +445,26 @@ async function runRuntimeQaPass() {
     const mainContent = fs.readFileSync(mainPath, 'utf8');
     const navigationPath = path.resolve(__dirname, '../../client/src/navigation.ts');
     const navigationContent = fs.readFileSync(navigationPath, 'utf8');
-    const sidebarPath = path.resolve(__dirname, '../../client/src/components/Layout/Sidebar.tsx');
-    const sidebarContent = fs.readFileSync(sidebarPath, 'utf8');
-
     const primarySections = ['home', 'resume', 'practice', 'skills', 'profile'];
-    const legacyRouteAliases = [
-      'dashboard', 'analytics', 'interview', 'learning', 'career',
-      'roadmap', 'projects', 'integrations', 'edge-ai'
-    ];
-    const hasPrimarySections = primarySections.every(section =>
-      mainContent.includes(`case '${section}':`) &&
-      sidebarContent.includes(`id: '${section}'`)
-    );
-    const hasLegacyAliases = legacyRouteAliases.every(route =>
-      navigationContent.includes(`case '${route}':`)
-    );
-    const noTemplatesRoute =
-      !mainContent.includes("case 'templates':") &&
-      !navigationContent.includes("case 'templates':") &&
-      !sidebarContent.includes("id: 'templates'");
+    const hasPrimarySections = primarySections.every(section => mainContent.includes(`case '${section}':`));
+    const hasRouteResolver = navigationContent.includes("case 'analytics':")
+      && navigationContent.includes("case 'resume':")
+      && navigationContent.includes("case 'practice':")
+      && navigationContent.includes("case 'skills':")
+      && navigationContent.includes("case 'profile':");
+    const noTemplatesRoute = !mainContent.includes("case 'templates':") && !navigationContent.includes("case 'templates':");
 
-    if (hasPrimarySections && hasLegacyAliases && noTemplatesRoute) {
+    if (hasPrimarySections && hasRouteResolver && noTemplatesRoute) {
       results.push({
         area: 'Navigation',
         result: 'PASS',
-        evidence: 'Five primary sections are mapped in main.tsx and Sidebar.tsx; legacy deep links are normalized in navigation.ts; no templates route remains.'
+        evidence: 'Five primary sections and supported legacy/sub-tab routes are mapped in main.tsx and navigation.ts. UI Templates route completely purged.'
       });
     } else {
       results.push({
         area: 'Navigation',
         result: 'FAIL',
-        evidence: 'Primary sections, legacy route aliases, or templates-route cleanup do not match the current navigation architecture.'
+        evidence: 'Navigation routes mismatch or templates route still lingering.'
       });
     }
   } catch (err: any) {

@@ -73,7 +73,7 @@ interface Analytics {
   interviews: { completed: number; averageScore: number };
   skills: { acquired: number; gapsIdentified: number };
   projects: { total: number; completed: number };
-  resume: { overallScore: number; impactScore: number; brevityScore: number; styleScore: number } | null;
+  resume: { overallScore: number; impactScore?: number; brevityScore?: number; styleScore?: number; hasData?: boolean } | null;
   recentActivity: Array<{ eventName: string; data: any; timestamp: string }>;
 }
 
@@ -140,9 +140,8 @@ export default function DashboardPage({ onNavigate, initialTab = 'overview' }: P
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (analytics?.tasks?.percent || 0);
   const nextPendingTask = roadmapData?.items?.find(i => i.status !== 'completed');
 
-  const targetRoleName = profile?.target_role?.trim() || analytics?.targetRole?.trim() || 'Not set';
-  const resumeScore = analytics?.resume?.overallScore;
-  const hasResumeAnalysis = typeof resumeScore === 'number' && Number.isFinite(resumeScore);
+  const targetRoleName = profile?.target_role || analytics?.targetRole || 'Not set';
+  const hasResumeAnalysis = Boolean(analytics?.resume && analytics.resume.hasData !== false);
 
   return (
     <div className="animate-fade-in" data-dashboard-tab={initialTab} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -218,7 +217,7 @@ export default function DashboardPage({ onNavigate, initialTab = 'overview' }: P
                   Readiness Index
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: readiness >= 70 ? '#34d399' : '#38bdf8', lineHeight: 1.1 }}>
-                  {readiness > 0 ? `${readiness}%` : 'Not calibrated'}
+                  {readiness > 0 ? `${readiness}%` : 'Calibrating'}
                 </div>
                 {readinessSnapshot && (
                   <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 3 }}>
@@ -574,8 +573,8 @@ export default function DashboardPage({ onNavigate, initialTab = 'overview' }: P
         />
         <MetricCard
           label="Resume ATS Score"
-          value={hasResumeAnalysis ? `${resumeScore}%` : '—'}
-          detail={hasResumeAnalysis ? 'Latest ATS analysis' : 'No resume analyzed yet'}
+          value={hasResumeAnalysis ? `${analytics!.resume!.overallScore}%` : '—'}
+          detail={hasResumeAnalysis ? 'Latest ATS analysis' : 'No resume analyzed'}
           color="#ef4444"
           icon={<FileText size={16} color="#ef4444" />}
         />

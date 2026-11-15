@@ -11,6 +11,7 @@ process.env.DATABASE_PATH = path.join(tempDir, 'career-hub.sqlite');
 
 const { default: app } = await import('../src/server.js');
 const { getDatabase } = await import('../src/db/database.js');
+const { aiQueueManager } = await import('../src/services/aiQueue.service.js');
 const server = http.createServer(app);
 await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
 const address = server.address();
@@ -65,6 +66,7 @@ try {
 
   console.log('AUTH HTTP FLOW TEST PASSED: signup, login, /me, logout, and revocation verified.');
 } finally {
+  aiQueueManager.shutdown();
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   fs.rmSync(tempDir, { recursive: true, force: true });
 }
