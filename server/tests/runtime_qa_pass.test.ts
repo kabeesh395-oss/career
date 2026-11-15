@@ -443,24 +443,39 @@ async function runRuntimeQaPass() {
   try {
     const mainPath = path.resolve(__dirname, '../../client/src/main.tsx');
     const mainContent = fs.readFileSync(mainPath, 'utf8');
+    const navigationPath = path.resolve(__dirname, '../../client/src/navigation.ts');
+    const navigationContent = fs.readFileSync(navigationPath, 'utf8');
     const sidebarPath = path.resolve(__dirname, '../../client/src/components/Layout/Sidebar.tsx');
     const sidebarContent = fs.readFileSync(sidebarPath, 'utf8');
 
-    const activeRoutes = ['dashboard', 'career', 'roadmap', 'resume', 'projects', 'interview', 'learning', 'integrations', 'analytics', 'edge-ai', 'profile'];
-    const hasAllActiveRoutes = activeRoutes.every(r => mainContent.includes(`case '${r}':`) && sidebarContent.includes(`id: '${r}'`));
-    const noTemplatesRoute = !mainContent.includes("case 'templates'") && !sidebarContent.includes("id: 'templates'");
+    const primarySections = ['home', 'resume', 'practice', 'skills', 'profile'];
+    const legacyRouteAliases = [
+      'dashboard', 'analytics', 'interview', 'learning', 'career',
+      'roadmap', 'projects', 'integrations', 'edge-ai'
+    ];
+    const hasPrimarySections = primarySections.every(section =>
+      mainContent.includes(`case '${section}':`) &&
+      sidebarContent.includes(`id: '${section}'`)
+    );
+    const hasLegacyAliases = legacyRouteAliases.every(route =>
+      navigationContent.includes(`case '${route}':`)
+    );
+    const noTemplatesRoute =
+      !mainContent.includes("case 'templates':") &&
+      !navigationContent.includes("case 'templates':") &&
+      !sidebarContent.includes("id: 'templates'");
 
-    if (hasAllActiveRoutes && noTemplatesRoute) {
+    if (hasPrimarySections && hasLegacyAliases && noTemplatesRoute) {
       results.push({
         area: 'Navigation',
         result: 'PASS',
-        evidence: 'All 11 genuine application routes mapped in main.tsx and Sidebar.tsx. UI Templates route completely purged.'
+        evidence: 'Five primary sections are mapped in main.tsx and Sidebar.tsx; legacy deep links are normalized in navigation.ts; no templates route remains.'
       });
     } else {
       results.push({
         area: 'Navigation',
         result: 'FAIL',
-        evidence: 'Navigation routes mismatch or templates route still lingering.'
+        evidence: 'Primary sections, legacy route aliases, or templates-route cleanup do not match the current navigation architecture.'
       });
     }
   } catch (err: any) {
