@@ -30,14 +30,6 @@ export default function AuthPage() {
     }
   };
 
-  const handleQuickFill = () => {
-    setEmail('demo@careerhub.dev');
-    setPassword('DemoCareer2026!');
-    if (!isLogin) {
-      setFullName('Jordan Vance');
-    }
-  };
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -98,11 +90,10 @@ export default function AuthPage() {
 
       {/* Main Glass Card */}
       <div
-        className="glass-panel animate-fade-in"
+        className="glass-panel animate-fade-in auth-card"
         style={{
           width: '100%',
           maxWidth: 460,
-          padding: '36px 32px',
           position: 'relative',
           zIndex: 10,
           borderRadius: 20,
@@ -224,26 +215,9 @@ export default function AuthPage() {
           )}
 
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 500, color: '#94a3b8' }}>
-                Email Address
-              </label>
-              <button
-                type="button"
-                onClick={handleQuickFill}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#60a5fa',
-                  fontSize: 11.5,
-                  cursor: 'pointer',
-                  padding: 0,
-                  textDecoration: 'underline'
-                }}
-              >
-                Quick fill sample
-              </button>
-            </div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
+              Email Address
+            </label>
             <input
               className="input-field"
               type="email"

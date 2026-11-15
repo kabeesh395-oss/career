@@ -8,17 +8,20 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await api('/integrations');
-        setIntegrations(data.integrations || []);
-      } catch {
-        /* empty */
-      }
+  const loadIntegrations = async () => {
+    setError('');
+    try {
+      const data = await api('/integrations');
+      setIntegrations(data.integrations || []);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load integrations.');
+    } finally {
       setLoading(false);
     }
-    load();
+  };
+
+  useEffect(() => {
+    loadIntegrations();
   }, []);
 
   const github = integrations.find(i => i.provider === 'github');
@@ -38,28 +41,30 @@ export default function IntegrationsPage() {
       });
       setGithubUser('');
     } catch (err: any) {
-      setError(err.message || 'Failed to lookup GitHub public profile.');
+      setError(err?.message || 'Failed to lookup GitHub public profile.');
+    } finally {
+      setConnecting(false);
     }
-    setConnecting(false);
   };
 
   const disconnect = async (provider: string) => {
+    setError('');
     try {
       await api(`/integrations/${provider}`, { method: 'DELETE' });
       setIntegrations(prev => prev.filter(i => i.provider !== provider));
-    } catch {
-      /* empty */
+    } catch (err: any) {
+      setError(err?.message || 'Failed to disconnect integration.');
     }
   };
 
-  if (loading) return <div style={{ color: 'hsl(var(--text-secondary))', padding: 40 }}>Loading integrations…</div>;
+  if (loading) return <div style={{ color: 'hsl(var(--text-secondary))', padding: 32 }}>Loading integrations…</div>;
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div>
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Integrations & External Data</h1>
-        <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 14 }}>
-          Enrich your engineering portfolio with public developer data and verified credentials.
+        <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 2px' }}>Integrations & External Data</h2>
+        <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 13, margin: 0 }}>
+          Fetch public GitHub repository metrics. External providers without configured credentials remain disabled.
         </p>
       </div>
 
@@ -79,9 +84,9 @@ export default function IntegrationsPage() {
       )}
 
       {/* GitHub Public Profile Lookup */}
-      <div className="glass-card" style={{ padding: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="glass-card" style={{ padding: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
             <div
               style={{
                 width: 40,
@@ -91,14 +96,15 @@ export default function IntegrationsPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 22,
+                fontSize: 20,
                 color: '#fff',
+                flexShrink: 0,
               }}
             >
               ⊙
             </div>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 600 }}>Public GitHub Profile Lookup</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 15.5, fontWeight: 600 }}>Public GitHub Profile Lookup</div>
               <div style={{ fontSize: 12, color: 'hsl(var(--text-muted))' }}>
                 {github?.isConnected
                   ? `Viewing public profile @${github.username}`
@@ -108,12 +114,14 @@ export default function IntegrationsPage() {
           </div>
           {github?.isConnected && (
             <button
+              type="button"
               onClick={() => disconnect('github')}
               style={{
                 background: 'hsla(var(--danger), 0.1)',
                 border: '1px solid hsla(var(--danger), 0.25)',
                 borderRadius: 8,
-                padding: '6px 14px',
+                padding: '7px 14px',
+                minHeight: 38,
                 color: 'hsl(var(--danger))',
                 cursor: 'pointer',
                 fontSize: 12,
@@ -124,23 +132,25 @@ export default function IntegrationsPage() {
           )}
         </div>
 
-        <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 12.5, marginBottom: 16, lineHeight: 1.5 }}>
-          Fetch publicly accessible repository counts, stars, and top languages. Note: This retrieves publicly available GitHub profile data and does not claim verified account ownership without OAuth credentials.
+        <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 12.5, marginBottom: 14, lineHeight: 1.5 }}>
+          Retrieves publicly accessible repositories, stars, and language counts from GitHub without claiming OAuth account ownership.
         </p>
 
         {!github?.isConnected ? (
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <input
               className="input-field"
-              placeholder="Enter public GitHub username (e.g. torvalds)"
+              placeholder="GitHub username (e.g. torvalds)"
               value={githubUser}
               onChange={e => setGithubUser(e.target.value)}
               id="github-username"
+              style={{ flex: '1 1 200px' }}
             />
             <button
+              type="button"
               className="btn-primary"
               onClick={lookupGitHub}
-              disabled={connecting}
+              disabled={connecting || !githubUser.trim()}
               id="connect-github"
             >
               {connecting ? 'Fetching…' : 'Lookup Profile'}
@@ -151,8 +161,8 @@ export default function IntegrationsPage() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: 12,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 110px), 1fr))',
+                gap: 10,
                 marginBottom: 16,
               }}
             >
@@ -192,7 +202,7 @@ export default function IntegrationsPage() {
                       {repo.name}
                     </a>
                     <span style={{ marginLeft: 8, color: 'hsl(var(--text-muted))', fontSize: 11 }}>
-                      {repo.language} · ★{repo.stargazers_count}
+                      {repo.language || 'Unknown'} · ★{repo.stargazers_count}
                     </span>
                     {repo.description && (
                       <p style={{ color: 'hsl(var(--text-muted))', fontSize: 12, marginTop: 2 }}>{repo.description}</p>
@@ -206,8 +216,8 @@ export default function IntegrationsPage() {
       </div>
 
       {/* LinkedIn Honest Unavailable State */}
-      <div className="glass-card" style={{ padding: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+      <div className="glass-card" style={{ padding: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
           <div
             style={{
               width: 40,
@@ -220,17 +230,18 @@ export default function IntegrationsPage() {
               fontSize: 18,
               color: '#fff',
               fontWeight: 700,
+              flexShrink: 0,
             }}
           >
             in
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>LinkedIn Integration</div>
+            <div style={{ fontSize: 15.5, fontWeight: 600 }}>LinkedIn Integration</div>
             <div style={{ fontSize: 12, color: 'hsl(var(--text-muted))' }}>Not Configured / Unavailable</div>
           </div>
         </div>
-        <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 13, lineHeight: 1.6 }}>
-          LinkedIn profile integration is disabled because official OAuth2 partner credentials are not configured. CareerHub does not simulate or fabricate external social profiles.
+        <p style={{ color: 'hsl(var(--text-secondary))', fontSize: 13, lineHeight: 1.55, margin: 0 }}>
+          LinkedIn integration is unavailable because official OAuth2 partner credentials are not configured. CareerHub never fabricates external social metrics.
         </p>
       </div>
     </div>
@@ -248,7 +259,7 @@ function MiniStat({ label, value }: { label: string; value: number | string }) {
         textAlign: 'center',
       }}
     >
-      <div style={{ fontSize: 22, fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{value}</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{value}</div>
       <div style={{ fontSize: 11, color: 'hsl(var(--text-muted))' }}>{label}</div>
     </div>
   );

@@ -168,9 +168,15 @@ class FirebaseAuthManager(private val context: Context) {
 
         val auth = getAuthSafe()
             ?: return Result.failure(IllegalStateException("Firebase Auth is not configured on this device."))
-
         return try {
-            val serverClientId = webClientId ?: "default_client_id"
+            val serverClientId = webClientId?.takeIf { it.isNotBlank() } ?: run {
+                try {
+                    val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+                    if (resId != 0) context.getString(resId) else null
+                } catch (_: Exception) {
+                    null
+                }
+            } ?: "187464193457-m8e41vbfmbihv9fm5e89frlhcqkras4v.apps.googleusercontent.com"
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
                 .setServerClientId(serverClientId)
@@ -225,5 +231,9 @@ class FirebaseAuthManager(private val context: Context) {
         } catch (e: Throwable) {
             _userState.value.uid
         }
+    }
+
+    fun isFirebaseConfigured(): Boolean {
+        return getAuthSafe() != null
     }
 }

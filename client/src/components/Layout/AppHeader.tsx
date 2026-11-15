@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, RefreshCw, Command, Check, AlertCircle, X, ChevronRight, Menu } from 'lucide-react';
+import { Search, Bell, RefreshCw, Command, Check, AlertCircle, X, ChevronRight } from 'lucide-react';
 import { CareerHubLogo } from '../Common/CareerHubLogo';
 
 interface AppHeaderProps {
@@ -19,22 +19,23 @@ interface CommandItem {
 }
 
 const COMMAND_PALETTE_ITEMS: CommandItem[] = [
-  { id: 'dash', title: 'Dashboard', category: 'Navigation', description: 'Overview, key metrics, and recommended actions', page: 'dashboard' },
-  { id: 'career', title: 'Career Readiness & Skills', category: 'Intelligence', description: 'Benchmark catalog, role readiness, and gap analysis', page: 'career' },
-  { id: 'roadmap', title: 'Career Roadmap', category: 'Progression', description: 'Phased milestones, action plans, and trackable goals', page: 'roadmap' },
-  { id: 'resume', title: 'Resume ATS Scanner', category: 'Tools', description: 'Upload resumes, run ATS keyword scans, and rewrite bullets', page: 'resume' },
-  { id: 'projects', title: 'Portfolio Projects', category: 'Proof', description: 'Track verified projects and link GitHub repositories', page: 'projects' },
-  { id: 'interview', title: 'Interview Simulation', category: 'Preparation', description: 'Practice behavioral and system architecture questions', page: 'interview' },
-  { id: 'learning', title: 'Learning Resources', category: 'Curriculum', description: 'Technical study modules, quizzes, and skill tracks', page: 'learning' },
-  { id: 'integrations', title: 'Integrations & GitHub', category: 'Sync', description: 'Lookup public GitHub profiles and external tooling', page: 'integrations' },
-  { id: 'analytics', title: 'Analytics & Telemetry', category: 'Metrics', description: 'Audit trails, verified events, and career velocity', page: 'analytics' },
-  { id: 'edge-ai', title: 'Edge AI Assistant', category: 'Local AI', description: 'Client-side inference and offline career intelligence', page: 'edge-ai' },
-  { id: 'profile', title: 'Profile & Settings', category: 'Account', description: 'Target role, compensation model, and candidate details', page: 'profile' },
+  { id: 'home', title: 'Home', category: 'Primary', description: 'Career overview, readiness metrics, and recommended next action', page: 'home' },
+  { id: 'home-analytics', title: 'Home · Telemetry & Audit', category: 'Home', description: 'Audit event stream and empirical progress metrics', page: 'home/analytics' },
+  { id: 'resume', title: 'Resume', category: 'Primary', description: 'Upload resumes, ATS keyword scoring, and JD matching', page: 'resume' },
+  { id: 'practice', title: 'Practice · Mock Interview', category: 'Primary', description: 'Technical mock interview rounds with rubric scoring', page: 'practice/interview' },
+  { id: 'practice-learning', title: 'Practice · Learning Resources', category: 'Practice', description: 'Verified technical references and progress tracking', page: 'practice/learning' },
+  { id: 'skills', title: 'Skills · My Skills', category: 'Primary', description: 'Manage verified proficiency levels across technical catalog', page: 'skills/my-skills' },
+  { id: 'skills-gaps', title: 'Skills · Gap Analysis', category: 'Skills', description: 'Benchmark readiness and target role skill gaps', page: 'skills/gaps' },
+  { id: 'skills-roadmap', title: 'Skills · Roadmap & Milestones', category: 'Skills', description: 'Phased curriculum and trackable completion checklist', page: 'skills/roadmap' },
+  { id: 'skills-projects', title: 'Skills · Portfolio Projects', category: 'Skills', description: 'Track portfolio builds, repositories, and targeted skills', page: 'skills/projects' },
+  { id: 'profile', title: 'Profile', category: 'Primary', description: 'Career background, target role, compensation, and presets', page: 'profile/general' },
+  { id: 'profile-integrations', title: 'Profile · Integrations', category: 'Profile', description: 'Public GitHub lookup and external data settings', page: 'profile/integrations' },
+  { id: 'profile-system', title: 'Profile · Theme & System AI', category: 'Profile', description: 'Appearance theme, Edge AI status, and account controls', page: 'profile/system' },
 ];
 
-export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobileMenu }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate }) => {
   const { user, profile, refreshProfile } = useAuth();
-  
+
   // Real Sync State
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -59,12 +60,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
     setSyncErrorMessage('');
 
     try {
-      await refreshProfile();
-      setSyncStatus('success');
-      setTimeout(() => setSyncStatus('idle'), 3000);
+      const ok = await refreshProfile();
+      if (ok) {
+        setSyncStatus('success');
+        setTimeout(() => setSyncStatus('idle'), 3000);
+      } else {
+        setSyncStatus('error');
+        setSyncErrorMessage('Failed to refresh data from server');
+        setTimeout(() => setSyncStatus('idle'), 4000);
+      }
     } catch (err: any) {
       setSyncStatus('error');
-      setSyncErrorMessage(err.message || 'Failed to refresh data from server');
+      setSyncErrorMessage(err?.message || 'Failed to refresh data from server');
       setTimeout(() => setSyncStatus('idle'), 4000);
     } finally {
       setIsSyncing(false);
@@ -87,7 +94,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Focus search input when command palette opens
   useEffect(() => {
     if (showCommandPalette) {
       setSearchQuery('');
@@ -96,7 +102,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
     }
   }, [showCommandPalette]);
 
-  // Close notifications on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -109,7 +114,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotification]);
 
-  // Filtered command palette items
   const filteredItems = COMMAND_PALETTE_ITEMS.filter(item => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
@@ -125,55 +129,52 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
     onNavigate(page);
   };
 
-  // Build authentic notifications from candidate profile and system state
+  // Authentic notifications derived strictly from actual profile state
   const rawNotifications = [
     {
       id: 'notif_role',
-      title: profile?.target_role ? `Target Role Active` : 'Target Role Not Configured',
-      description: profile?.target_role 
+      title: profile?.target_role ? 'Target Role Configured' : 'Target Role Not Set',
+      description: profile?.target_role
         ? `Tracking readiness benchmarks for ${profile.target_role}.`
-        : 'Set your target role in Profile to unlock tailored skill gaps.',
+        : 'Set your target role in Profile to calibrate skill gaps and recommendations.',
       actionPage: 'profile',
-      type: profile?.target_role ? 'info' : 'warning',
-      timestamp: 'Active'
+      statusLabel: profile?.target_role ? 'Configured' : 'Action needed',
     },
     {
       id: 'notif_readiness',
-      title: 'Readiness Calibration',
-      description: (profile?.current_readiness_score ?? 0) > 0
-        ? `Current readiness score is ${profile?.current_readiness_score}%. Review gaps in Career tab.`
-        : 'Run career readiness analysis to benchmark your engineering skills.',
-      actionPage: 'career',
-      type: 'info',
-      timestamp: 'Today'
+      title: (profile?.current_readiness_score ?? 0) > 0 ? 'Readiness Calibrated' : 'Readiness Not Calibrated',
+      description:
+        (profile?.current_readiness_score ?? 0) > 0
+          ? `Recorded career readiness score: ${profile?.current_readiness_score}%. Review gaps under Skills.`
+          : 'Add your skills and run Career Analysis in Skills to calculate your readiness.',
+      actionPage: 'skills/gaps',
+      statusLabel: (profile?.current_readiness_score ?? 0) > 0 ? 'Evaluated' : 'Pending',
     },
     {
       id: 'notif_resume',
-      title: 'Resume ATS Vault',
-      description: 'Upload your latest technical resume to run automated ATS keyword extraction.',
+      title: 'Resume & ATS Workspace',
+      description: 'Upload a PDF, DOCX, or TXT resume or match against a target job description.',
       actionPage: 'resume',
-      type: 'info',
-      timestamp: 'Available'
-    }
+      statusLabel: 'Workspace',
+    },
   ];
 
   const unreadCount = rawNotifications.filter(n => !readNotifications.has(n.id)).length;
 
   const markAllAsRead = () => {
-    const allIds = new Set(rawNotifications.map(n => n.id));
-    setReadNotifications(allIds);
+    setReadNotifications(new Set(rawNotifications.map(n => n.id)));
   };
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+      transition: { staggerChildren: 0.08, delayChildren: 0.05 },
     },
   };
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: -10 },
+    hidden: { opacity: 0, y: -8 },
     visible: {
       opacity: 1,
       y: 0,
@@ -189,35 +190,30 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
         animate="visible"
         className="app-header-bar"
       >
-        {/* Left: Hamburger (mobile) + Brand Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            type="button"
-            className="mobile-menu-btn"
-            onClick={onToggleMobileMenu}
-            aria-label="Open navigation menu"
-            data-testid="mobile-menu-button"
-          >
-            <Menu size={20} />
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => onNavigate('dashboard')}>
-            <CareerHubLogo size={36} showSubtitle={false} />
+        {/* Left: Brand Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => onNavigate('home')}>
+            <CareerHubLogo size={34} showSubtitle={false} />
           </div>
         </div>
 
         {/* Right: Search, Sync, Notifications & Profile */}
-        <motion.div variants={itemVariants} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <motion.div variants={itemVariants} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Global Search / Command Palette Trigger */}
           <motion.button
-            whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)', background: 'rgba(15, 23, 42, 0.9)' }}
+            type="button"
+            whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)' }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowCommandPalette(true)}
-            title="Open Command Palette (Cmd + K)"
+            title="Open Quick Search (Cmd + K)"
+            aria-label="Open Quick Search"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              padding: '7px 14px',
+              minWidth: 40,
+              minHeight: 40,
+              padding: '7px 12px',
               borderRadius: 10,
               background: 'rgba(15, 23, 42, 0.6)',
               border: '1px solid rgba(51, 65, 85, 0.6)',
@@ -227,8 +223,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
               transition: 'all 0.2s ease',
             }}
           >
-            <Search size={14} color="#64748b" />
-            <span className="header-search-text">Search destinations & features...</span>
+            <Search size={15} color="#94a3b8" />
+            <span className="header-search-text">Search sections...</span>
             <span
               className="header-search-kbd"
               style={{
@@ -249,38 +245,42 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
 
           {/* Genuine Data Refresh Button */}
           <motion.button
+            type="button"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSync}
             disabled={isSyncing}
+            aria-label="Refresh profile and data"
+            data-testid="sync-button"
             title={
-              isSyncing 
-                ? 'Refreshing user profile & state...' 
-                : syncStatus === 'success' 
-                  ? 'Refreshed successfully' 
-                  : syncStatus === 'error' 
-                    ? syncErrorMessage 
-                    : 'Refresh Data'
+              isSyncing
+                ? 'Refreshing user profile & state...'
+                : syncStatus === 'success'
+                ? 'Refreshed successfully'
+                : syncStatus === 'error'
+                ? syncErrorMessage
+                : 'Refresh Data'
             }
             style={{
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               borderRadius: 10,
-              background: syncStatus === 'success' 
-                ? 'rgba(16, 185, 129, 0.15)' 
-                : syncStatus === 'error' 
-                  ? 'rgba(239, 68, 68, 0.15)' 
+              background:
+                syncStatus === 'success'
+                  ? 'rgba(16, 185, 129, 0.15)'
+                  : syncStatus === 'error'
+                  ? 'rgba(239, 68, 68, 0.15)'
                   : 'rgba(30, 41, 59, 0.6)',
               border: `1px solid ${
-                syncStatus === 'success' 
-                  ? 'rgba(16, 185, 129, 0.4)' 
-                  : syncStatus === 'error' 
-                    ? 'rgba(239, 68, 68, 0.4)' 
-                    : 'rgba(51, 65, 85, 0.6)'
+                syncStatus === 'success'
+                  ? 'rgba(16, 185, 129, 0.4)'
+                  : syncStatus === 'error'
+                  ? 'rgba(239, 68, 68, 0.4)'
+                  : 'rgba(51, 65, 85, 0.6)'
               }`,
               color: syncStatus === 'success' ? '#10b981' : syncStatus === 'error' ? '#ef4444' : '#94a3b8',
               cursor: isSyncing ? 'not-allowed' : 'pointer',
@@ -300,20 +300,22 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
             </motion.div>
           </motion.button>
 
-          {/* Genuine Notifications Bell & Popover Container */}
+          {/* Notifications Bell & Popover */}
           <div style={{ position: 'relative' }} ref={notifRef}>
             <motion.button
+              type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowNotification(prev => !prev)}
-              title="Notifications"
+              title="Status Notices"
+              aria-label="Status Notices"
               style={{
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 borderRadius: 10,
                 background: showNotification ? 'rgba(59, 130, 246, 0.2)' : 'rgba(30, 41, 59, 0.6)',
                 border: showNotification ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(51, 65, 85, 0.6)',
@@ -326,8 +328,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                 <span
                   style={{
                     position: 'absolute',
-                    top: 6,
-                    right: 6,
+                    top: 7,
+                    right: 7,
                     width: 7,
                     height: 7,
                     borderRadius: '50%',
@@ -338,7 +340,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
               )}
             </motion.button>
 
-            {/* Notification Popover */}
             <AnimatePresence>
               {showNotification && (
                 <motion.div
@@ -348,36 +349,39 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                   transition={{ duration: 0.15 }}
                   style={{
                     position: 'absolute',
-                    top: 'calc(100% + 12px)',
+                    top: 'calc(100% + 10px)',
                     right: 0,
-                    width: 340,
-                    background: 'rgba(15, 23, 42, 0.95)',
+                    width: 'min(320px, calc(100vw - 24px))',
+                    background: 'rgba(15, 23, 42, 0.97)',
                     backdropFilter: 'blur(20px)',
                     border: '1px solid rgba(59, 130, 246, 0.3)',
                     borderRadius: 14,
                     boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6)',
-                    padding: 16,
-                    zIndex: 60,
+                    padding: 14,
+                    zIndex: 70,
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>Notifications</span>
+                      <span style={{ fontSize: 13.5, fontWeight: 700, color: '#f1f5f9' }}>Workspace Status</span>
                       {unreadCount > 0 && (
-                        <span style={{
-                          padding: '1px 6px',
-                          background: 'rgba(56, 189, 248, 0.2)',
-                          color: '#38bdf8',
-                          borderRadius: 8,
-                          fontSize: 11,
-                          fontWeight: 600
-                        }}>
-                          {unreadCount} new
+                        <span
+                          style={{
+                            padding: '1px 6px',
+                            background: 'rgba(56, 189, 248, 0.2)',
+                            color: '#38bdf8',
+                            borderRadius: 8,
+                            fontSize: 11,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {unreadCount}
                         </span>
                       )}
                     </div>
                     {unreadCount > 0 && (
                       <button
+                        type="button"
                         onClick={markAllAsRead}
                         style={{
                           background: 'none',
@@ -385,7 +389,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                           color: '#94a3b8',
                           fontSize: 11,
                           cursor: 'pointer',
-                          textDecoration: 'underline'
+                          textDecoration: 'underline',
                         }}
                       >
                         Mark all read
@@ -413,11 +417,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                             transition: 'background 0.15s ease',
                           }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
                             <span style={{ fontSize: 12.5, fontWeight: 600, color: isRead ? '#94a3b8' : '#f1f5f9' }}>
                               {n.title}
                             </span>
-                            <span style={{ fontSize: 10, color: '#64748b' }}>{n.timestamp}</span>
+                            <span style={{ fontSize: 10, color: '#64748b', flexShrink: 0 }}>{n.statusLabel}</span>
                           </div>
                           <p style={{ margin: 0, fontSize: 11.5, color: '#94a3b8', lineHeight: 1.4 }}>
                             {n.description}
@@ -439,8 +443,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
-              padding: '5px 12px 5px 6px',
+              gap: 8,
+              minHeight: 40,
+              padding: '5px 8px',
               borderRadius: 10,
               background: 'rgba(30, 41, 59, 0.7)',
               border: '1px solid rgba(59, 130, 246, 0.25)',
@@ -463,12 +468,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
             >
               {user?.fullName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="header-profile-meta" style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9', lineHeight: 1.2 }}>
                 {user?.fullName || user?.email || 'Candidate'}
               </span>
               <span style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.1 }}>
-                {profile?.target_role || 'Candidate Profile'}
+                {profile?.target_role || 'Target role not set'}
               </span>
             </div>
           </motion.div>
@@ -488,7 +493,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
               display: 'flex',
               alignItems: 'flex-start',
               justifyContent: 'center',
-              paddingTop: '12vh',
+              padding: '10vh 12px 12px',
             }}
             onClick={() => setShowCommandPalette(false)}
           >
@@ -500,7 +505,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
               onClick={e => e.stopPropagation()}
               style={{
                 width: '100%',
-                maxWidth: 580,
+                maxWidth: 560,
                 background: '#0f172a',
                 border: '1px solid rgba(59, 130, 246, 0.4)',
                 borderRadius: 16,
@@ -508,13 +513,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                 overflow: 'hidden',
               }}
             >
-              {/* Search Input Bar */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 12,
-                  padding: '16px 20px',
+                  padding: '14px 16px',
                   borderBottom: '1px solid rgba(51, 65, 85, 0.6)',
                 }}
               >
@@ -522,7 +526,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Type to search destinations (e.g. Resume, Roadmap, Projects)..."
+                  placeholder="Jump to Home, Resume, Practice, Skills, or Profile..."
                   value={searchQuery}
                   onChange={e => {
                     setSearchQuery(e.target.value);
@@ -548,28 +552,30 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                     border: 'none',
                     outline: 'none',
                     color: '#f8fafc',
-                    fontSize: 15,
+                    fontSize: 14.5,
+                    minWidth: 0,
                   }}
                 />
                 <button
+                  type="button"
                   onClick={() => setShowCommandPalette(false)}
+                  aria-label="Close search"
                   style={{
                     background: 'transparent',
                     border: 'none',
                     color: '#64748b',
                     cursor: 'pointer',
-                    padding: 4,
+                    padding: 6,
                   }}
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              {/* Items List */}
-              <div style={{ maxHeight: 360, overflowY: 'auto', padding: 8 }}>
+              <div style={{ maxHeight: 340, overflowY: 'auto', padding: 8 }}>
                 {filteredItems.length === 0 ? (
                   <div style={{ padding: '24px 20px', textAlign: 'center', color: '#64748b', fontSize: 13 }}>
-                    No destinations match "{searchQuery}"
+                    No sections match "{searchQuery}"
                   </div>
                 ) : (
                   filteredItems.map((item, idx) => {
@@ -583,16 +589,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '10px 14px',
+                          padding: '10px 12px',
                           borderRadius: 10,
                           background: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
                           border: isSelected ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent',
                           cursor: 'pointer',
-                          transition: 'all 0.1s ease',
                         }}
                       >
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                             <span style={{ fontSize: 13.5, fontWeight: 600, color: isSelected ? '#38bdf8' : '#f1f5f9' }}>
                               {item.title}
                             </span>
@@ -616,23 +621,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigate, onToggleMobile
                     );
                   })
                 )}
-              </div>
-
-              {/* Footer Helper */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 16px',
-                  background: 'rgba(15, 23, 42, 0.9)',
-                  borderTop: '1px solid rgba(51, 65, 85, 0.4)',
-                  fontSize: 11,
-                  color: '#64748b',
-                }}
-              >
-                <span>Navigate with <kbd style={{ padding: '1px 4px', background: '#1e293b', borderRadius: 3 }}>↑</kbd> <kbd style={{ padding: '1px 4px', background: '#1e293b', borderRadius: 3 }}>↓</kbd> · Select with <kbd style={{ padding: '1px 4px', background: '#1e293b', borderRadius: 3 }}>↵</kbd></span>
-                <span>Press <kbd style={{ padding: '1px 4px', background: '#1e293b', borderRadius: 3 }}>esc</kbd> to close</span>
               </div>
             </motion.div>
           </div>

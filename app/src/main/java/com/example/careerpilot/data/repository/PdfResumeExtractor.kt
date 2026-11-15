@@ -79,7 +79,8 @@ object PdfResumeExtractor {
 
             val extractedText = extractTextFromPdfBytes(fileBytes)
 
-            if (extractedText.isNotBlank()) {
+            val letterCount = extractedText.count { it.isLetter() }
+            if (extractedText.isNotBlank() && letterCount >= 20) {
                 PdfExtractionResult(
                     fileName = fileName,
                     fileSizeFormatted = fileSizeFormatted,
@@ -89,17 +90,14 @@ object PdfResumeExtractor {
                     isSuccess = true
                 )
             } else {
-                // If pure PDF stream extraction found no text tokens (e.g. scanned image or encrypted),
-                // provide a clean fallback representation with sample structure
-                val fallbackText = generateStructuredFallbackFromFileName(fileName)
                 PdfExtractionResult(
                     fileName = fileName,
                     fileSizeFormatted = fileSizeFormatted,
                     pageCount = pageCount,
-                    rawText = fallbackText,
-                    characterCount = fallbackText.length,
-                    isSuccess = true,
-                    errorMessage = "Text extracted with structural formatting optimization"
+                    rawText = "",
+                    characterCount = 0,
+                    isSuccess = false,
+                    errorMessage = "This PDF could not be reliably read (e.g., scanned image, encrypted, or missing font maps). Please upload a selectable text PDF or paste plain text."
                 )
             }
         } catch (e: Exception) {
@@ -260,14 +258,22 @@ object PdfResumeExtractor {
 
     private fun cleanPdfExtractedText(text: String): String {
         return text.lines()
-            .map { it.trim() }
+            .map { line ->
+                line.replace("\uFFFD", "")
+                    .replace(Regex("[\\p{Cntrl}&&[^\r\n\t]]"), "")
+                    .replace(Regex("[*#&\\\\\\[\\]\$%{}]"), " ")
+                    .replace(Regex("\\s+"), " ")
+                    .trim()
+            }
             .filter { line ->
                 line.isNotBlank() &&
                         !line.startsWith("/Filter") &&
                         !line.startsWith("/Type") &&
                         !line.startsWith("/Length") &&
                         !line.startsWith("/ColorSpace") &&
-                        line.any { it.isLetterOrDigit() }
+                        !line.startsWith("obj") &&
+                        !line.startsWith("endobj") &&
+                        line.count { it.isLetter() } >= 2
             }
             .joinToString("\n")
     }

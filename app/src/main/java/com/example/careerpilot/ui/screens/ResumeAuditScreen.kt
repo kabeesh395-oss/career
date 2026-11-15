@@ -42,6 +42,7 @@ import com.example.careerpilot.ui.components.StatusBadge
 import com.example.careerpilot.ui.theme.DesignSystem
 import com.example.careerpilot.ui.theme.PrimaryBlueGlow
 import com.example.careerpilot.ui.viewmodel.CareerViewModel
+import com.example.careerpilot.ui.viewmodel.ResumeUploadState
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -58,6 +59,7 @@ fun ResumeAuditScreen(
     val activeJobMatch by viewModel.activeJobMatch.collectAsState()
     val bulletAnalysis by viewModel.bulletAnalysis.collectAsState()
     val uploadedPdf by viewModel.uploadedPdfInfo.collectAsState()
+    val uploadState by viewModel.resumeUploadState.collectAsState()
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0: ATS Audit, 1: Job Matcher, 2: X-Y-Z Bullet Rewriter, 3: Import Resume
     val tabTitles = listOf("ATS Audit", "Job Matcher", "X-Y-Z Rewriter", "PDF Upload")
@@ -361,7 +363,7 @@ fun ResumeAuditScreen(
                         }
                     }
                 }
-            } else {
+            } else if (uploadedPdf == null && uploadState is ResumeUploadState.Idle) {
                 item {
                     EmptyStateCard(
                         icon = Icons.Default.Description,

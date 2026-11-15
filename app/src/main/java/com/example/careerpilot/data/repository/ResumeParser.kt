@@ -99,60 +99,75 @@ object ResumeParser {
     fun parseResumeText(rawText: String): ParsedResumeData {
         val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
         
-        // Extract Name (usually 1st line or before email)
-        var name = "Candidate Engineer"
-        if (lines.isNotEmpty()) {
-            val firstLine = lines.first()
-            val cleanedFirst = firstLine.split("—", "-", "|", ",").first().trim()
-            if (cleanedFirst.length in 3..40 && !cleanedFirst.contains("@")) {
-                name = cleanedFirst
+        // Extract Name (first lines, valid alphabetic characters only)
+        var name = "Not detected"
+        for (candidateLine in lines.take(5)) {
+            val cleaned = candidateLine
+                .replace("\uFFFD", "")
+                .replace(Regex("[*#&\\\\\\[\\]\$%{}()_]"), " ")
+                .replace(Regex("\\s+"), " ")
+                .trim()
+            val candidateName = cleaned.split("—", "-", "|", ",").first().trim()
+            val words = candidateName.split(" ").filter { it.isNotBlank() }
+            if (candidateName.length in 3..40 &&
+                !candidateName.contains("@") &&
+                !candidateName.lowercase().contains("resume") &&
+                !candidateName.lowercase().contains("curriculum") &&
+                !candidateName.lowercase().contains("page") &&
+                candidateName.all { it.isLetter() || it.isWhitespace() || it == '.' || it == '\'' } &&
+                words.isNotEmpty() && words.all { it.length >= 2 }
+            ) {
+                name = candidateName
+                break
             }
         }
 
         // Extract Email
         val emailRegex = Regex("""[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}""")
-        val email = emailRegex.find(rawText)?.value ?: "engineer@domain.com"
+        val email = emailRegex.find(rawText)?.value ?: "Not detected"
 
         // Extract Role
-        var role = "Senior Full Stack Engineer"
+        var role = "Not detected"
         val lowerText = rawText.lowercase()
         when {
-            lowerText.contains("mobile") || lowerText.contains("android") -> role = "Senior Android & Mobile Engineer"
-            lowerText.contains("backend") || lowerText.contains("distributed") -> role = "Senior Backend & Cloud Engineer"
-            lowerText.contains("frontend") || lowerText.contains("react") -> role = "Senior Frontend Engineer"
-            lowerText.contains("full stack") || lowerText.contains("fullstack") -> role = "Senior Full Stack Engineer"
-            lowerText.contains("data engineer") || lowerText.contains("machine learning") || lowerText.contains("ml") || lowerText.contains("ai") -> role = "Senior Data & ML Systems Engineer"
-            lowerText.contains("devops") || lowerText.contains("platform") || lowerText.contains("infrastructure") -> role = "Senior Platform & Infrastructure Engineer"
+            lowerText.contains("mobile") || lowerText.contains("android") || lowerText.contains("ios") -> role = "Mobile Engineer"
+            lowerText.contains("backend") || lowerText.contains("distributed") -> role = "Backend Engineer"
+            lowerText.contains("frontend") || lowerText.contains("react") -> role = "Frontend Engineer"
+            lowerText.contains("full stack") || lowerText.contains("fullstack") -> role = "Full Stack Engineer"
+            lowerText.contains("data engineer") || lowerText.contains("machine learning") || lowerText.contains("ml") || lowerText.contains("ai") -> role = "Data & ML Engineer"
+            lowerText.contains("devops") || lowerText.contains("platform") || lowerText.contains("infrastructure") -> role = "Platform Engineer"
+            lowerText.contains("software engineer") || lowerText.contains("developer") -> role = "Software Engineer"
         }
 
         // Extract Education
-        var education = "B.S. in Computer Science"
+        var education = "Not detected"
         for (line in lines) {
             val l = line.lowercase()
-            if (l.contains("bachelor") || l.contains("b.s.") || l.contains("master") || l.contains("m.s.") || l.contains("university") || l.contains("degree") || l.contains("stanford") || l.contains("mit")) {
-                education = line.take(60)
-                break
+            if (l.contains("bachelor") || l.contains("b.s.") || l.contains("b.tech") || l.contains("b.e.") ||
+                l.contains("master") || l.contains("m.s.") || l.contains("m.tech") || l.contains("ph.d") ||
+                l.contains("university") || l.contains("college") || l.contains("institute") || l.contains("degree") ||
+                l.contains("stanford") || l.contains("mit") || l.contains("harvard")) {
+                val cleanedEdu = line.replace("\uFFFD", "").replace(Regex("[*#&\\\\\\[\\]\$%{}]"), " ").replace(Regex("\\s+"), " ").trim()
+                if (cleanedEdu.length in 5..80 && cleanedEdu.any { it.isLetter() }) {
+                    education = cleanedEdu.take(60)
+                    break
+                }
             }
         }
 
         // Estimate Experience Years
-        var expYears = 3.5f
+        var expYears = 0.0f
         val expMatches = Regex("""(\d+(\.\d+)?)\+?\s*(years|yrs)""").find(lowerText)
         if (expMatches != null) {
-            expYears = expMatches.groupValues[1].toFloatOrNull() ?: 3.5f
-        } else if (lowerText.contains("senior") || lowerText.contains("lead") || lowerText.contains("staff")) {
-            expYears = 5.5f
+            expYears = expMatches.groupValues[1].toFloatOrNull() ?: 0.0f
         }
 
-        // Detect Skills
+        // Detect Skills (strictly from text)
         val detectedSkills = mutableListOf<String>()
         for (skill in KNOWN_TECH_SKILLS) {
             if (rawText.contains(skill, ignoreCase = true)) {
                 detectedSkills.add(skill)
             }
-        }
-        if (detectedSkills.isEmpty()) {
-            detectedSkills.addAll(listOf("Kotlin", "System Design", "PostgreSQL", "Redis", "Jetpack Compose", "Docker"))
         }
 
         // Extract Bullet Snippets
@@ -160,13 +175,17 @@ object ResumeParser {
             it.startsWith("•") || it.startsWith("-") || it.startsWith("*") || it.startsWith("Architected") || it.startsWith("Optimized") || it.startsWith("Engineered") || it.startsWith("Spearheaded")
         }.take(8)
 
-        val headline = "High-Impact $role specializing in scalable cloud systems & reliable mobile architecture"
-        val bio = "Experienced in ${detectedSkills.take(5).joinToString(", ")}. Proven track record optimizing high-throughput distributed systems and delivering reliable production applications."
+        val headline = if (role != "Not detected") "$role specializing in modern software development" else "Software Engineering Professional"
+        val bio = if (detectedSkills.isNotEmpty()) {
+            "Proficient in ${detectedSkills.take(5).joinToString(", ")}. Focused on building reliable, performant systems."
+        } else {
+            "Career Hub profile with active technical calibration."
+        }
 
         return ParsedResumeData(
             fullName = name,
             email = email,
-            location = "San Francisco, CA (or Remote)",
+            location = "Not specified",
             targetRole = role,
             headline = headline,
             bio = bio,

@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User career background and target calibration profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "headline": { "type": "string" },
+        "email": { "type": "string" },
+        "targetRole": { "type": "string" },
+        "targetIndustry": { "type": "string" },
+        "targetSalary": { "type": "string" },
+        "targetCompanyTier": { "type": "string" },
+        "location": { "type": "string" },
+        "bio": { "type": "string" },
+        "education": { "type": "string" },
+        "experienceYears": { "type": "number" },
+        "readinessScore": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "fullName", "email"]
+    },
+    "JobApplication": {
+      "title": "JobApplication",
+      "description": "User tracked job applications and statuses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "company": { "type": "string" },
+        "roleTitle": { "type": "string" },
+        "location": { "type": "string" },
+        "salaryOffered": { "type": "string" },
+        "stage": { "type": "string" },
+        "appliedDate": { "type": "number" },
+        "matchScore": { "type": "number" },
+        "notes": { "type": "string" },
+        "interviewDate": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "company", "roleTitle"]
+    },
+    "UserSkill": {
+      "title": "UserSkill",
+      "description": "User verified technical skill entries",
+      "type": "object",
+      "properties": {
+        "skillName": { "type": "string" },
+        "category": { "type": "string" },
+        "proficiencyLevel": { "type": "number" },
+        "verified": { "type": "boolean" },
+        "source": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["skillName", "proficiencyLevel"]
+    },
+    "PortfolioProject": {
+      "title": "PortfolioProject",
+      "description": "User portfolio projects and targeted skills",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "repositoryUrl": { "type": "string" },
+        "liveUrl": { "type": "string" },
+        "technologies": { "type": "string" },
+        "status": { "type": "string" },
+        "skillsTargeted": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "title"]
+    },
+    "InterviewSession": {
+      "title": "InterviewSession",
+      "description": "Interview practice session history and feedback",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "roleTarget": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "overallScore": { "type": "number" },
+        "feedbackSummary": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "completedQuestions": { "type": "number" },
+        "status": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "roleTarget"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/profile/current": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Single user profile and calibration data"
+    },
+    "/users/{userId}/applications/{applicationId}": {
+      "schema": { "$ref": "#/entities/JobApplication" },
+      "description": "User tracked job applications"
+    },
+    "/users/{userId}/skills/{skillName}": {
+      "schema": { "$ref": "#/entities/UserSkill" },
+      "description": "User calibrated technical skills"
+    },
+    "/users/{userId}/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/PortfolioProject" },
+      "description": "User portfolio projects"
+    },
+    "/users/{userId}/interviews/{interviewId}": {
+      "schema": { "$ref": "#/entities/InterviewSession" },
+      "description": "User mock interview logs"
+    }
+  }
+}

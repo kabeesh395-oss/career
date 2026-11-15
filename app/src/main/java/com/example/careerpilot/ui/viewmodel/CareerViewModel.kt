@@ -58,10 +58,12 @@ class CareerViewModel(application: Application) : AndroidViewModel(application) 
     val authManager: FirebaseAuthManager = FirebaseAuthManager(application)
     val syncManager: FirestoreSyncManager = FirestoreSyncManager(
         authManager = authManager,
-        dao = AppDatabase.getDatabase(application).careerDao()
+        dao = AppDatabase.getDatabase(application).careerDao(),
+        context = application
     )
 
     val authUserState: StateFlow<AuthUserState> = authManager.userState
+    fun isFirebaseConfigured(): Boolean = authManager.isFirebaseConfigured()
     val customGeminiApiKey: StateFlow<String> = userPreferencesManager.customGeminiApiKey.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

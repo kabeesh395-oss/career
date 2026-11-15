@@ -769,7 +769,7 @@ private fun SuccessUploadDropZone(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Candidate Name", fontSize = 10.sp, color = TextMuted)
                             Text(
-                                text = parsed.fullName.ifBlank { "Candidate" },
+                                text = parsed.fullName.ifBlank { "Not detected" },
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary,
@@ -779,7 +779,7 @@ private fun SuccessUploadDropZone(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Extracted Target Role", fontSize = 10.sp, color = TextMuted)
                             Text(
-                                text = parsed.targetRole.ifBlank { "Software Engineer" },
+                                text = parsed.targetRole.ifBlank { "Not detected" },
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = PrimaryBlueGlow,
@@ -797,7 +797,7 @@ private fun SuccessUploadDropZone(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Education", fontSize = 10.sp, color = TextMuted)
                             Text(
-                                text = parsed.education.ifBlank { "B.S. in Computer Science" },
+                                text = parsed.education.ifBlank { "Not detected" },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextPrimary,
                                 maxLines = 1
@@ -806,10 +806,10 @@ private fun SuccessUploadDropZone(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Experience Detected", fontSize = 10.sp, color = TextMuted)
                             Text(
-                                text = "${parsed.experienceYears} Years",
+                                text = if (parsed.experienceYears > 0f) "${parsed.experienceYears} Years" else "Not detected",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
-                                color = SuccessGreen
+                                color = if (parsed.experienceYears > 0f) SuccessGreen else TextMuted
                             )
                         }
                     }

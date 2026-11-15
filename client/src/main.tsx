@@ -1,77 +1,46 @@
-import React, { useEffect, useState, Suspense, lazy } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AuthPage from './components/Auth/AuthPage';
 import Sidebar from './components/Layout/Sidebar';
 import AppHeader from './components/Layout/AppHeader';
+import BottomNav from './components/Layout/BottomNav';
 import DashboardPage from './components/Dashboard/DashboardPage';
+import ResumePage from './components/Resume/ResumePage';
+import PracticePage from './components/Practice/PracticePage';
+import SkillsHubPage, { type SkillsSubTab } from './components/Skills/SkillsHubPage';
+import ProfilePage, { type ProfileSubTab } from './components/Profile/ProfilePage';
+import { resolveRoute, type ResolvedRoute } from './navigation';
 import './index.css';
-
-// Code splitting: Secondary pages loaded dynamically via React.lazy
-const CareerPage = lazy(() => import('./components/Career/CareerPage'));
-const RoadmapPage = lazy(() => import('./components/Roadmap/RoadmapPage'));
-const ResumePage = lazy(() => import('./components/Resume/ResumePage'));
-const ProjectsPage = lazy(() => import('./components/Projects/ProjectsPage'));
-const InterviewPage = lazy(() => import('./components/Interview/InterviewPage'));
-const LearningPage = lazy(() => import('./components/Learning/LearningPage'));
-const IntegrationsPage = lazy(() => import('./components/Integrations/IntegrationsPage'));
-const AnalyticsPage = lazy(() => import('./components/Analytics/AnalyticsPage'));
-const ProfilePage = lazy(() => import('./components/Profile/ProfilePage'));
-const EdgeAiPage = lazy(() => import('./components/EdgeAI/EdgeAiPage'));
-
-function PageLoadingFallback() {
-  return (
-    <div
-      style={{
-        padding: '60px 0',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 14,
-        color: 'hsl(var(--text-secondary))',
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          border: '3px solid rgba(59, 130, 246, 0.2)',
-          borderTopColor: '#38bdf8',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-        }}
-      />
-      <span style={{ fontSize: 13, color: 'hsl(var(--text-muted))' }}>Loading view…</span>
-    </div>
-  );
-}
 
 export function AppContent() {
   const { user, loading } = useAuth();
-  const [activePage, setActivePage] = useState('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [route, setRoute] = useState<ResolvedRoute>(() =>
+    resolveRoute(typeof window !== 'undefined' ? window.location.hash : '')
+  );
 
-  // Simple Hash Router sync
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.slice(2); // Remove '#/'
-      if (hash) {
-        setActivePage(hash);
-      } else {
-        setActivePage('dashboard');
-      }
+      setRoute(resolveRoute(window.location.hash));
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Run once on mount
+    handleHashChange();
 
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const navigateTo = (page: string) => {
-    window.location.hash = `#/${page}`;
+  const navigateTo = (target: string) => {
+    const resolved = resolveRoute(target);
+    const nextHash = resolved.subTab && !['overview', 'resume', 'interview', 'my-skills', 'general'].includes(resolved.subTab)
+      ? `#/${resolved.section}/${resolved.subTab}`
+      : `#/${resolved.section}`;
+
+    setRoute(resolved);
+    if (window.location.hash !== nextHash) {
+      window.location.hash = nextHash;
+    }
   };
 
   if (loading) {
@@ -113,31 +82,42 @@ export function AppContent() {
     return <AuthPage />;
   }
 
-  // Render correct page view inside Suspense boundary
   const renderPage = () => {
-    switch (activePage) {
-      case 'dashboard':
-        return <DashboardPage onNavigate={navigateTo} />;
-      case 'career':
-        return <CareerPage />;
-      case 'roadmap':
-        return <RoadmapPage />;
+    switch (route.section) {
+      case 'home':
+        return (
+          <DashboardPage
+            onNavigate={navigateTo}
+            initialTab={route.subTab === 'analytics' ? 'analytics' : 'overview'}
+          />
+        );
       case 'resume':
-        return <ResumePage />;
-      case 'projects':
-        return <ProjectsPage />;
-      case 'interview':
-        return <InterviewPage />;
-      case 'learning':
-        return <LearningPage />;
-      case 'integrations':
-        return <IntegrationsPage />;
-      case 'analytics':
-        return <AnalyticsPage />;
-      case 'edge-ai':
-        return <EdgeAiPage />;
+        return (
+          <ResumePage
+            initialTab={route.subTab === 'job_description' ? 'job_description' : 'resume'}
+          />
+        );
+      case 'practice':
+        return (
+          <PracticePage
+            initialTab={route.subTab === 'learning' ? 'learning' : 'interview'}
+            onNavigate={navigateTo}
+          />
+        );
+      case 'skills':
+        return (
+          <SkillsHubPage
+            initialTab={(route.subTab as SkillsSubTab) || 'my-skills'}
+            onNavigate={navigateTo}
+          />
+        );
       case 'profile':
-        return <ProfilePage />;
+        return (
+          <ProfilePage
+            initialTab={(route.subTab as ProfileSubTab) || 'general'}
+            onNavigate={navigateTo}
+          />
+        );
       default:
         return <DashboardPage onNavigate={navigateTo} />;
     }
@@ -146,21 +126,20 @@ export function AppContent() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'hsl(var(--bg-base))' }}>
       <Sidebar
-        activePage={activePage}
+        activePage={route.section}
         onNavigate={navigateTo}
-        isOpenMobile={isMobileMenuOpen}
-        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
       <main className="app-main-content">
         <AppHeader
-          activePage={activePage}
+          activePage={route.section}
           onNavigate={navigateTo}
-          onToggleMobileMenu={() => setIsMobileMenuOpen(prev => !prev)}
         />
-        <Suspense fallback={<PageLoadingFallback />}>
-          {renderPage()}
-        </Suspense>
+        {renderPage()}
       </main>
+      <BottomNav
+        activePage={route.section}
+        onNavigate={navigateTo}
+      />
     </div>
   );
 }

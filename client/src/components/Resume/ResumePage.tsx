@@ -1,16 +1,21 @@
 import { useEffect, useState, useRef } from 'react';
 import { api } from '../../api/client';
 
-type ProcessingStep = 'idle' | 'uploading' | 'parsing' | 'analyzing' | 'success' | 'error';
+type ProcessingStep = 'idle' | 'uploading' | 'success' | 'error';
 
-export default function ResumePage() {
-  const [activeTab, setActiveTab] = useState<'resume' | 'job_description'>('resume');
+interface ResumePageProps {
+  initialTab?: 'resume' | 'job_description';
+}
+
+export default function ResumePage({ initialTab = 'resume' }: ResumePageProps) {
+  const [activeTab, setActiveTab] = useState<'resume' | 'job_description'>(initialTab);
   const [resumes, setResumes] = useState<any[]>([]);
   const [latestAnalysis, setLatestAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
-  
-  // Resume Processing State Machine
+
+  // Upload state
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -22,16 +27,28 @@ export default function ResumePage() {
   const [jdAnalysisResult, setJdAnalysisResult] = useState<any>(null);
   const [jdError, setJdError] = useState('');
 
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   const loadResumes = async () => {
+    setLoading(true);
+    setLoadError('');
     try {
       const data = await api('/resume');
-      setResumes(data.resumes || []);
+      const list = data.resumes || [];
+      setResumes(list);
       setLatestAnalysis(data.latestAnalysis || null);
-      if (data.resumes?.[0]?.id) {
-        setSelectedResumeId(data.resumes[0].id);
+      if (list[0]?.id) {
+        setSelectedResumeId(prev => (prev && list.some((r: any) => r.id === prev) ? prev : list[0].id));
+      } else {
+        setSelectedResumeId('');
       }
-    } catch { /* empty */ }
-    setLoading(false);
+    } catch (err: any) {
+      setLoadError(err?.message || 'Failed to load uploaded resumes.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -54,32 +71,19 @@ export default function ResumePage() {
       const formData = new FormData();
       formData.append('resume', file);
 
-      // Transition visual feedback: Uploading -> Parsing
-      const parseTimer = setTimeout(() => {
-        setProcessingStep('parsing');
-      }, 700);
-
-      // Transition visual feedback: Parsing -> Analyzing
-      const analyzeTimer = setTimeout(() => {
-        setProcessingStep('analyzing');
-      }, 1500);
-
       const data = await api('/resume/upload', {
         method: 'POST',
         body: formData,
       });
 
-      clearTimeout(parseTimer);
-      clearTimeout(analyzeTimer);
-
       setResumes(prev => [data.resume, ...prev.filter(r => r.id !== data.resume.id)]);
-      setLatestAnalysis(data.analysis);
+      setLatestAnalysis(data.analysis || null);
       setSelectedResumeId(data.resume.id);
       setProcessingStep('success');
 
       if (fileRef.current) fileRef.current.value = '';
     } catch (err: any) {
-      setError(err.message || 'Resume upload or analysis failed. Please verify the document format.');
+      setError(err?.message || 'Resume upload or text extraction failed. Please verify the file format.');
       setProcessingStep('error');
     }
   };
@@ -93,15 +97,24 @@ export default function ResumePage() {
   };
 
   const deleteResume = async (id: string) => {
+    setError('');
     try {
       await api(`/resume/${id}`, { method: 'DELETE' });
-      setResumes(prev => prev.filter(r => r.id !== id));
-      if (latestAnalysis?.resume_id === id) setLatestAnalysis(null);
-      if (selectedResumeId === id) {
-        const remaining = resumes.filter(r => r.id !== id);
-        setSelectedResumeId(remaining[0]?.id || '');
+      let nextSelected = selectedResumeId;
+      setResumes(prev => {
+        const remaining = prev.filter(r => r.id !== id);
+        if (selectedResumeId === id) {
+          nextSelected = remaining[0]?.id || '';
+        }
+        return remaining;
+      });
+      setSelectedResumeId(nextSelected);
+      if (latestAnalysis?.resume_id === id) {
+        await loadResumes();
       }
-    } catch { /* empty */ }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to delete resume.');
+    }
   };
 
   const handleAnalyzeJobDescription = async (e: React.FormEvent) => {
@@ -115,115 +128,108 @@ export default function ResumePage() {
         method: 'POST',
         body: JSON.stringify({
           jobDescription: jdText,
-          resumeId: selectedResumeId || undefined
-        })
+          resumeId: selectedResumeId || undefined,
+        }),
       });
 
       setJdAnalysisResult(data.analysis);
     } catch (err: any) {
-      setJdError(err.message || 'Failed to analyze job description.');
+      setJdError(err?.message || 'Failed to analyze job description.');
     } finally {
       setJdAnalyzing(false);
     }
   };
 
-  const insertSampleJd = () => {
-    setJdText(`Role: Senior Full Stack Engineer (Cloud & AI)
-Experience: Minimum 4+ years of professional software engineering experience.
-Requirements:
-- Deep expertise in TypeScript, React, Next.js, and Node.js backend architecture.
-- Strong proficiency in PostgreSQL database indexing, query optimization, and schema design.
-- Hands-on experience with Docker & Containerization, Kubernetes, and AWS Cloud Architecture.
-- Familiarity with LLM Prompting & Function Calling and RAG (Retrieval Augmented Generation).
-- Strong cross-functional communication, agile collaboration, and mentorship abilities.`);
-  };
-
   if (loading) {
-    return <div style={{ color: '#94a3b8', padding: 40 }}>Loading Resume intelligence pipeline…</div>;
+    return <div style={{ color: '#94a3b8', padding: 32 }}>Loading resumes and ATS records…</div>;
   }
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Title & Navigation Tabs */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Title & Segmented Tabs */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Resume & Job Intelligence</h1>
-          <p style={{ color: '#94a3b8', fontSize: 14 }}>
-            Multi-stage document extraction, ATS scoring, and targeted Job Description gap matching.
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>Resume & Job Match</h1>
+          <p style={{ color: '#94a3b8', fontSize: 13.5, margin: 0 }}>
+            Upload a real resume for server-side text extraction, ATS scoring, and job description comparison.
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div style={{
-          display: 'flex',
-          background: 'rgba(15, 23, 42, 0.8)',
-          border: '1px solid rgba(51, 65, 85, 0.6)',
-          borderRadius: 10,
-          padding: 3
-        }}>
+        <div className="segmented-tabs" role="tablist" aria-label="Resume Views">
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'resume'}
             onClick={() => setActiveTab('resume')}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              border: 'none',
-              background: activeTab === 'resume' ? '#2563eb' : 'transparent',
-              color: activeTab === 'resume' ? '#ffffff' : '#94a3b8',
-              transition: 'all 0.15s ease'
-            }}
+            className={`segmented-tab-btn ${activeTab === 'resume' ? 'active' : ''}`}
           >
-            ATS Resume Analyzer
+            ATS Analyzer
           </button>
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'job_description'}
             onClick={() => setActiveTab('job_description')}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              border: 'none',
-              background: activeTab === 'job_description' ? '#2563eb' : 'transparent',
-              color: activeTab === 'job_description' ? '#ffffff' : '#94a3b8',
-              transition: 'all 0.15s ease'
-            }}
+            className={`segmented-tab-btn ${activeTab === 'job_description' ? 'active' : ''}`}
           >
-            Job Description Matcher
+            JD Matcher
           </button>
         </div>
       </div>
 
+      {loadError && (
+        <div
+          style={{
+            background: 'rgba(239,68,68,0.1)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 10,
+            padding: '12px 16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 10,
+            color: '#f87171',
+            fontSize: 13,
+          }}
+        >
+          <span>{loadError}</span>
+          <button type="button" onClick={loadResumes} className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }}>
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* TAB 1: RESUME ATS PIPELINE */}
       {activeTab === 'resume' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {error && (
-            <div style={{
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              borderRadius: 10,
-              padding: '12px 16px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              color: '#f87171',
-              fontSize: 13
-            }}>
+            <div
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: 10,
+                padding: '12px 16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 10,
+                color: '#f87171',
+                fontSize: 13,
+              }}
+            >
               <span>{error}</span>
-              <button
-                onClick={handleRetry}
-                className="btn-secondary"
-                style={{ fontSize: 12, padding: '4px 12px' }}
-              >
-                Retry Analysis
-              </button>
+              {lastUploadedFile && (
+                <button type="button" onClick={handleRetry} className="btn-secondary" style={{ fontSize: 12, padding: '5px 12px' }}>
+                  Retry Upload
+                </button>
+              )}
             </div>
           )}
 
-          {/* Upload Zone & Dynamic Multi-step Progress State */}
-          <div className="glass-card" style={{ padding: 28, textAlign: 'center' }}>
+          {/* Upload Zone */}
+          <div className="glass-card" style={{ padding: 24, textAlign: 'center' }}>
             <input
               ref={fileRef}
               type="file"
@@ -233,17 +239,57 @@ Requirements:
               onChange={handleFileSelected}
             />
 
-            {processingStep === 'idle' || processingStep === 'success' ? (
+            {processingStep === 'uploading' ? (
+              <div style={{ maxWidth: 440, margin: '0 auto', padding: '12px 0' }}>
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    border: '3px solid rgba(59, 130, 246, 0.25)',
+                    borderTopColor: '#38bdf8',
+                    animation: 'spin 0.8s linear infinite',
+                    margin: '0 auto 14px',
+                  }}
+                />
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#f8fafc', marginBottom: 6 }}>
+                  Uploading & Parsing Document…
+                </div>
+                <div style={{ fontSize: 12.5, color: '#94a3b8', lineHeight: 1.5 }}>
+                  Extracting text and running ATS evaluation on the server for{' '}
+                  <strong>{lastUploadedFile?.name || 'your file'}</strong>.
+                </div>
+              </div>
+            ) : processingStep === 'error' ? (
               <div>
-                <div style={{ fontSize: 38, marginBottom: 10 }}>📄</div>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f87171', marginBottom: 6 }}>
+                  Could Not Process Resume
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>
+                  Text extraction or ATS evaluation failed. Make sure the document contains selectable text (PDF, TXT, DOC, or DOCX up to 10MB).
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  {lastUploadedFile && (
+                    <button type="button" className="btn-primary" onClick={handleRetry}>
+                      Retry Upload
+                    </button>
+                  )}
+                  <button type="button" className="btn-secondary" onClick={() => fileRef.current?.click()}>
+                    Choose Another File
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
                 <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f8fafc', marginBottom: 6 }}>
                   Upload Candidate Resume
                 </h3>
-                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 18, maxWidth: 500, margin: '0 auto 18px' }}>
-                  Supports PDF, TXT, DOC, DOCX up to 10MB. Text is parsed into structured skills and evaluated against target role benchmarks.
+                <p style={{ color: '#94a3b8', fontSize: 13, margin: '0 auto 18px', maxWidth: 500, lineHeight: 1.5 }}>
+                  Supports PDF, TXT, DOC, and DOCX up to 10MB. Parsed on the server to extract skills and evaluate role fit.
                 </p>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <button
+                    type="button"
                     className="btn-primary"
                     onClick={() => fileRef.current?.click()}
                     id="upload-resume-btn"
@@ -252,54 +298,13 @@ Requirements:
                   </button>
                   {latestAnalysis && (
                     <button
+                      type="button"
                       className="btn-secondary"
                       onClick={() => setActiveTab('job_description')}
                     >
-                      Compare with Job Listing →
+                      Compare vs Job Listing →
                     </button>
                   )}
-                </div>
-              </div>
-            ) : processingStep === 'error' ? (
-              <div>
-                <div style={{ fontSize: 38, marginBottom: 10 }}>⚠️</div>
-                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f87171', marginBottom: 6 }}>
-                  Processing Encountered an Issue
-                </h3>
-                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 18 }}>
-                  Could not complete resume extraction. Please try uploading the document again or check file permissions.
-                </p>
-                <button className="btn-primary" onClick={handleRetry}>
-                  Retry Document Analysis
-                </button>
-              </div>
-            ) : (
-              /* Multi-state visual progress indicator */
-              <div style={{ maxWidth: 440, margin: '0 auto', padding: '10px 0' }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>
-                  {processingStep === 'uploading' && '⬆️'}
-                  {processingStep === 'parsing' && '🔍'}
-                  {processingStep === 'analyzing' && '🧠'}
-                </div>
-
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#f8fafc', marginBottom: 6 }}>
-                  {processingStep === 'uploading' && 'Step 1/3: Uploading document to memory…'}
-                  {processingStep === 'parsing' && 'Step 2/3: Parsing document text & extracting skills…'}
-                  {processingStep === 'analyzing' && 'Step 3/3: Evaluating ATS scoring & role readiness…'}
-                </div>
-
-                <div style={{ width: '100%', height: 6, background: 'rgba(51, 65, 85, 0.4)', borderRadius: 3, overflow: 'hidden', margin: '14px 0 8px' }}>
-                  <div style={{
-                    height: '100%',
-                    background: 'linear-gradient(90deg, #3b82f6, #38bdf8)',
-                    borderRadius: 3,
-                    width: processingStep === 'uploading' ? '33%' : processingStep === 'parsing' ? '66%' : '95%',
-                    transition: 'width 0.4s ease'
-                  }} />
-                </div>
-
-                <div style={{ fontSize: 12, color: '#64748b' }}>
-                  Processing securely on-device with zero external data leakage.
                 </div>
               </div>
             )}
@@ -307,14 +312,14 @@ Requirements:
 
           {/* Latest Analysis Results */}
           {latestAnalysis ? (
-            <div className="glass-card" style={{ padding: 24 }}>
+            <div className="glass-card" style={{ padding: 22 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
                 <div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: '#f8fafc' }}>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, color: '#f8fafc', margin: 0 }}>
                     ATS Evaluation Results
                   </h3>
                   <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-                    Calibrated against: <strong>{latestAnalysis.target_role || 'Target Role'}</strong>
+                    Calibrated against: <strong>{latestAnalysis.target_role || 'Profile Target Role'}</strong>
                   </div>
                 </div>
                 {latestAnalysis.model_used && (
@@ -322,19 +327,17 @@ Requirements:
                 )}
               </div>
 
-              {/* Score Box Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))', gap: 10, marginBottom: 18 }}>
                 <ScoreCard label="Overall Match" score={latestAnalysis.overall_score} color="#3b82f6" />
                 <ScoreCard label="Quantifiable Impact" score={latestAnalysis.impact_score} color="#10b981" />
                 <ScoreCard label="Brevity & Density" score={latestAnalysis.brevity_score} color="#8b5cf6" />
-                <ScoreCard label="Style & Hierarchy" score={latestAnalysis.style_score} color="#f59e0b" />
+                <ScoreCard label="Style & Structure" score={latestAnalysis.style_score} color="#f59e0b" />
               </div>
 
-              {/* Extracted Skills */}
               {latestAnalysis.skills_detected?.length > 0 && (
-                <div style={{ marginBottom: 18 }}>
+                <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>
-                    Extracted Technical Skills ({latestAnalysis.skills_detected.length})
+                    Detected Technical Skills ({latestAnalysis.skills_detected.length})
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {latestAnalysis.skills_detected.map((skill: string) => (
@@ -344,10 +347,9 @@ Requirements:
                 </div>
               )}
 
-              {/* Strengths & Weaknesses Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 14, marginBottom: 16 }}>
                 {latestAnalysis.strengths?.length > 0 && (
-                  <div style={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: 10, padding: 16 }}>
+                  <div style={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: 10, padding: 14 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#34d399', marginBottom: 8 }}>
                       Key Strengths
                     </div>
@@ -361,7 +363,7 @@ Requirements:
                 )}
 
                 {latestAnalysis.weaknesses?.length > 0 && (
-                  <div style={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: 10, padding: 16 }}>
+                  <div style={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: 10, padding: 14 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#f87171', marginBottom: 8 }}>
                       Identified Gaps
                     </div>
@@ -375,11 +377,10 @@ Requirements:
                 )}
               </div>
 
-              {/* Recommendations */}
               {latestAnalysis.recommendations?.length > 0 && (
-                <div style={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: 10, padding: 16 }}>
+                <div style={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: 10, padding: 14 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#60a5fa', marginBottom: 8 }}>
-                    Actionable ATS Recommendations
+                    Actionable Recommendations
                   </div>
                   {latestAnalysis.recommendations.map((rec: string, i: number) => (
                     <div key={i} style={{ color: '#cbd5e1', fontSize: 13, marginBottom: 6, display: 'flex', gap: 6 }}>
@@ -391,54 +392,61 @@ Requirements:
               )}
             </div>
           ) : (
-            <div className="glass-card" style={{ padding: 24, textAlign: 'center', color: '#64748b', fontSize: 13 }}>
-              No resume analysis recorded yet. Upload a resume above to generate real ATS feedback.
+            <div className="glass-card" style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+              No resume audited yet. Upload a PDF, DOCX, or TXT file above to run real ATS evaluation.
             </div>
           )}
 
           {/* Upload History */}
           {resumes.length > 0 && (
             <div>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', marginBottom: 12 }}>
-                Document Vault ({resumes.length})
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', marginBottom: 10 }}>
+                Uploaded Resumes ({resumes.length})
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {resumes.map(r => (
-                  <div key={r.id} className="glass-card" style={{
-                    padding: '14px 18px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: 10
-                  }}>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{r.original_filename}</div>
+                  <div
+                    key={r.id}
+                    className="glass-card"
+                    style={{
+                      padding: '14px 16px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', wordBreak: 'break-word' }}>{r.original_filename}</div>
                       <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
                         {(r.file_size / 1024).toFixed(1)} KB · Status: <strong>{r.status}</strong> · {new Date(r.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedResumeId(r.id);
                           setActiveTab('job_description');
                         }}
                         className="btn-secondary"
-                        style={{ fontSize: 11, padding: '5px 10px' }}
+                        style={{ fontSize: 12, padding: '6px 10px', minHeight: 36 }}
                       >
                         Match vs JD →
                       </button>
                       <button
+                        type="button"
                         onClick={() => deleteResume(r.id)}
                         style={{
                           background: 'rgba(239,68,68,0.1)',
                           border: '1px solid rgba(239,68,68,0.3)',
                           borderRadius: 8,
-                          padding: '5px 10px',
+                          padding: '6px 10px',
+                          minHeight: 36,
                           color: '#f87171',
                           cursor: 'pointer',
-                          fontSize: 11
+                          fontSize: 12,
                         }}
                       >
                         Delete
@@ -452,47 +460,39 @@ Requirements:
         </div>
       )}
 
-      {/* TAB 2: JOB DESCRIPTION ANALYZER (PHASE 6) */}
+      {/* TAB 2: JOB DESCRIPTION ANALYZER */}
       {activeTab === 'job_description' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* JD Input Card */}
-          <div className="glass-card" style={{ padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-              <div>
-                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f8fafc' }}>
-                  Target Job Description Analyzer
-                </h3>
-                <p style={{ color: '#94a3b8', fontSize: 13 }}>
-                  Paste any job posting text. The analyzer extracts required technical skills, soft skills, and experience, comparing them directly with your resume.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={insertSampleJd}
-                style={{ fontSize: 11, padding: '6px 12px' }}
-              >
-                Paste Sample JD
-              </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="glass-card" style={{ padding: 22 }}>
+            <div style={{ marginBottom: 12 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f8fafc', margin: '0 0 4px' }}>
+                Target Job Description Matcher
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: 13, margin: 0 }}>
+                Paste a real job posting to compare its required skills and experience against your uploaded resume.
+              </p>
             </div>
 
             {jdError && (
-              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', color: '#f87171', fontSize: 13, marginBottom: 16 }}>
+              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', color: '#f87171', fontSize: 13, marginBottom: 14 }}>
                 {jdError}
               </div>
             )}
 
-            <form onSubmit={handleAnalyzeJobDescription} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {resumes.length > 0 && (
+            {resumes.length === 0 ? (
+              <div style={{ background: 'rgba(30,41,59,0.45)', borderRadius: 10, padding: 18, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+                Upload at least one resume first before running job description comparison.
+              </div>
+            ) : (
+              <form onSubmit={handleAnalyzeJobDescription} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>
-                    Select Resume for Comparison
+                    Resume for Comparison
                   </label>
                   <select
                     className="input-field"
                     value={selectedResumeId}
                     onChange={e => setSelectedResumeId(e.target.value)}
-                    style={{ background: 'rgba(15, 23, 42, 0.9)' }}
                   >
                     {resumes.map(r => (
                       <option key={r.id} value={r.id}>
@@ -501,46 +501,45 @@ Requirements:
                     ))}
                   </select>
                 </div>
-              )}
 
-              <div>
-                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>
-                  Job Description Text
-                </label>
-                <textarea
-                  className="input-field"
-                  rows={8}
-                  placeholder="Paste the full job posting requirements, responsibilities, and qualifications here..."
-                  value={jdText}
-                  onChange={e => setJdText(e.target.value)}
-                  required
-                  style={{ resize: 'vertical' }}
-                  id="job-description-input"
-                />
-              </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>
+                    Job Description Text
+                  </label>
+                  <textarea
+                    className="input-field"
+                    rows={7}
+                    placeholder="Paste the job posting requirements, responsibilities, and qualifications here..."
+                    value={jdText}
+                    onChange={e => setJdText(e.target.value)}
+                    required
+                    style={{ resize: 'vertical' }}
+                    id="job-description-input"
+                  />
+                </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <button
-                  className="btn-primary"
-                  type="submit"
-                  disabled={jdAnalyzing || !jdText.trim()}
-                  id="analyze-jd-btn"
-                >
-                  {jdAnalyzing ? 'Analyzing Job Requirements…' : 'Extract Requirements & Compare'}
-                </button>
-              </div>
-            </form>
+                <div>
+                  <button
+                    className="btn-primary"
+                    type="submit"
+                    disabled={jdAnalyzing || !jdText.trim()}
+                    id="analyze-jd-btn"
+                  >
+                    {jdAnalyzing ? 'Comparing Resume & JD…' : 'Compare Resume vs Job Description'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
 
-          {/* JD Analysis Output */}
           {jdAnalysisResult && (
-            <div className="glass-card" style={{ padding: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+            <div className="glass-card" style={{ padding: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <span className="badge badge-primary" style={{ marginBottom: 6 }}>
                     {jdAnalysisResult.jobRoleDetected}
                   </span>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#f8fafc' }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#f8fafc', margin: 0 }}>
                     Match Evaluation Breakdown
                   </h3>
                   <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>
@@ -556,26 +555,22 @@ Requirements:
                 </div>
               </div>
 
-              <div style={{ width: '100%', height: 8, background: 'rgba(51, 65, 85, 0.4)', borderRadius: 4, overflow: 'hidden', marginBottom: 20 }}>
-                <div style={{
-                  width: `${jdAnalysisResult.overallMatchPercent}%`,
-                  height: '100%',
-                  background: jdAnalysisResult.overallMatchPercent >= 70 ? '#10b981' : jdAnalysisResult.overallMatchPercent >= 45 ? '#f59e0b' : '#ef4444',
-                  borderRadius: 4
-                }} />
+              <div style={{ width: '100%', height: 8, background: 'rgba(51, 65, 85, 0.4)', borderRadius: 4, overflow: 'hidden', marginBottom: 18 }}>
+                <div
+                  style={{
+                    width: `${jdAnalysisResult.overallMatchPercent}%`,
+                    height: '100%',
+                    background: jdAnalysisResult.overallMatchPercent >= 70 ? '#10b981' : jdAnalysisResult.overallMatchPercent >= 45 ? '#f59e0b' : '#ef4444',
+                    borderRadius: 4,
+                  }}
+                />
               </div>
 
-              {/* 3 Categories: Matched, Partial, Missing */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {/* Matched Skills */}
-                <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 10, padding: 18 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>
-                      ✓ Matched Skills ({jdAnalysisResult.matchedSkills?.length || 0})
-                    </span>
-                    <span style={{ fontSize: 11, color: '#64748b' }}>Verified against resume content</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 10, padding: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#34d399', marginBottom: 10 }}>
+                    ✓ Matched Skills ({jdAnalysisResult.matchedSkills?.length || 0})
                   </div>
-
                   {jdAnalysisResult.matchedSkills?.length === 0 ? (
                     <div style={{ color: '#64748b', fontSize: 13 }}>No direct skill matches identified in resume text.</div>
                   ) : (
@@ -592,60 +587,45 @@ Requirements:
                   )}
                 </div>
 
-                {/* Partial Skills */}
                 {jdAnalysisResult.partialSkills?.length > 0 && (
-                  <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: 10, padding: 18 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fbbf24' }}>
-                        ⚡ Transferable / Partial Skills ({jdAnalysisResult.partialSkills.length})
-                      </span>
-                      <span style={{ fontSize: 11, color: '#64748b' }}>Foundational equivalents detected</span>
+                  <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: 10, padding: 16 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fbbf24', marginBottom: 10 }}>
+                      ⚡ Partial / Related Skills ({jdAnalysisResult.partialSkills.length})
                     </div>
-
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {jdAnalysisResult.partialSkills.map((p: any, i: number) => (
                         <div key={i} style={{ borderBottom: i < jdAnalysisResult.partialSkills.length - 1 ? '1px solid rgba(51, 65, 85, 0.3)' : 'none', paddingBottom: 8 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                             <span className="badge badge-warning">{p.skill}</span>
                             <span style={{ fontSize: 11, color: '#64748b' }}>Related: {p.relatedSkillFound}</span>
                           </div>
-                          <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 4 }}>
-                            {p.reason}
-                          </div>
+                          <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 4 }}>{p.reason}</div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Missing Skills */}
-                <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 10, padding: 18 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#f87171' }}>
-                      ✗ Missing Skills & Gaps ({jdAnalysisResult.missingSkills?.length || 0})
-                    </span>
-                    <span style={{ fontSize: 11, color: '#64748b' }}>High priority items to address</span>
+                <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 10, padding: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#f87171', marginBottom: 10 }}>
+                    ✗ Missing Skills ({jdAnalysisResult.missingSkills?.length || 0})
                   </div>
-
                   {jdAnalysisResult.missingSkills?.length === 0 ? (
-                    <div style={{ color: '#34d399', fontSize: 13 }}>Incredible match! All required technical skills are present in your resume.</div>
+                    <div style={{ color: '#34d399', fontSize: 13 }}>All detected required technical skills appear in your resume.</div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {jdAnalysisResult.missingSkills.map((mis: any, i: number) => (
                         <div key={i} style={{ borderBottom: i < jdAnalysisResult.missingSkills.length - 1 ? '1px solid rgba(51, 65, 85, 0.3)' : 'none', paddingBottom: 8 }}>
                           <span className="badge badge-danger" style={{ marginBottom: 4 }}>{mis.skill}</span>
-                          <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 3 }}>
-                            {mis.recommendation}
-                          </div>
+                          <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 3 }}>{mis.recommendation}</div>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
-                {/* Soft Skills */}
                 {jdAnalysisResult.softSkillsRequired?.length > 0 && (
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(51, 65, 85, 0.4)', borderRadius: 10, padding: 16 }}>
+                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(51, 65, 85, 0.4)', borderRadius: 10, padding: 14 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 8 }}>
                       Required Soft & Collaboration Competencies
                     </div>
@@ -667,14 +647,16 @@ Requirements:
 
 function ScoreCard({ label, score, color }: { label: string; score: number; color: string }) {
   return (
-    <div style={{
-      background: 'rgba(15,23,42,0.6)',
-      border: '1px solid rgba(51,65,85,0.4)',
-      borderRadius: 10,
-      padding: '12px 14px',
-      textAlign: 'center'
-    }}>
-      <div style={{ fontSize: 24, fontWeight: 700, color, marginBottom: 2 }}>{score || 0}%</div>
+    <div
+      style={{
+        background: 'rgba(15,23,42,0.6)',
+        border: '1px solid rgba(51,65,85,0.4)',
+        borderRadius: 10,
+        padding: '12px 14px',
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ fontSize: 22, fontWeight: 700, color, marginBottom: 2 }}>{typeof score === 'number' ? `${score}%` : '—'}</div>
       <div style={{ fontSize: 11, color: '#94a3b8' }}>{label}</div>
     </div>
   );

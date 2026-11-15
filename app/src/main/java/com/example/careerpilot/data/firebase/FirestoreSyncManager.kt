@@ -1,8 +1,10 @@
 package com.example.careerpilot.data.firebase
 
+import android.content.Context
 import android.util.Log
 import com.example.careerpilot.data.local.CareerDao
 import com.example.careerpilot.data.model.*
+import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.Dispatchers
@@ -21,12 +23,38 @@ data class CloudSyncStatus(
 
 class FirestoreSyncManager(
     private val authManager: FirebaseAuthManager,
-    private val dao: CareerDao? = null
+    private val dao: CareerDao? = null,
+    private val context: Context? = null
 ) {
 
     private fun getFirestoreSafe(): FirebaseFirestore? {
         return try {
-            FirebaseFirestore.getInstance()
+            val app = try {
+                if (context != null && FirebaseApp.getApps(context).isEmpty()) {
+                    FirebaseApp.initializeApp(context)
+                }
+                FirebaseApp.getInstance()
+            } catch (_: Throwable) {
+                null
+            }
+
+            val dbId = try {
+                val ctx = context ?: app?.applicationContext
+                if (ctx != null) {
+                    val resId = ctx.resources.getIdentifier("firestore_database_id", "string", ctx.packageName)
+                    if (resId != 0) ctx.getString(resId) else null
+                } else null
+            } catch (_: Throwable) {
+                null
+            }
+
+            if (app != null && !dbId.isNullOrBlank() && dbId != "(default)") {
+                FirebaseFirestore.getInstance(app, dbId)
+            } else if (app != null) {
+                FirebaseFirestore.getInstance(app)
+            } else {
+                FirebaseFirestore.getInstance()
+            }
         } catch (e: Throwable) {
             Log.w("FirestoreSync", "Firestore not available / not configured: ${e.message}")
             null

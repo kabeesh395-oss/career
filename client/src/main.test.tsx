@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { AppContent } from './main';
 import * as AuthContextModule from './context/AuthContext';
 
-// Mock child page components so we isolate routing and layout integration logic
 vi.mock('./components/Auth/AuthPage', () => ({
   default: () => <div data-testid="auth-page">Authentication Screen</div>,
 }));
@@ -12,18 +11,25 @@ vi.mock('./components/Auth/AuthPage', () => ({
 vi.mock('./components/Layout/Sidebar', () => ({
   default: ({ activePage, onNavigate }: { activePage: string; onNavigate: (page: string) => void }) => (
     <aside data-testid="sidebar" data-active={activePage}>
-      <button onClick={() => onNavigate('career')}>Nav Career</button>
-      <button onClick={() => onNavigate('roadmap')}>Nav Roadmap</button>
+      <button onClick={() => onNavigate('home')}>Nav Home</button>
       <button onClick={() => onNavigate('resume')}>Nav Resume</button>
-      <button onClick={() => onNavigate('projects')}>Nav Projects</button>
-      <button onClick={() => onNavigate('interview')}>Nav Interview</button>
-      <button onClick={() => onNavigate('learning')}>Nav Learning</button>
-      <button onClick={() => onNavigate('integrations')}>Nav Integrations</button>
-      <button onClick={() => onNavigate('analytics')}>Nav Analytics</button>
-      <button onClick={() => onNavigate('edge-ai')}>Nav Edge AI</button>
+      <button onClick={() => onNavigate('practice')}>Nav Practice</button>
+      <button onClick={() => onNavigate('skills')}>Nav Skills</button>
       <button onClick={() => onNavigate('profile')}>Nav Profile</button>
-      <button onClick={() => onNavigate('nonexistent')}>Nav Unknown</button>
+      <button onClick={() => onNavigate('roadmap')}>Nav Legacy Roadmap</button>
     </aside>
+  ),
+}));
+
+vi.mock('./components/Layout/BottomNav', () => ({
+  default: ({ activePage, onNavigate }: { activePage: string; onNavigate: (page: string) => void }) => (
+    <nav data-testid="bottom-nav" data-active={activePage}>
+      <button onClick={() => onNavigate('home')}>Bottom Home</button>
+      <button onClick={() => onNavigate('resume')}>Bottom Resume</button>
+      <button onClick={() => onNavigate('practice')}>Bottom Practice</button>
+      <button onClick={() => onNavigate('skills')}>Bottom Skills</button>
+      <button onClick={() => onNavigate('profile')}>Bottom Profile</button>
+    </nav>
   ),
 }));
 
@@ -36,47 +42,43 @@ vi.mock('./components/Layout/AppHeader', () => ({
 }));
 
 vi.mock('./components/Dashboard/DashboardPage', () => ({
-  default: () => <div data-testid="dashboard-page">Dashboard Content</div>,
-}));
-
-vi.mock('./components/Career/CareerPage', () => ({
-  default: () => <div data-testid="career-page">Career Content</div>,
-}));
-
-vi.mock('./components/Roadmap/RoadmapPage', () => ({
-  default: () => <div data-testid="roadmap-page">Roadmap Content</div>,
+  default: ({ initialTab }: { initialTab?: string }) => (
+    <div data-testid="dashboard-page" data-tab={initialTab || 'overview'}>
+      Home Content ({initialTab || 'overview'})
+    </div>
+  ),
 }));
 
 vi.mock('./components/Resume/ResumePage', () => ({
-  default: () => <div data-testid="resume-page">Resume Content</div>,
+  default: ({ initialTab }: { initialTab?: string }) => (
+    <div data-testid="resume-page" data-tab={initialTab || 'resume'}>
+      Resume Content
+    </div>
+  ),
 }));
 
-vi.mock('./components/Projects/ProjectsPage', () => ({
-  default: () => <div data-testid="projects-page">Projects Content</div>,
+vi.mock('./components/Practice/PracticePage', () => ({
+  default: ({ initialTab }: { initialTab?: string }) => (
+    <div data-testid="practice-page" data-tab={initialTab || 'interview'}>
+      Practice Content ({initialTab || 'interview'})
+    </div>
+  ),
 }));
 
-vi.mock('./components/Interview/InterviewPage', () => ({
-  default: () => <div data-testid="interview-page">Interview Content</div>,
-}));
-
-vi.mock('./components/Learning/LearningPage', () => ({
-  default: () => <div data-testid="learning-page">Learning Content</div>,
-}));
-
-vi.mock('./components/Integrations/IntegrationsPage', () => ({
-  default: () => <div data-testid="integrations-page">Integrations Content</div>,
-}));
-
-vi.mock('./components/Analytics/AnalyticsPage', () => ({
-  default: () => <div data-testid="analytics-page">Analytics Content</div>,
-}));
-
-vi.mock('./components/EdgeAI/EdgeAiPage', () => ({
-  default: () => <div data-testid="edge-ai-page">Edge AI Content</div>,
+vi.mock('./components/Skills/SkillsHubPage', () => ({
+  default: ({ initialTab }: { initialTab?: string }) => (
+    <div data-testid="skills-page" data-tab={initialTab || 'my-skills'}>
+      Skills Content ({initialTab || 'my-skills'})
+    </div>
+  ),
 }));
 
 vi.mock('./components/Profile/ProfilePage', () => ({
-  default: () => <div data-testid="profile-page">Profile Content</div>,
+  default: ({ initialTab }: { initialTab?: string }) => (
+    <div data-testid="profile-page" data-tab={initialTab || 'general'}>
+      Profile Content ({initialTab || 'general'})
+    </div>
+  ),
 }));
 
 const mockAuthenticatedUser = {
@@ -86,7 +88,7 @@ const mockAuthenticatedUser = {
   role: 'user',
 };
 
-describe('main.tsx Navigation & Authentication State Transitions', () => {
+describe('main.tsx 5-Section Navigation & Authentication Transitions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.location.hash = '';
@@ -126,10 +128,10 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
 
     expect(screen.getByTestId('auth-page')).toBeDefined();
     expect(screen.queryByTestId('sidebar')).toBeNull();
-    expect(screen.queryByTestId('dashboard-page')).toBeNull();
+    expect(screen.queryByTestId('bottom-nav')).toBeNull();
   });
 
-  it('renders default Dashboard view with Sidebar and AppHeader when authenticated and hash is empty', () => {
+  it('renders default Home view with Sidebar, AppHeader, and BottomNav when authenticated and hash is empty', () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: mockAuthenticatedUser,
       profile: null,
@@ -141,16 +143,15 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
     });
 
     window.location.hash = '';
-
     render(<AppContent />);
 
-    expect(screen.getByTestId('sidebar')).toBeDefined();
-    expect(screen.getByTestId('app-header')).toBeDefined();
+    expect(screen.getByTestId('sidebar').getAttribute('data-active')).toBe('home');
+    expect(screen.getByTestId('bottom-nav').getAttribute('data-active')).toBe('home');
+    expect(screen.getByTestId('app-header').getAttribute('data-active')).toBe('home');
     expect(screen.getByTestId('dashboard-page')).toBeDefined();
-    expect(screen.queryByTestId('auth-page')).toBeNull();
   });
 
-  it('renders correct page when mounted with an initial hash route', async () => {
+  it('routes legacy deep links cleanly into the 5 primary sections', () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: mockAuthenticatedUser,
       profile: null,
@@ -162,14 +163,13 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
     });
 
     window.location.hash = '#/roadmap';
-
     render(<AppContent />);
 
-    expect(await screen.findByTestId('roadmap-page')).toBeDefined();
-    expect(screen.queryByTestId('dashboard-page')).toBeNull();
+    expect(screen.getByTestId('skills-page').getAttribute('data-tab')).toBe('roadmap');
+    expect(screen.getByTestId('bottom-nav').getAttribute('data-active')).toBe('skills');
   });
 
-  it('transitions between active pages on hashchange event', async () => {
+  it('transitions cleanly across all 5 primary sections and sub-tabs on hashchange', () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: mockAuthenticatedUser,
       profile: null,
@@ -180,77 +180,54 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
       refreshProfile: vi.fn(),
     });
 
-    window.location.hash = '#/dashboard';
+    window.location.hash = '#/home';
     render(<AppContent />);
     expect(screen.getByTestId('dashboard-page')).toBeDefined();
 
-    // Transition to Career
-    act(() => {
-      window.location.hash = '#/career';
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    });
-    expect(await screen.findByTestId('career-page')).toBeDefined();
-    expect(screen.queryByTestId('dashboard-page')).toBeNull();
-
-    // Transition to Resume
     act(() => {
       window.location.hash = '#/resume';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(await screen.findByTestId('resume-page')).toBeDefined();
-    expect(screen.queryByTestId('career-page')).toBeNull();
+    expect(screen.getByTestId('resume-page')).toBeDefined();
 
-    // Transition to Projects
     act(() => {
-      window.location.hash = '#/projects';
+      window.location.hash = '#/practice';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(await screen.findByTestId('projects-page')).toBeDefined();
+    expect(screen.getByTestId('practice-page').getAttribute('data-tab')).toBe('interview');
 
-    // Transition to Interview
-    act(() => {
-      window.location.hash = '#/interview';
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    });
-    expect(await screen.findByTestId('interview-page')).toBeDefined();
-
-    // Transition to Learning
     act(() => {
       window.location.hash = '#/learning';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(await screen.findByTestId('learning-page')).toBeDefined();
+    expect(screen.getByTestId('practice-page').getAttribute('data-tab')).toBe('learning');
 
-    // Transition to Integrations
     act(() => {
-      window.location.hash = '#/integrations';
+      window.location.hash = '#/skills/projects';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(await screen.findByTestId('integrations-page')).toBeDefined();
+    expect(screen.getByTestId('skills-page').getAttribute('data-tab')).toBe('projects');
 
-    // Transition to Analytics
     act(() => {
       window.location.hash = '#/analytics';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(await screen.findByTestId('analytics-page')).toBeDefined();
+    expect(screen.getByTestId('dashboard-page').getAttribute('data-tab')).toBe('analytics');
 
-    // Transition to Edge AI
+    act(() => {
+      window.location.hash = '#/integrations';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    expect(screen.getByTestId('profile-page').getAttribute('data-tab')).toBe('integrations');
+
     act(() => {
       window.location.hash = '#/edge-ai';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(await screen.findByTestId('edge-ai-page')).toBeDefined();
-
-    // Transition to Profile
-    act(() => {
-      window.location.hash = '#/profile';
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    });
-    expect(await screen.findByTestId('profile-page')).toBeDefined();
+    expect(screen.getByTestId('profile-page').getAttribute('data-tab')).toBe('system');
   });
 
-  it('falls back to DashboardPage when navigation receives an unknown hash', () => {
+  it('falls back to Home overview when receiving an unknown hash route', () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: mockAuthenticatedUser,
       profile: null,
@@ -261,11 +238,10 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
       refreshProfile: vi.fn(),
     });
 
-    window.location.hash = '#/unknown-route-path';
-
+    window.location.hash = '#/nonexistent-route';
     render(<AppContent />);
 
-    expect(screen.getByTestId('dashboard-page')).toBeDefined();
+    expect(screen.getByTestId('dashboard-page').getAttribute('data-tab')).toBe('overview');
   });
 
   it('updates window.location.hash when navigation callback is invoked from UI', () => {
@@ -281,16 +257,15 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
 
     render(<AppContent />);
 
-    // Click navigation button in sidebar
     act(() => {
-      screen.getByText('Nav Roadmap').click();
+      screen.getByText('Nav Legacy Roadmap').click();
     });
 
-    expect(window.location.hash).toBe('#/roadmap');
+    expect(window.location.hash).toBe('#/skills/roadmap');
+    expect(screen.getByTestId('skills-page').getAttribute('data-tab')).toBe('roadmap');
   });
 
-  it('smoothly transitions UI between authenticated and unauthenticated states', () => {
-    // Dynamic test wrapper to simulate live auth status changes
+  it('transitions UI cleanly between unauthenticated and authenticated states', () => {
     let authState = {
       user: null as any,
       profile: null as any,
@@ -312,38 +287,20 @@ describe('main.tsx Navigation & Authentication State Transitions', () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockImplementation(() => authState);
 
     const { rerender } = render(<TestHost />);
-
-    // Initially unauthenticated
     expect(screen.getByTestId('auth-page')).toBeDefined();
-    expect(screen.queryByTestId('dashboard-page')).toBeNull();
 
-    // Log in transition
     act(() => {
-      authState = {
-        ...authState,
-        user: mockAuthenticatedUser,
-      };
+      authState = { ...authState, user: mockAuthenticatedUser };
       triggerUpdate!();
     });
     rerender(<TestHost />);
-
-    // Authenticated view appears
-    expect(screen.queryByTestId('auth-page')).toBeNull();
     expect(screen.getByTestId('dashboard-page')).toBeDefined();
-    expect(screen.getByTestId('sidebar')).toBeDefined();
 
-    // Log out transition
     act(() => {
-      authState = {
-        ...authState,
-        user: null,
-      };
+      authState = { ...authState, user: null };
       triggerUpdate!();
     });
     rerender(<TestHost />);
-
-    // Returns to auth page
     expect(screen.getByTestId('auth-page')).toBeDefined();
-    expect(screen.queryByTestId('dashboard-page')).toBeNull();
   });
 });

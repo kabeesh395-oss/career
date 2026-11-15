@@ -32,7 +32,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => void;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -107,12 +107,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = async (): Promise<boolean> => {
     try {
       const data = await api('/auth/me');
       setUser(data.user);
       setProfile(data.profile);
-    } catch { /* no-op */ }
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   return (
