@@ -79,9 +79,10 @@ interface Analytics {
 
 interface Props {
   onNavigate: (page: string) => void;
+  initialTab?: 'overview' | 'analytics';
 }
 
-export default function DashboardPage({ onNavigate }: Props) {
+export default function DashboardPage({ onNavigate, initialTab = 'overview' }: Props) {
   const { user, profile } = useAuth();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [nextAction, setNextAction] = useState<NextAction | null>(null);
@@ -142,7 +143,7 @@ export default function DashboardPage({ onNavigate }: Props) {
   const targetRoleName = profile?.target_role || analytics?.targetRole || 'Full Stack Engineer';
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="animate-fade-in" data-dashboard-tab={initialTab} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       
       {/* Premium Hero Welcome Banner with PatternWaves */}
       <div
