@@ -141,6 +141,8 @@ export default function DashboardPage({ onNavigate, initialTab = 'overview' }: P
   const nextPendingTask = roadmapData?.items?.find(i => i.status !== 'completed');
 
   const targetRoleName = profile?.target_role?.trim() || analytics?.targetRole?.trim() || 'Not set';
+  const resumeScore = analytics?.resume?.overallScore;
+  const hasResumeAnalysis = typeof resumeScore === 'number' && Number.isFinite(resumeScore);
 
   return (
     <div className="animate-fade-in" data-dashboard-tab={initialTab} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -572,8 +574,8 @@ export default function DashboardPage({ onNavigate, initialTab = 'overview' }: P
         />
         <MetricCard
           label="Resume ATS Score"
-          value={analytics?.resume ? `${analytics.resume.overallScore}%` : '—'}
-          detail={analytics?.resume ? 'Latest ATS analysis' : 'No resume analyzed yet'}
+          value={hasResumeAnalysis ? `${resumeScore}%` : '—'}
+          detail={hasResumeAnalysis ? 'Latest ATS analysis' : 'No resume analyzed yet'}
           color="#ef4444"
           icon={<FileText size={16} color="#ef4444" />}
         />
