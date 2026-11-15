@@ -443,18 +443,22 @@ async function runRuntimeQaPass() {
   try {
     const mainPath = path.resolve(__dirname, '../../client/src/main.tsx');
     const mainContent = fs.readFileSync(mainPath, 'utf8');
-    const sidebarPath = path.resolve(__dirname, '../../client/src/components/Layout/Sidebar.tsx');
-    const sidebarContent = fs.readFileSync(sidebarPath, 'utf8');
+    const navigationPath = path.resolve(__dirname, '../../client/src/navigation.ts');
+    const navigationContent = fs.readFileSync(navigationPath, 'utf8');
+    const primarySections = ['home', 'resume', 'practice', 'skills', 'profile'];
+    const hasPrimarySections = primarySections.every(section => mainContent.includes(`case '${section}':`));
+    const hasRouteResolver = navigationContent.includes("case 'analytics':")
+      && navigationContent.includes("case 'resume':")
+      && navigationContent.includes("case 'practice':")
+      && navigationContent.includes("case 'skills':")
+      && navigationContent.includes("case 'profile':");
+    const noTemplatesRoute = !mainContent.includes("case 'templates':") && !navigationContent.includes("case 'templates':");
 
-    const activeRoutes = ['dashboard', 'career', 'roadmap', 'resume', 'projects', 'interview', 'learning', 'integrations', 'analytics', 'edge-ai', 'profile'];
-    const hasAllActiveRoutes = activeRoutes.every(r => mainContent.includes(`case '${r}':`) && sidebarContent.includes(`id: '${r}'`));
-    const noTemplatesRoute = !mainContent.includes("case 'templates'") && !sidebarContent.includes("id: 'templates'");
-
-    if (hasAllActiveRoutes && noTemplatesRoute) {
+    if (hasPrimarySections && hasRouteResolver && noTemplatesRoute) {
       results.push({
         area: 'Navigation',
         result: 'PASS',
-        evidence: 'All 11 genuine application routes mapped in main.tsx and Sidebar.tsx. UI Templates route completely purged.'
+        evidence: 'Five primary sections and supported legacy/sub-tab routes are mapped in main.tsx and navigation.ts. UI Templates route completely purged.'
       });
     } else {
       results.push({

@@ -73,15 +73,16 @@ interface Analytics {
   interviews: { completed: number; averageScore: number };
   skills: { acquired: number; gapsIdentified: number };
   projects: { total: number; completed: number };
-  resume: { overallScore: number; impactScore: number; brevityScore: number; styleScore: number } | null;
+  resume: { overallScore: number; impactScore?: number; brevityScore?: number; styleScore?: number; hasData?: boolean } | null;
   recentActivity: Array<{ eventName: string; data: any; timestamp: string }>;
 }
 
 interface Props {
   onNavigate: (page: string) => void;
+  initialTab?: 'overview' | 'analytics';
 }
 
-export default function DashboardPage({ onNavigate }: Props) {
+export default function DashboardPage({ onNavigate, initialTab = 'overview' }: Props) {
   const { user, profile } = useAuth();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [nextAction, setNextAction] = useState<NextAction | null>(null);
@@ -139,10 +140,11 @@ export default function DashboardPage({ onNavigate }: Props) {
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : (analytics?.tasks?.percent || 0);
   const nextPendingTask = roadmapData?.items?.find(i => i.status !== 'completed');
 
-  const targetRoleName = profile?.target_role || analytics?.targetRole || 'Full Stack Engineer';
+  const targetRoleName = profile?.target_role || analytics?.targetRole || 'Not set';
+  const hasResumeAnalysis = Boolean(analytics?.resume && analytics.resume.hasData !== false);
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="animate-fade-in" data-dashboard-tab={initialTab} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       
       {/* Premium Hero Welcome Banner with PatternWaves */}
       <div
@@ -571,8 +573,8 @@ export default function DashboardPage({ onNavigate }: Props) {
         />
         <MetricCard
           label="Resume ATS Score"
-          value={analytics?.resume ? `${analytics.resume.overallScore}%` : '—'}
-          detail={analytics?.resume ? 'Latest ATS analysis' : 'No resume analyzed'}
+          value={hasResumeAnalysis ? `${analytics!.resume!.overallScore}%` : '—'}
+          detail={hasResumeAnalysis ? 'Latest ATS analysis' : 'No resume analyzed'}
           color="#ef4444"
           icon={<FileText size={16} color="#ef4444" />}
         />
