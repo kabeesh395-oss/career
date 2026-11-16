@@ -65,7 +65,7 @@ router.post('/signup', async (req, res, next) => {
     const userPayload = { id: userId, email: normalizedEmail, role: 'user' };
     const token = generateToken(userPayload);
 
-    AnalyticsService.trackEvent(userId, 'user_signup', { email: normalizedEmail, fullName });
+    AnalyticsService.trackEvent(userId, 'user_signup', { method: 'password' });
 
     return res.status(201).json({
       user: {
@@ -120,7 +120,7 @@ router.post('/login', async (req, res, next) => {
     const userPayload = { id: user.id, email: user.email, role: user.role };
     const token = generateToken(userPayload, Number(user.token_version || 0));
 
-    AnalyticsService.trackEvent(user.id, 'user_login', { email: user.email });
+    AnalyticsService.trackEvent(user.id, 'user_login', { method: 'password' });
 
     return res.json({
       user: {
