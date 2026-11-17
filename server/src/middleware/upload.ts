@@ -24,21 +24,35 @@ const storage = multer.diskStorage({
   }
 });
 
+const MIME_TO_EXTENSION: Record<string, string> = {
+  'application/pdf': '.pdf',
+  'application/x-pdf': '.pdf',
+  'application/acrobat': '.pdf',
+  'text/plain': '.txt',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/zip': '.docx',
+  'application/x-zip-compressed': '.docx',
+  'application/msword': '.doc'
+};
+
+const ALLOWED_EXTENSIONS = new Set(['.pdf', '.txt', '.docx']);
+
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedMimeTypes = [
-    'application/pdf',
-    'text/plain',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  ];
-
-  const allowedExtensions = ['.pdf', '.txt', '.docx'];
   const ext = path.extname(file.originalname).toLowerCase();
+  const declaredExtension = MIME_TO_EXTENSION[file.mimetype];
 
-  if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
-    cb(null, true);
-  } else {
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
     cb(new Error('Invalid file format. Only PDF, TXT, and DOCX files are supported.'));
+    return;
   }
+
+  if (declaredExtension && declaredExtension !== ext) {
+    cb(new Error('File extension does not match the declared file type.'));
+    return;
+  }
+
+  // Unknown/generic MIME values are checked against the file signature below.
+  cb(null, true);
 };
 
 export const uploadResume = multer({
@@ -55,6 +69,15 @@ export const uploadResume = multer({
  */
 export async function validateResumeFile(file: Express.Multer.File): Promise<void> {
   const ext = path.extname(file.originalname).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
+    throw new Error('Only PDF, TXT, and DOCX files are supported.');
+  }
+
+  const declaredExtension = MIME_TO_EXTENSION[file.mimetype];
+  if (declaredExtension && declaredExtension !== ext) {
+    throw new Error('The uploaded file extension does not match its declared MIME type.');
+  }
+
   const handle = await fs.promises.open(file.path, 'r');
 
   try {
