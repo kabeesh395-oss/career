@@ -127,6 +127,9 @@ jobs:
           npm run test:error-security
           npm run test:cors
 
+      - name: Verify Resume Upload Type Validation
+        run: npm run test:upload-validation
+
       - name: Execute Security & Tenant Isolation Tests (TASK-003 / TASK-009)
         run: |
           npm run test:security
